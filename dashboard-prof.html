@@ -1,0 +1,706 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Espace Professeur — ILCH</title>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
+  <style>
+    *{margin:0;padding:0;box-sizing:border-box}
+    :root{
+      --navy:#0D2B4E;--navy2:#1A3D6B;--gold:#C9A96E;--gold-bg:#FAF3E8;--gold-light:#E8D5B0;
+      --cream:#FAFAF8;--white:#fff;--gray:#6B7280;--gray-light:#F3F4F6;
+      --border:#E5E7EB;--text:#1F2937;--muted:#9CA3AF;
+      --green:#16A34A;--green-bg:#F0FDF4;--blue:#2563EB;--blue-bg:#EFF6FF;--red:#DC2626;
+    }
+    body{font-family:'Inter',sans-serif;background:var(--cream);color:var(--text);display:flex;min-height:100vh}
+    a{text-decoration:none;color:inherit}
+
+    /* SIDEBAR */
+    .sidebar{width:230px;background:var(--navy);flex-shrink:0;display:flex;flex-direction:column;min-height:100vh;position:fixed;top:0;left:0;bottom:0;z-index:50}
+    .sb-logo{padding:1.25rem 1rem;border-bottom:1px solid rgba(255,255,255,0.08)}
+    .sb-logo-mark{display:flex;align-items:center;gap:10px}
+    .sb-badge{width:32px;height:32px;background:var(--gold);display:flex;align-items:center;justify-content:center;font-family:'Playfair Display',serif;font-weight:700;font-size:12px;color:var(--navy);flex-shrink:0}
+    .sb-name{font-size:13px;font-weight:600;color:var(--white);line-height:1.2}
+    .sb-name small{display:block;font-size:10px;color:rgba(255,255,255,0.4);font-weight:300;letter-spacing:0.04em}
+    .sb-nav{flex:1;padding:1.25rem 0}
+    .sb-section{font-size:9px;color:rgba(255,255,255,0.3);letter-spacing:0.12em;text-transform:uppercase;padding:0.75rem 1rem 0.35rem}
+    .sb-item{display:flex;align-items:center;gap:10px;padding:10px 1rem;font-size:13px;color:rgba(255,255,255,0.6);cursor:pointer;border-left:3px solid transparent;transition:background 0.15s,color 0.15s;-webkit-user-select:none;user-select:none}
+    .sb-item:hover{background:rgba(255,255,255,0.06);color:var(--white)}
+    .sb-item.active{background:rgba(201,169,110,0.12);color:var(--gold);border-left-color:var(--gold)}
+    .sb-item i{font-size:17px;width:20px;flex-shrink:0}
+    .sb-badge-count{margin-left:auto;background:var(--gold);color:var(--navy);font-size:10px;font-weight:700;padding:2px 7px;border-radius:10px}
+    .sb-user{padding:1rem;border-top:1px solid rgba(255,255,255,0.08)}
+    .sb-user-row{display:flex;align-items:center;gap:9px}
+    .sb-avatar{width:34px;height:34px;border-radius:50%;background:var(--gold-bg);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:var(--navy);flex-shrink:0}
+    .sb-user-name{font-size:12px;color:var(--white);font-weight:500}
+    .sb-user-role{font-size:10px;color:rgba(255,255,255,0.4)}
+    .logout-btn{display:inline-flex;align-items:center;gap:5px;font-size:11px;color:rgba(255,255,255,0.3);cursor:pointer;margin-top:8px;transition:color 0.15s;background:none;border:none;font-family:'Inter',sans-serif;padding:0}
+    .logout-btn:hover{color:var(--gold)}
+
+    /* MAIN */
+    .main{flex:1;margin-left:230px;display:flex;flex-direction:column;min-height:100vh}
+    .topbar{background:var(--white);border-bottom:1px solid var(--border);padding:0.875rem 1.75rem;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:40}
+    .topbar-title{font-family:'Playfair Display',serif;font-size:17px;font-weight:600;color:var(--navy)}
+    .notif-pill{display:flex;align-items:center;gap:6px;background:var(--gold-bg);border:1px solid var(--gold-light);padding:5px 12px}
+    .notif-dot{width:7px;height:7px;background:var(--gold);border-radius:50%}
+    .notif-text{font-size:12px;color:var(--navy);font-weight:500}
+    .content{flex:1;padding:1.75rem;background:var(--cream)}
+
+    /* PANELS */
+    .panel{display:none}
+    .panel.active{display:block}
+
+    /* STATS */
+    .stats-row{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-bottom:1.75rem}
+    .stat-card{background:var(--white);border:0.5px solid var(--border);padding:1.25rem 1.5rem}
+    .stat-label{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:0.07em;margin-bottom:5px;font-weight:500}
+    .stat-val{font-family:'Playfair Display',serif;font-size:2rem;color:var(--navy);font-weight:700;line-height:1}
+    .stat-sub{font-size:11px;color:var(--gray);margin-top:5px}
+
+    /* RECENT */
+    .block-title{font-size:13px;font-weight:600;color:var(--navy);margin-bottom:10px;display:flex;align-items:center;gap:6px}
+    .recent-list{display:flex;flex-direction:column;gap:8px}
+    .recent-item{background:var(--white);border:0.5px solid var(--border);padding:12px 16px;display:flex;align-items:center;gap:12px}
+    .recent-icon{width:34px;height:34px;background:var(--gold-bg);display:flex;align-items:center;justify-content:center;flex-shrink:0;color:var(--navy);font-size:16px}
+    .recent-info p{font-size:13px;font-weight:500;color:var(--text);line-height:1.3}
+    .recent-info span{font-size:11px;color:var(--muted)}
+    .badge{margin-left:auto;font-size:10px;padding:3px 9px;font-weight:600;flex-shrink:0}
+    .badge-new{background:var(--blue-bg);color:var(--blue)}
+    .badge-done{background:var(--green-bg);color:var(--green)}
+
+    /* VIDEOS */
+    .section-header-row{display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem}
+    .add-btn{background:var(--navy);color:var(--white);border:none;padding:9px 16px;font-size:12px;font-weight:600;cursor:pointer;display:flex;align-items:center;gap:7px;letter-spacing:0.04em;font-family:'Inter',sans-serif;transition:background 0.15s}
+    .add-btn:hover{background:var(--navy2)}
+
+    .upload-form{background:var(--white);border:0.5px solid var(--border);padding:1.5rem;margin-bottom:1.25rem;display:none}
+    .upload-form.open{display:block}
+    .form-row{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px}
+    .form-group{display:flex;flex-direction:column;gap:5px}
+    .form-group label{font-size:11px;font-weight:600;color:var(--navy);text-transform:uppercase;letter-spacing:0.05em}
+    .form-group input,.form-group select,.form-group textarea{border:1px solid var(--border);padding:9px 12px;font-size:13px;background:var(--cream);outline:none;font-family:'Inter',sans-serif;color:var(--text);transition:border-color 0.15s}
+    .form-group input:focus,.form-group select:focus,.form-group textarea:focus{border-color:var(--gold)}
+    .upload-drop{border:2px dashed var(--border);padding:2rem;text-align:center;cursor:pointer;transition:border-color 0.2s,background 0.2s;margin-top:4px}
+    .upload-drop:hover{border-color:var(--gold);background:var(--gold-bg)}
+    .upload-drop i{font-size:32px;color:var(--muted);display:block;margin-bottom:8px}
+    .upload-drop .drop-title{font-size:13px;font-weight:500;color:var(--navy)}
+    .upload-drop .drop-sub{font-size:11px;color:var(--muted);margin-top:4px}
+    .form-actions{display:flex;gap:8px;margin-top:14px}
+    .form-submit{background:var(--gold);color:var(--navy);border:none;padding:10px 20px;font-size:13px;font-weight:700;cursor:pointer;font-family:'Inter',sans-serif;transition:background 0.15s}
+    .form-submit:hover{background:#d4b57c}
+    .form-cancel{background:transparent;border:1px solid var(--border);padding:10px 20px;font-size:13px;color:var(--gray);cursor:pointer;font-family:'Inter',sans-serif;transition:border-color 0.15s}
+    .form-cancel:hover{border-color:var(--navy)}
+
+    .videos-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:14px}
+    .video-card{background:var(--white);border:0.5px solid var(--border);transition:transform 0.2s,border-color 0.2s}
+    .video-card:hover{transform:translateY(-2px);border-color:var(--gold-light)}
+    .video-thumb{width:100%;height:130px;background:var(--navy);display:flex;align-items:center;justify-content:center;position:relative;overflow:hidden}
+    .video-subj{position:absolute;top:10px;left:10px;background:var(--gold);color:var(--navy);font-size:9px;font-weight:700;padding:3px 8px;letter-spacing:0.06em;text-transform:uppercase}
+    .video-actions{position:absolute;top:8px;right:8px;display:flex;gap:5px}
+    .video-action-btn{background:rgba(0,0,0,0.4);border:none;padding:5px 8px;cursor:pointer;color:var(--white);font-size:13px;transition:background 0.15s}
+    .video-action-btn:hover{background:rgba(0,0,0,0.7)}
+    .video-body{padding:12px 14px 14px}
+    .video-title{font-size:13px;font-weight:600;color:var(--text);margin-bottom:5px;line-height:1.35}
+    .video-meta{font-size:11px;color:var(--muted);display:flex;align-items:center;gap:10px}
+    .video-meta i{font-size:13px}
+    .video-status{display:inline-flex;align-items:center;gap:4px;margin-left:auto;font-size:10px;font-weight:600}
+    .status-pub{color:var(--green)}
+    .status-draft{color:var(--muted)}
+
+    /* NOTES MGT */
+    .notes-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem}
+    .class-select{border:1px solid var(--border);padding:7px 12px;font-size:13px;background:var(--white);font-family:'Inter',sans-serif;outline:none}
+    .notes-table{width:100%;border-collapse:collapse;background:var(--white);border:0.5px solid var(--border)}
+    .notes-table th{background:var(--navy);color:var(--white);font-size:11px;font-weight:600;letter-spacing:0.05em;text-transform:uppercase;padding:12px 16px;text-align:left}
+    .notes-table td{padding:10px 16px;font-size:13px;border-bottom:0.5px solid var(--border);color:var(--text)}
+    .notes-table tr:last-child td{border-bottom:none}
+    .notes-table input[type="number"]{width:60px;border:1px solid var(--border);padding:5px 8px;font-size:13px;background:var(--cream);outline:none;text-align:center;font-family:'Inter',sans-serif}
+    .notes-table input[type="number"]:focus{border-color:var(--gold)}
+    .save-notes-btn{background:var(--gold);color:var(--navy);border:none;padding:9px 18px;font-size:12px;font-weight:700;cursor:pointer;font-family:'Inter',sans-serif;transition:background 0.15s}
+    .save-notes-btn:hover{background:#d4b57c}
+
+    /* MESSAGES */
+    .msg-layout{display:grid;grid-template-columns:220px 1fr;background:var(--white);border:0.5px solid var(--border);height:500px}
+    .msg-contacts{border-right:0.5px solid var(--border);display:flex;flex-direction:column}
+    .msg-contact-header{padding:12px 14px;border-bottom:0.5px solid var(--border);font-size:11px;font-weight:600;color:var(--navy);text-transform:uppercase;letter-spacing:0.07em}
+    .contact-item{padding:11px 14px;cursor:pointer;display:flex;align-items:center;gap:9px;border-bottom:0.5px solid var(--border);transition:background 0.15s;border-left:3px solid transparent}
+    .contact-item:hover{background:var(--gold-bg)}
+    .contact-item.active{background:var(--gold-bg);border-left-color:var(--gold)}
+    .contact-avatar{width:32px;height:32px;border-radius:50%;background:var(--navy);display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;color:var(--gold);flex-shrink:0}
+    .contact-name{font-size:12px;font-weight:500;color:var(--text)}
+    .contact-preview{font-size:10px;color:var(--muted);margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:120px}
+    .unread-dot{width:8px;height:8px;background:var(--gold);border-radius:50%;margin-left:auto;flex-shrink:0}
+    .msg-thread{display:flex;flex-direction:column;height:100%}
+    .thread-header{padding:12px 16px;border-bottom:0.5px solid var(--border);display:flex;align-items:center;gap:10px}
+    .thread-avatar{width:32px;height:32px;border-radius:50%;background:var(--navy2);display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;color:var(--gold);flex-shrink:0}
+    .thread-header strong{font-size:13px;color:var(--navy)}
+    .thread-header span{font-size:11px;color:var(--muted)}
+    .thread-messages{flex:1;padding:14px 16px;overflow-y:auto;display:flex;flex-direction:column;gap:10px;background:var(--cream)}
+    .msg-bubble{max-width:72%;padding:9px 13px;font-size:12px;line-height:1.55}
+    .msg-bubble.received{background:var(--white);border:0.5px solid var(--border);color:var(--text);align-self:flex-start}
+    .msg-bubble.sent{background:var(--navy);color:rgba(255,255,255,0.9);align-self:flex-end}
+    .msg-time{font-size:10px;margin-top:4px;opacity:0.45}
+    .thread-input{padding:10px 14px;border-top:0.5px solid var(--border);display:flex;gap:8px;align-items:center;background:var(--white)}
+    .thread-input input{flex:1;border:1px solid var(--border);padding:9px 12px;font-size:13px;outline:none;background:var(--cream);font-family:'Inter',sans-serif;transition:border-color 0.15s}
+    .thread-input input:focus{border-color:var(--gold)}
+    .send-btn{background:var(--navy);border:none;padding:9px 16px;cursor:pointer;transition:background 0.15s;flex-shrink:0}
+    .send-btn:hover{background:var(--navy2)}
+    .send-btn i{font-size:17px;color:var(--white)}
+
+    /* DEVOIRS */
+    .devoir-card{background:var(--white);border:0.5px solid var(--border);margin-bottom:12px;overflow:hidden}
+    .devoir-header{padding:1rem 1.25rem;display:flex;align-items:center;justify-content:space-between;border-bottom:0.5px solid var(--border)}
+    .devoir-header-left{display:flex;align-items:center;gap:10px}
+    .devoir-matiere{background:var(--navy);color:var(--gold);font-size:10px;font-weight:700;padding:4px 10px;letter-spacing:0.05em;text-transform:uppercase}
+    .devoir-classe{background:var(--gold-bg);color:var(--navy);font-size:10px;font-weight:600;padding:4px 9px}
+    .devoir-title{font-size:14px;font-weight:600;color:var(--navy);margin-top:6px}
+    .devoir-desc{font-size:13px;color:var(--gray);line-height:1.6;margin-top:4px}
+    .devoir-body{padding:1rem 1.25rem}
+    .devoir-footer{padding:0.75rem 1.25rem;background:var(--gray-light);display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px}
+    .devoir-meta{font-size:11px;color:var(--muted);display:flex;align-items:center;gap:12px}
+    .devoir-meta i{font-size:13px}
+    .devoir-actions{display:flex;gap:8px}
+    .deadline-badge{font-size:11px;font-weight:600;padding:4px 10px}
+    .deadline-ok{background:var(--green-bg);color:var(--green)}
+    .deadline-soon{background:var(--orange-bg);color:var(--orange)}
+    .deadline-passed{background:var(--red-bg);color:var(--red)}
+
+    /* CORRIGE */
+    .corrige-section{margin-top:10px;padding:12px;background:var(--green-bg);border:1px solid #BBF7D0}
+    .corrige-section-title{font-size:11px;font-weight:700;color:var(--green);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:8px;display:flex;align-items:center;gap:5px}
+    .corrige-content{font-size:13px;color:var(--text);line-height:1.6;white-space:pre-wrap}
+    .no-corrige{background:var(--orange-bg);border:1px solid #FDE68A;padding:10px 12px;font-size:12px;color:var(--orange);display:flex;align-items:center;gap:6px;margin-top:10px}
+
+    /* FORM DEVOIR */
+    .devoir-form{background:var(--white);border:0.5px solid var(--border);padding:1.5rem;margin-bottom:1.25rem;display:none}
+    .devoir-form.open{display:block}
+    .form-group{margin-bottom:1rem}
+    .form-group label{display:block;font-size:11px;font-weight:600;color:var(--navy);text-transform:uppercase;letter-spacing:0.05em;margin-bottom:5px}
+    .form-group input,.form-group select,.form-group textarea{width:100%;border:1px solid var(--border);padding:9px 12px;font-size:13px;background:var(--cream);outline:none;font-family:'Inter',sans-serif;color:var(--text)}
+    .form-group input:focus,.form-group select:focus,.form-group textarea:focus{border-color:var(--gold)}
+    .form-row-2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+
+    /* MODAL CORRIGE */
+    .modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.45);z-index:200;align-items:center;justify-content:center;padding:1rem}
+    .modal-overlay.open{display:flex}
+    .modal{background:var(--white);width:100%;max-width:540px;max-height:90vh;overflow-y:auto}
+    .modal-header{padding:1.25rem 1.5rem;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;background:var(--white)}
+    .modal-title{font-family:'Playfair Display',serif;font-size:1.1rem;color:var(--navy);font-weight:700}
+    .modal-close{background:none;border:none;cursor:pointer;font-size:20px;color:var(--gray)}
+    .modal-body{padding:1.5rem}
+    .modal-footer{padding:1rem 1.5rem;border-top:1px solid var(--border);display:flex;gap:8px;justify-content:flex-end}
+    .btn-green{background:var(--green);color:var(--white);border:none;padding:9px 16px;font-size:12px;font-weight:600;cursor:pointer;font-family:'Inter',sans-serif;display:inline-flex;align-items:center;gap:6px}
+    .btn-green:hover{background:#15803D}
+    .btn-sm-modal{background:var(--gray-light);color:var(--text);border:0.5px solid var(--border);padding:9px 14px;font-size:12px;cursor:pointer;font-family:'Inter',sans-serif}
+
+    /* DEADLINE BADGES */
+    .deadline-ok{background:var(--green-bg);color:var(--green)}
+    .deadline-soon{background:var(--orange-bg);color:var(--orange)}
+    .deadline-passed{background:var(--red-bg);color:var(--red)}
+    .btn-edit{background:var(--gray-light);color:var(--text);border:0.5px solid var(--border);padding:6px 10px;font-size:11px;cursor:pointer;font-family:'Inter',sans-serif;display:inline-flex;align-items:center;gap:4px}
+    .btn-danger{background:var(--red);color:var(--white);border:none;padding:6px 10px;font-size:11px;cursor:pointer;font-family:'Inter',sans-serif}
+    .btn-green{background:var(--green);color:var(--white);border:none;padding:6px 10px;font-size:11px;cursor:pointer;font-family:'Inter',sans-serif;display:inline-flex;align-items:center;gap:4px}
+
+    /* TOAST */
+    .toast{position:fixed;bottom:1.5rem;right:1.5rem;background:var(--navy);color:var(--white);padding:11px 20px;font-size:13px;font-weight:500;z-index:999;display:none;align-items:center;gap:8px}
+    .toast.show{display:flex}
+    .toast i{color:var(--gold);font-size:17px}
+  </style>
+</head>
+<body>
+
+<div class="toast" id="toast"><i class="ti ti-check" aria-hidden="true"></i><span id="toast-msg"></span></div>
+
+<!-- SIDEBAR -->
+<aside class="sidebar">
+  <div class="sb-logo">
+    <div class="sb-logo-mark">
+      <div class="sb-badge">ILCH</div>
+      <div class="sb-name">Espace professeur<small>Institution Louis Chauvet</small></div>
+    </div>
+  </div>
+  <nav class="sb-nav">
+    <div class="sb-section">Principal</div>
+    <div class="sb-item active" onclick="showPanel('dash',this)"><i class="ti ti-home" aria-hidden="true"></i>Tableau de bord</div>
+    <div class="sb-item" onclick="showPanel('videos',this)"><i class="ti ti-video" aria-hidden="true"></i>Cours vidéo</div>
+    <div class="sb-item" onclick="showPanel('notes',this)"><i class="ti ti-edit" aria-hidden="true"></i>Saisie des notes</div>
+    <div class="sb-item" onclick="showPanel('devoirs',this)"><i class="ti ti-clipboard-text" aria-hidden="true"></i>Devoirs & Corrigés<span class="sb-badge-count" id="devoirs-count">0</span></div>
+    <div class="sb-section">Communication</div>
+    <div class="sb-item" onclick="showPanel('msgs',this)"><i class="ti ti-message" aria-hidden="true"></i>Messages élèves<span class="sb-badge-count">3</span></div>
+    <div class="sb-section">Compte</div>
+    <div class="sb-item" onclick="showPanel('profil',this)"><i class="ti ti-user" aria-hidden="true"></i>Mon profil</div>
+  </nav>
+  <div class="sb-user">
+    <div class="sb-user-row">
+      <div class="sb-avatar">MC</div>
+      <div><div class="sb-user-name">Marie Céleste</div><div class="sb-user-role">Professeure · Maths</div></div>
+    </div>
+    <button class="logout-btn" onclick="window.location.href='login.html'"><i class="ti ti-logout" style="font-size:13px" aria-hidden="true"></i> Déconnexion</button>
+  </div>
+</aside>
+
+<!-- MAIN -->
+<div class="main">
+  <div class="topbar">
+    <div class="topbar-title" id="topbar-title">Tableau de bord</div>
+    <div class="notif-pill"><div class="notif-dot"></div><span class="notif-text">3 messages d'élèves</span></div>
+  </div>
+
+  <div class="content">
+
+    <!-- DASHBOARD -->
+    <div class="panel active" id="panel-dash">
+      <div class="stats-row">
+        <div class="stat-card">
+          <div class="stat-label">Cours publiés</div>
+          <div class="stat-val">5</div>
+          <div class="stat-sub">Année 2025–2026</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Élèves suivis</div>
+          <div class="stat-val">42</div>
+          <div class="stat-sub">Terminale A et B</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Messages en attente</div>
+          <div class="stat-val">3</div>
+          <div class="stat-sub">À traiter dès que possible</div>
+        </div>
+      </div>
+      <div class="block-title"><i class="ti ti-clock" style="font-size:15px;color:var(--gold)" aria-hidden="true"></i>Activité récente</div>
+      <div class="recent-list">
+        <div class="recent-item">
+          <div class="recent-icon"><i class="ti ti-video" aria-hidden="true"></i></div>
+          <div class="recent-info"><p>Cours publié — Les équations du 2e degré</p><span>Il y a 2 heures · Terminale A et B</span></div>
+          <span class="badge badge-done">Publié</span>
+        </div>
+        <div class="recent-item">
+          <div class="recent-icon"><i class="ti ti-message" aria-hidden="true"></i></div>
+          <div class="recent-info"><p>Message de Jean Pierre</p><span>« J'ai une question sur l'exercice 3 du cours »</span></div>
+          <span class="badge badge-new">Non lu</span>
+        </div>
+        <div class="recent-item">
+          <div class="recent-icon"><i class="ti ti-message" aria-hidden="true"></i></div>
+          <div class="recent-info"><p>Message de Marc Antoine</p><span>« Professeure, puis-je soumettre demain ? »</span></div>
+          <span class="badge badge-new">Non lu</span>
+        </div>
+        <div class="recent-item">
+          <div class="recent-icon"><i class="ti ti-message" aria-hidden="true"></i></div>
+          <div class="recent-info"><p>Message de Sophie Marc</p><span>« Merci professeure, très bon cours ! »</span></div>
+          <span class="badge badge-done">Lu</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- COURS VIDÉO -->
+    <div class="panel" id="panel-videos">
+      <div class="section-header-row">
+        <div style="font-size:14px;font-weight:600;color:var(--navy)">Mes cours publiés</div>
+        <button class="add-btn" onclick="toggleUpload()"><i class="ti ti-plus" aria-hidden="true"></i>Ajouter un cours</button>
+      </div>
+
+      <div class="upload-form" id="upload-form">
+        <div style="font-size:14px;font-weight:600;color:var(--navy);margin-bottom:1rem;padding-bottom:0.75rem;border-bottom:1px solid var(--border)">Nouveau cours vidéo</div>
+        <div class="form-row">
+          <div class="form-group"><label>Titre du cours</label><input type="text" id="vid-title" placeholder="Ex : Les équations du 2e degré"></div>
+          <div class="form-group"><label>Matière</label><select id="vid-subject"><option>Mathématiques</option><option>Français</option><option>Sciences</option><option>Histoire-Géographie</option><option>Anglais</option><option>Philosophie</option></select></div>
+        </div>
+        <div class="form-row">
+          <div class="form-group"><label>Classe(s) ciblée(s)</label><select id="vid-class"><option>Terminale A</option><option>Terminale B</option><option>Terminale A et B</option><option>Toutes les classes</option></select></div>
+          <div class="form-group"><label>Durée estimée</label><input type="text" id="vid-duration" placeholder="Ex : 35 min"></div>
+        </div>
+        <div class="form-group" style="margin-bottom:0">
+          <label>Description (optionnelle)</label>
+          <textarea rows="2" placeholder="Résumé du cours, objectifs pédagogiques..."></textarea>
+        </div>
+        <div class="upload-drop" onclick="showToast('Sélection de fichier simulée — intégrez votre service d\'hébergement vidéo ici')">
+          <i class="ti ti-cloud-upload" aria-hidden="true"></i>
+          <div class="drop-title">Cliquer pour choisir une vidéo ou glisser-déposer</div>
+          <div class="drop-sub">MP4, MOV, AVI · Maximum 2 Go</div>
+        </div>
+        <div class="form-actions">
+          <button class="form-submit" onclick="publishVideo()">Publier le cours</button>
+          <button class="form-cancel" onclick="toggleUpload()">Annuler</button>
+        </div>
+      </div>
+
+      <div class="videos-grid" id="prof-videos-grid">
+        <div class="video-card">
+          <div class="video-thumb"><div class="video-subj">Maths</div><div class="video-actions"><button class="video-action-btn" onclick="showToast('Cours supprimé')" aria-label="Supprimer"><i class="ti ti-trash" aria-hidden="true"></i></button></div></div>
+          <div class="video-body"><div class="video-title">Les équations du 2e degré</div><div class="video-meta"><i class="ti ti-users" aria-hidden="true"></i>42 élèves<i class="ti ti-clock" style="margin-left:6px" aria-hidden="true"></i>32 min<span class="video-status status-pub"><i class="ti ti-circle-check" style="font-size:12px" aria-hidden="true"></i>Publié</span></div></div>
+        </div>
+        <div class="video-card">
+          <div class="video-thumb" style="background:#1A3D6B"><div class="video-subj">Maths</div><div class="video-actions"><button class="video-action-btn" onclick="showToast('Cours supprimé')" aria-label="Supprimer"><i class="ti ti-trash" aria-hidden="true"></i></button></div></div>
+          <div class="video-body"><div class="video-title">Introduction aux fonctions affines</div><div class="video-meta"><i class="ti ti-users" aria-hidden="true"></i>42 élèves<i class="ti ti-clock" style="margin-left:6px" aria-hidden="true"></i>40 min<span class="video-status status-pub"><i class="ti ti-circle-check" style="font-size:12px" aria-hidden="true"></i>Publié</span></div></div>
+        </div>
+        <div class="video-card">
+          <div class="video-thumb" style="background:#0F3460"><div class="video-subj">Maths</div><div class="video-actions"><button class="video-action-btn" onclick="showToast('Cours supprimé')" aria-label="Supprimer"><i class="ti ti-trash" aria-hidden="true"></i></button></div></div>
+          <div class="video-body"><div class="video-title">Les inégalités et intervalles</div><div class="video-meta"><i class="ti ti-users" aria-hidden="true"></i>42 élèves<i class="ti ti-clock" style="margin-left:6px" aria-hidden="true"></i>27 min<span class="video-status status-draft"><i class="ti ti-clock" style="font-size:12px" aria-hidden="true"></i>Brouillon</span></div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- SAISIE DES NOTES -->
+    <div class="panel" id="panel-notes">
+      <div class="notes-header">
+        <div style="font-size:14px;font-weight:600;color:var(--navy)">Saisie des notes — Trimestre 2</div>
+        <div style="display:flex;gap:8px;align-items:center">
+          <select class="class-select"><option>Terminale A</option><option>Terminale B</option></select>
+          <button class="save-notes-btn" onclick="saveNotes()">Enregistrer</button>
+        </div>
+      </div>
+      <table class="notes-table">
+        <thead><tr><th>Élève</th><th>Note / 20</th><th>Appréciation</th></tr></thead>
+        <tbody>
+          <tr><td>Jean Pierre</td><td><input type="number" min="0" max="20" value="16" step="0.5"></td><td><input type="text" value="Très bien" style="width:100%;border:1px solid var(--border);padding:5px 8px;font-size:13px;background:var(--cream);outline:none;font-family:'Inter',sans-serif"></td></tr>
+          <tr><td>Sophie Marc</td><td><input type="number" min="0" max="20" value="14" step="0.5"></td><td><input type="text" value="Bien" style="width:100%;border:1px solid var(--border);padding:5px 8px;font-size:13px;background:var(--cream);outline:none;font-family:'Inter',sans-serif"></td></tr>
+          <tr><td>Marc Antoine</td><td><input type="number" min="0" max="20" value="11" step="0.5"></td><td><input type="text" value="Passable" style="width:100%;border:1px solid var(--border);padding:5px 8px;font-size:13px;background:var(--cream);outline:none;font-family:'Inter',sans-serif"></td></tr>
+          <tr><td>Claire Dupont</td><td><input type="number" min="0" max="20" value="18" step="0.5"></td><td><input type="text" value="Excellent" style="width:100%;border:1px solid var(--border);padding:5px 8px;font-size:13px;background:var(--cream);outline:none;font-family:'Inter',sans-serif"></td></tr>
+          <tr><td>Paul Étienne</td><td><input type="number" min="0" max="20" value="8" step="0.5"></td><td><input type="text" value="Insuffisant" style="width:100%;border:1px solid var(--border);padding:5px 8px;font-size:13px;background:var(--cream);outline:none;font-family:'Inter',sans-serif"></td></tr>
+          <tr><td>Marie Joëlle</td><td><input type="number" min="0" max="20" value="13" step="0.5"></td><td><input type="text" value="Assez bien" style="width:100%;border:1px solid var(--border);padding:5px 8px;font-size:13px;background:var(--cream);outline:none;font-family:'Inter',sans-serif"></td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- MESSAGES -->
+    <div class="panel" id="panel-msgs">
+      <div class="msg-layout">
+        <div class="msg-contacts">
+          <div class="msg-contact-header">Élèves</div>
+          <div class="contact-item active" onclick="switchContact('Jean Pierre','Terminale A','JP',this)">
+            <div class="contact-avatar">JP</div>
+            <div style="min-width:0"><div class="contact-name">Jean Pierre</div><div class="contact-preview">Question exercice 3</div></div>
+            <div class="unread-dot"></div>
+          </div>
+          <div class="contact-item" onclick="switchContact('Marc Antoine','Terminale A','MA',this)">
+            <div class="contact-avatar" style="background:#1A3D6B">MA</div>
+            <div style="min-width:0"><div class="contact-name">Marc Antoine</div><div class="contact-preview">Puis-je remettre demain ?</div></div>
+            <div class="unread-dot"></div>
+          </div>
+          <div class="contact-item" onclick="switchContact('Sophie Marc','Terminale B','SM',this)">
+            <div class="contact-avatar" style="background:#0F3460">SM</div>
+            <div style="min-width:0"><div class="contact-name">Sophie Marc</div><div class="contact-preview">Merci professeure !</div></div>
+          </div>
+          <div class="contact-item" onclick="switchContact('Claire Dupont','Terminale A','CD',this)">
+            <div class="contact-avatar" style="background:#16213E">CD</div>
+            <div style="min-width:0"><div class="contact-name">Claire Dupont</div><div class="contact-preview">Bonjour professeure</div></div>
+          </div>
+        </div>
+        <div class="msg-thread">
+          <div class="thread-header">
+            <div class="thread-avatar" id="thread-avatar">JP</div>
+            <div><strong id="thread-name">Jean Pierre</strong><br><span id="thread-sub">Terminale A</span></div>
+          </div>
+          <div class="thread-messages" id="thread-msgs">
+            <div class="msg-bubble received">Bonjour professeure, j'ai du mal avec l'exercice 3 du cours sur les équations. Je ne comprends pas la partie sur le discriminant.<div class="msg-time">Aujourd'hui, 10h12</div></div>
+            <div class="msg-bubble sent">Bonjour Jean, le discriminant est Δ = b² − 4ac. Si Δ > 0, il y a deux solutions. Essaie de refaire l'exercice avec cette formule.<div class="msg-time">Aujourd'hui, 10h40</div></div>
+            <div class="msg-bubble received">Merci professeure, je vais réessayer tout de suite !<div class="msg-time">Aujourd'hui, 10h45</div></div>
+          </div>
+          <div class="thread-input">
+            <input type="text" id="msg-input" placeholder="Répondre à l'élève...">
+            <button class="send-btn" onclick="sendMsg()" aria-label="Envoyer"><i class="ti ti-send" aria-hidden="true"></i></button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- PROFIL -->
+    <div class="panel" id="panel-profil">
+      <div style="background:var(--white);border:0.5px solid var(--border);max-width:520px;padding:2rem">
+        <div style="display:flex;align-items:center;gap:16px;margin-bottom:1.5rem;padding-bottom:1.5rem;border-bottom:1px solid var(--border)">
+          <div style="width:56px;height:56px;border-radius:50%;background:var(--gold-bg);display:flex;align-items:center;justify-content:center;font-size:20px;font-weight:700;color:var(--navy)">MC</div>
+          <div>
+            <div style="font-family:'Playfair Display',serif;font-size:18px;font-weight:700;color:var(--navy)">Marie Céleste</div>
+            <div style="font-size:12px;color:var(--gray);margin-top:2px">Professeure · Mathématiques · ILCH</div>
+          </div>
+        </div>
+        <table style="width:100%;font-size:13px;border-collapse:collapse">
+          <tr><td style="color:var(--muted);padding:8px 0;width:160px;vertical-align:top">Identifiant</td><td style="color:var(--text);font-weight:500">marie.celeste</td></tr>
+          <tr><td style="color:var(--muted);padding:8px 0">Matière enseignée</td><td style="font-weight:500">Mathématiques</td></tr>
+          <tr><td style="color:var(--muted);padding:8px 0">Classes</td><td style="font-weight:500">Terminale A · Terminale B</td></tr>
+          <tr><td style="color:var(--muted);padding:8px 0">Cours publiés</td><td style="font-weight:500">5 cours</td></tr>
+        </table>
+        <div style="margin-top:1.5rem;padding-top:1.5rem;border-top:1px solid var(--border);font-size:12px;color:var(--gray)">Pour modifier vos informations ou votre mot de passe, contactez l'administration à <a href="mailto:institutionlouischauvet@gmail.com" style="color:var(--navy);font-weight:500">institutionlouischauvet@gmail.com</a>.</div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+  var titles={dash:'Tableau de bord',videos:'Cours vidéo',notes:'Saisie des notes',msgs:'Messages élèves',profil:'Mon profil'};
+
+  function showPanel(id,el){
+    document.querySelectorAll('.panel').forEach(function(p){p.classList.remove('active')});
+    document.getElementById('panel-'+id).classList.add('active');
+    document.querySelectorAll('.sb-item').forEach(function(i){i.classList.remove('active')});
+    el.classList.add('active');
+    document.getElementById('topbar-title').textContent=titles[id]||id;
+    if(id!=='videos') document.getElementById('upload-form').classList.remove('open');
+  }
+
+  function toggleUpload(){
+    var f=document.getElementById('upload-form');
+    f.classList.toggle('open');
+  }
+
+  var bgColors=['#0D2B4E','#1A3D6B','#0F3460','#16213E','#0D3B2E','#1E3A5F'];
+  var colorIdx=bgColors.length;
+
+  function publishVideo(){
+    var t=document.getElementById('vid-title').value.trim()||'Nouveau cours';
+    var s=document.getElementById('vid-subject').value;
+    var g=document.getElementById('prof-videos-grid');
+    var bg=bgColors[colorIdx%bgColors.length]; colorIdx++;
+    var card=document.createElement('div');
+    card.className='video-card';
+    card.innerHTML='<div class="video-thumb" style="background:'+bg+'"><div class="video-subj">'+s.substring(0,5)+'</div><div class="video-actions"><button class="video-action-btn" onclick="showToast(\'Cours supprimé\')" aria-label="Supprimer"><i class="ti ti-trash" aria-hidden="true"></i></button></div></div><div class="video-body"><div class="video-title">'+t+'</div><div class="video-meta"><i class="ti ti-users" aria-hidden="true"></i>42 élèves<i class="ti ti-clock" style="margin-left:6px" aria-hidden="true"></i>-- min<span class="video-status status-pub"><i class="ti ti-circle-check" style="font-size:12px" aria-hidden="true"></i>Publié</span></div></div>';
+    g.appendChild(card);
+    document.getElementById('upload-form').classList.remove('open');
+    document.getElementById('vid-title').value='';
+    document.getElementById('vid-duration').value='';
+    showToast('Cours « '+t+' » publié avec succès');
+  }
+
+  function saveNotes(){
+    showToast('Notes enregistrées');
+  }
+
+  function switchContact(name,sub,initials,el){
+    document.querySelectorAll('.contact-item').forEach(function(i){i.classList.remove('active')});
+    el.classList.add('active');
+    var dot=el.querySelector('.unread-dot');
+    if(dot)dot.remove();
+    document.getElementById('thread-name').textContent=name;
+    document.getElementById('thread-sub').textContent=sub;
+    document.getElementById('thread-avatar').textContent=initials;
+    var msgs=document.getElementById('thread-msgs');
+    msgs.innerHTML='<div class="msg-bubble received">Bonjour professeure, j\'ai une question.<div class="msg-time">Aujourd\'hui</div></div>';
+  }
+
+  function sendMsg(){
+    var inp=document.getElementById('msg-input');
+    var txt=inp.value.trim();
+    if(!txt)return;
+    var msgs=document.getElementById('thread-msgs');
+    var b=document.createElement('div');
+    b.className='msg-bubble sent';
+    b.innerHTML=txt+'<div class="msg-time">À l\'instant</div>';
+    msgs.appendChild(b);
+    msgs.scrollTop=msgs.scrollHeight;
+    inp.value='';
+    showToast('Message envoyé');
+  }
+
+  function showToast(msg){
+    var t=document.getElementById('toast');
+    document.getElementById('toast-msg').textContent=msg;
+    t.classList.add('show');
+    setTimeout(function(){t.classList.remove('show')},3000);
+  }
+
+  document.addEventListener('keydown',function(e){
+    if(e.key==='Enter'&&document.activeElement===document.getElementById('msg-input'))sendMsg();
+  });
+
+  // ─── DEVOIRS & CORRIGÉS ────────────────────────────────
+  var DB={
+    get:function(k){try{return JSON.parse(localStorage.getItem('ilch_'+k))||[];}catch(e){return [];}},
+    set:function(k,v){localStorage.setItem('ilch_'+k,JSON.stringify(v));},
+    id:function(){return 'dv_'+Date.now()+'_'+Math.random().toString(36).substr(2,4);}
+  };
+  var editCorrigeId=null;
+
+  function openDevoir(){
+    document.getElementById('dv-form').classList.add('open');
+    document.getElementById('dv-id').value='';
+    ['dv-titre','dv-desc','dv-matiere','dv-classe'].forEach(function(i){document.getElementById(i).value='';});
+    var d=new Date(); d.setDate(d.getDate()+7);
+    document.getElementById('dv-deadline').value=d.toISOString().slice(0,10);
+    window.scrollTo({top:0,behavior:'smooth'});
+  }
+  function cancelDevoir(){ document.getElementById('dv-form').classList.remove('open'); }
+
+  function saveDevoir(){
+    var titre=document.getElementById('dv-titre').value.trim();
+    var matiere=document.getElementById('dv-matiere').value.trim();
+    var classe=document.getElementById('dv-classe').value.trim();
+    var deadline=document.getElementById('dv-deadline').value;
+    if(!titre||!matiere||!classe||!deadline){showToast('Remplissez tous les champs obligatoires');return;}
+    var devoirs=DB.get('devoirs');
+    var editId=document.getElementById('dv-id').value;
+    var obj={id:editId||DB.id(),titre:titre,desc:document.getElementById('dv-desc').value.trim(),matiere:matiere,classe:classe,deadline:deadline,dateCreation:new Date().toLocaleDateString('fr-FR'),corrige:editId?(devoirs.find(function(d){return d.id===editId;})||{}).corrige||null:null};
+    if(editId){var idx=devoirs.findIndex(function(d){return d.id===editId;});if(idx>-1)devoirs[idx]=obj;}
+    else devoirs.push(obj);
+    DB.set('devoirs',devoirs);
+    document.getElementById('dv-form').classList.remove('open');
+    renderDevoirs();
+    showToast('Devoir "'+ titre+'" '+(editId?'modifié':'publié'));
+  }
+
+  function editDevoir(id){
+    var d=DB.get('devoirs').find(function(x){return x.id===id;});
+    if(!d) return;
+    document.getElementById('dv-form').classList.add('open');
+    document.getElementById('dv-id').value=d.id;
+    document.getElementById('dv-titre').value=d.titre;
+    document.getElementById('dv-desc').value=d.desc||'';
+    document.getElementById('dv-matiere').value=d.matiere;
+    document.getElementById('dv-classe').value=d.classe;
+    document.getElementById('dv-deadline').value=d.deadline;
+    window.scrollTo({top:0,behavior:'smooth'});
+  }
+
+  function deleteDevoir(id){
+    if(!confirm('Supprimer ce devoir ?')) return;
+    DB.set('devoirs',DB.get('devoirs').filter(function(d){return d.id!==id;}));
+    renderDevoirs(); showToast('Devoir supprimé');
+  }
+
+  function openCorrige(id){
+    editCorrigeId=id;
+    var d=DB.get('devoirs').find(function(x){return x.id===id;});
+    document.getElementById('modal-corrige').classList.add('open');
+    document.getElementById('corrige-devoir-title').textContent=d?d.titre:'';
+    document.getElementById('corrige-text').value=d&&d.corrige?d.corrige:'';
+  }
+
+  function saveCorrige(){
+    var text=document.getElementById('corrige-text').value.trim();
+    if(!text){showToast('Saisissez le corrigé');return;}
+    var devoirs=DB.get('devoirs');
+    var idx=devoirs.findIndex(function(d){return d.id===editCorrigeId;});
+    if(idx>-1){devoirs[idx].corrige=text; DB.set('devoirs',devoirs);}
+    document.getElementById('modal-corrige').classList.remove('open');
+    renderDevoirs(); showToast('Corrigé publié — visible par les élèves');
+  }
+
+  function removeCorrige(id){
+    if(!confirm('Retirer le corrigé ?')) return;
+    var devoirs=DB.get('devoirs');
+    var idx=devoirs.findIndex(function(d){return d.id===id;});
+    if(idx>-1){devoirs[idx].corrige=null; DB.set('devoirs',devoirs);}
+    renderDevoirs(); showToast('Corrigé retiré');
+  }
+
+  function deadlineStatus(deadline){
+    var today=new Date(); today.setHours(0,0,0,0);
+    var dl=new Date(deadline);
+    var diff=Math.floor((dl-today)/(1000*60*60*24));
+    if(diff<0) return {cls:'deadline-passed',label:'Délai dépassé'};
+    if(diff===0) return {cls:'deadline-soon',label:"Aujourd'hui !"};
+    if(diff<=3) return {cls:'deadline-soon',label:'Dans '+diff+' jour'+(diff>1?'s':'')};
+    return {cls:'deadline-ok',label:'Avant le '+dl.toLocaleDateString('fr-FR')};
+  }
+
+  function renderDevoirs(){
+    var devoirs=DB.get('devoirs');
+    var container=document.getElementById('devoirs-list');
+    var countEl=document.getElementById('devoirs-count');
+    if(countEl) countEl.textContent=devoirs.length||'';
+    if(!container) return;
+    if(!devoirs.length){
+      container.innerHTML='<div style="text-align:center;padding:3rem;color:var(--muted)"><i class="ti ti-clipboard-text" style="font-size:48px;display:block;margin-bottom:1rem;color:var(--border)" aria-hidden="true"></i><p style="font-size:14px">Aucun devoir publié. Cliquez sur "Nouveau devoir".</p></div>';
+      return;
+    }
+    devoirs.sort(function(a,b){return new Date(a.deadline)-new Date(b.deadline);});
+    container.innerHTML=devoirs.map(function(d){
+      var ds=deadlineStatus(d.deadline);
+      var corrigeHtml=d.corrige
+        ?'<div style="margin-top:10px;padding:12px;background:var(--green-bg);border:1px solid #BBF7D0"><div style="font-size:11px;font-weight:700;color:var(--green);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:8px;display:flex;align-items:center;gap:5px"><i class="ti ti-check-circle" aria-hidden="true"></i>Corrigé publié</div><div style="font-size:13px;color:var(--text);line-height:1.6;white-space:pre-wrap">'+d.corrige+'</div></div>'
+        :'<div style="margin-top:10px;background:var(--orange-bg);border:1px solid #FDE68A;padding:10px 12px;font-size:12px;color:var(--orange);display:flex;align-items:center;gap:6px"><i class="ti ti-clock" aria-hidden="true"></i>Corrigé non encore publié</div>';
+      return '<div style="background:var(--white);border:0.5px solid var(--border);margin-bottom:12px;overflow:hidden">'+
+        '<div style="padding:1rem 1.25rem;display:flex;align-items:center;justify-content:space-between;border-bottom:0.5px solid var(--border)">'+
+          '<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">'+
+            '<span style="background:var(--navy);color:var(--gold);font-size:10px;font-weight:700;padding:4px 10px;letter-spacing:0.05em;text-transform:uppercase">'+d.matiere+'</span>'+
+            '<span style="background:var(--gold-bg);color:var(--navy);font-size:10px;font-weight:600;padding:4px 9px">'+d.classe+'</span>'+
+            '<span style="font-size:11px;font-weight:600;padding:4px 10px" class="'+ds.cls+'"><i class="ti ti-calendar" style="font-size:11px" aria-hidden="true"></i> '+ds.label+'</span>'+
+          '</div>'+
+          '<div style="font-size:11px;color:var(--muted)">Publié le '+d.dateCreation+'</div>'+
+        '</div>'+
+        '<div style="padding:1rem 1.25rem">'+
+          '<div style="font-size:14px;font-weight:600;color:var(--navy)">'+d.titre+'</div>'+
+          (d.desc?'<div style="font-size:13px;color:var(--gray);line-height:1.6;margin-top:4px">'+d.desc+'</div>':'')+
+          corrigeHtml+
+        '</div>'+
+        '<div style="padding:0.75rem 1.25rem;background:var(--gray-light);display:flex;align-items:center;justify-content:space-between;gap:8px">'+
+          '<div style="font-size:11px;color:var(--muted)">Date limite : <strong>'+new Date(d.deadline).toLocaleDateString('fr-FR')+'</strong></div>'+
+          '<div style="display:flex;gap:8px">'+
+            '<button style="background:var(--gray-light);color:var(--text);border:0.5px solid var(--border);padding:6px 10px;font-size:11px;cursor:pointer;font-family:Inter,sans-serif;display:inline-flex;align-items:center;gap:4px" onclick="editDevoir(\''+d.id+'\')"><i class="ti ti-pencil" aria-hidden="true"></i>Modifier</button>'+
+            (d.corrige
+              ?'<button style="background:var(--orange-bg);color:var(--orange);border:1px solid #FDE68A;padding:6px 10px;font-size:11px;cursor:pointer;font-family:Inter,sans-serif;display:inline-flex;align-items:center;gap:4px" onclick="removeCorrige(\''+d.id+'\')"><i class="ti ti-x" aria-hidden="true"></i>Retirer corrigé</button>'
+              :'<button style="background:var(--green);color:var(--white);border:none;padding:6px 10px;font-size:11px;cursor:pointer;font-family:Inter,sans-serif;display:inline-flex;align-items:center;gap:4px" onclick="openCorrige(\''+d.id+'\')"><i class="ti ti-check" aria-hidden="true"></i>Ajouter corrigé</button>')+
+            '<button style="background:var(--red);color:var(--white);border:none;padding:6px 10px;font-size:11px;cursor:pointer;font-family:Inter,sans-serif" onclick="deleteDevoir(\''+d.id+'\')"><i class="ti ti-trash" aria-hidden="true"></i></button>'+
+          '</div>'+
+        '</div>'+
+      '</div>';
+    }).join('');
+  }
+
+  renderDevoirs();
+</script>
+
+<!-- MODAL CORRIGÉ -->
+<div style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.45);z-index:200;align-items:center;justify-content:center;padding:1rem" id="modal-corrige" onclick="if(event.target===this)this.style.display='none'">
+  <div style="background:var(--white);width:100%;max-width:560px;max-height:90vh;overflow-y:auto">
+    <div style="padding:1.25rem 1.5rem;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;background:var(--white)">
+      <div style="font-family:'Playfair Display',serif;font-size:1.1rem;color:var(--navy);font-weight:700">Publier le corrigé</div>
+      <button style="background:none;border:none;cursor:pointer;font-size:20px;color:var(--gray)" onclick="document.getElementById('modal-corrige').style.display='none'"><i class="ti ti-x" aria-hidden="true"></i></button>
+    </div>
+    <div style="padding:1.5rem">
+      <div style="background:var(--gold-bg);border:1px solid var(--gold-light);padding:10px 14px;margin-bottom:1rem;font-size:13px;color:var(--navy);font-weight:500" id="corrige-devoir-title"></div>
+      <div style="margin-bottom:1rem">
+        <label style="display:block;font-size:11px;font-weight:600;color:var(--navy);text-transform:uppercase;letter-spacing:0.05em;margin-bottom:5px">Corrigé complet</label>
+        <textarea id="corrige-text" rows="10" placeholder="Rédigez le corrigé complet ici...&#10;&#10;Vous pouvez écrire les réponses, les explications, les étapes de résolution..." style="width:100%;border:1px solid var(--border);padding:9px 12px;font-size:13px;background:var(--cream);outline:none;font-family:'Inter',sans-serif;resize:vertical;line-height:1.6"></textarea>
+      </div>
+      <div style="background:var(--blue-bg);padding:10px 14px;font-size:12px;color:var(--blue);display:flex;align-items:center;gap:6px">
+        <i class="ti ti-info-circle" aria-hidden="true"></i>
+        Une fois publié, les élèves pourront consulter ce corrigé depuis leur espace.
+      </div>
+    </div>
+    <div style="padding:1rem 1.5rem;border-top:1px solid var(--border);display:flex;gap:8px;justify-content:flex-end">
+      <button style="background:var(--green);color:var(--white);border:none;padding:10px 18px;font-size:13px;font-weight:600;cursor:pointer;font-family:'Inter',sans-serif;display:inline-flex;align-items:center;gap:6px" onclick="saveCorrige()"><i class="ti ti-check" aria-hidden="true"></i>Publier le corrigé</button>
+      <button style="background:var(--gray-light);color:var(--text);border:0.5px solid var(--border);padding:10px 14px;font-size:13px;cursor:pointer;font-family:'Inter',sans-serif" onclick="document.getElementById('modal-corrige').style.display='none'">Annuler</button>
+    </div>
+  </div>
+</div>
+
+<!-- PANEL DEVOIRS — inséré dans le DOM via JS -->
+<script>
+// Injecter le panel devoirs dans .content
+(function(){
+  var content=document.querySelector('.content');
+  if(!content) return;
+  var panel=document.createElement('div');
+  panel.className='panel';
+  panel.id='panel-devoirs';
+  panel.innerHTML=
+    '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem;flex-wrap:wrap;gap:8px">'+
+      '<div style="font-size:14px;font-weight:600;color:var(--navy)">Devoirs & Corrigés publiés</div>'+
+      '<button style="background:var(--gold);color:var(--navy);border:none;padding:9px 16px;font-size:12px;font-weight:600;cursor:pointer;font-family:Inter,sans-serif;display:inline-flex;align-items:center;gap:6px" onclick="openDevoir()"><i class=\"ti ti-plus\" aria-hidden=\"true\"></i>Nouveau devoir</button>'+
+    '</div>'+
+    // Formulaire création
+    '<div id="dv-form" style="background:var(--white);border:0.5px solid var(--border);padding:1.5rem;margin-bottom:1.25rem;display:none">'+
+      '<div style="font-size:14px;font-weight:600;color:var(--navy);margin-bottom:1rem;padding-bottom:0.75rem;border-bottom:1px solid var(--border)">📋 Nouveau devoir</div>'+
+      '<input type="hidden" id="dv-id">'+
+      '<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:1rem">'+
+        '<div><label style="display:block;font-size:11px;font-weight:600;color:var(--navy);text-transform:uppercase;letter-spacing:0.05em;margin-bottom:5px">Matière *</label><input type="text" id="dv-matiere" placeholder="Ex: Mathématiques" style="width:100%;border:1px solid var(--border);padding:9px 12px;font-size:13px;background:var(--cream);outline:none;font-family:Inter,sans-serif"></div>'+
+        '<div><label style="display:block;font-size:11px;font-weight:600;color:var(--navy);text-transform:uppercase;letter-spacing:0.05em;margin-bottom:5px">Classe *</label><input type="text" id="dv-classe" placeholder="Ex: Terminale A" style="width:100%;border:1px solid var(--border);padding:9px 12px;font-size:13px;background:var(--cream);outline:none;font-family:Inter,sans-serif"></div>'+
+      '</div>'+
+      '<div style="margin-bottom:1rem"><label style="display:block;font-size:11px;font-weight:600;color:var(--navy);text-transform:uppercase;letter-spacing:0.05em;margin-bottom:5px">Titre du devoir *</label><input type="text" id="dv-titre" placeholder="Ex: Exercices sur les équations du 2e degré" style="width:100%;border:1px solid var(--border);padding:9px 12px;font-size:13px;background:var(--cream);outline:none;font-family:Inter,sans-serif"></div>'+
+      '<div style="margin-bottom:1rem"><label style="display:block;font-size:11px;font-weight:600;color:var(--navy);text-transform:uppercase;letter-spacing:0.05em;margin-bottom:5px">Description / Consignes</label><textarea id="dv-desc" rows="3" placeholder="Décrivez le devoir, les consignes, les exercices à faire..." style="width:100%;border:1px solid var(--border);padding:9px 12px;font-size:13px;background:var(--cream);outline:none;font-family:Inter,sans-serif;resize:vertical"></textarea></div>'+
+      '<div style="margin-bottom:1rem"><label style="display:block;font-size:11px;font-weight:600;color:var(--navy);text-transform:uppercase;letter-spacing:0.05em;margin-bottom:5px">Date limite *</label><input type="date" id="dv-deadline" style="border:1px solid var(--border);padding:9px 12px;font-size:13px;background:var(--cream);outline:none;font-family:Inter,sans-serif"></div>'+
+      '<div style="display:flex;gap:8px">'+
+        '<button style="background:var(--gold);color:var(--navy);border:none;padding:9px 16px;font-size:12px;font-weight:600;cursor:pointer;font-family:Inter,sans-serif;display:inline-flex;align-items:center;gap:6px" onclick="saveDevoir()"><i class=\"ti ti-check\" aria-hidden=\"true\"></i>Publier le devoir</button>'+
+        '<button style="background:var(--gray-light);color:var(--text);border:0.5px solid var(--border);padding:9px 14px;font-size:12px;cursor:pointer;font-family:Inter,sans-serif" onclick="cancelDevoir()">Annuler</button>'+
+      '</div>'+
+    '</div>'+
+    '<div id="devoirs-list"></div>';
+  content.appendChild(panel);
+  renderDevoirs();
+})();
+</script>
+</body>
+</html>

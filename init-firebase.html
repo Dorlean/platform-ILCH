@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Initialisation Firebase — ILCH</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    *{margin:0;padding:0;box-sizing:border-box}
+    body{font-family:'Inter',sans-serif;background:#0D2B4E;min-height:100vh;display:flex;align-items:center;justify-content:center;padding:2rem}
+    .card{background:#fff;max-width:700px;width:100%;padding:2rem}
+    h1{font-size:1.4rem;color:#0D2B4E;margin-bottom:0.5rem}
+    p{font-size:13px;color:#6B7280;margin-bottom:1.5rem}
+    .btn{background:#C9A96E;color:#0D2B4E;border:none;padding:12px 24px;font-size:14px;font-weight:700;cursor:pointer;font-family:'Inter',sans-serif;width:100%;margin-bottom:1rem;transition:background 0.15s}
+    .btn:hover{background:#d4b57c}
+    .btn:disabled{background:#E5E7EB;color:#9CA3AF;cursor:not-allowed}
+    .log{background:#0D2B4E;color:#C9A96E;padding:1rem;font-family:monospace;font-size:12px;height:300px;overflow-y:auto;margin-top:1rem}
+    .log-line{padding:2px 0;border-bottom:1px solid rgba(255,255,255,0.05)}
+    .log-line.ok{color:#4ADE80}
+    .log-line.err{color:#F87171}
+    .log-line.info{color:#60A5FA}
+    .progress{height:6px;background:#E5E7EB;margin-bottom:1rem}
+    .progress-bar{height:100%;background:#C9A96E;width:0%;transition:width 0.3s}
+    .stats{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:1rem}
+    .stat{background:#F3F4F6;padding:10px;text-align:center}
+    .stat-val{font-size:1.5rem;font-weight:700;color:#0D2B4E}
+    .stat-label{font-size:10px;color:#9CA3AF;text-transform:uppercase;letter-spacing:0.05em}
+    .warning{background:#FEF3C7;border:1px solid #FDE68A;padding:10px 14px;font-size:12px;color:#92400E;margin-bottom:1rem}
+    .success-banner{background:#F0FDF4;border:1px solid #BBF7D0;padding:14px;font-size:13px;color:#16A34A;display:none;margin-top:1rem;text-align:center;font-weight:600}
+  </style>
+</head>
+<body>
+<div class="card">
+  <h1>🚀 Initialisation de la plateforme ILCH</h1>
+  <p>Ce script va créer automatiquement toutes les données d'exemple dans Firebase pour tester la plateforme.</p>
+
+  <div class="warning">
+    ⚠️ À utiliser une seule fois ! Si vous cliquez plusieurs fois, les données seront dupliquées.
+  </div>
+
+  <div class="stats">
+    <div class="stat"><div class="stat-val" id="cnt-users">0</div><div class="stat-label">Utilisateurs</div></div>
+    <div class="stat"><div class="stat-val" id="cnt-eleves">0</div><div class="stat-label">Élèves</div></div>
+    <div class="stat"><div class="stat-val" id="cnt-profs">0</div><div class="stat-label">Professeurs</div></div>
+    <div class="stat"><div class="stat-val" id="cnt-parents">0</div><div class="stat-label">Parents</div></div>
+  </div>
+
+  <div class="progress"><div class="progress-bar" id="progress-bar"></div></div>
+
+  <button class="btn" id="init-btn" onclick="initAll()">▶ Lancer l'initialisation</button>
+  <button class="btn" style="background:#0D2B4E;color:#fff" onclick="window.location.href='login.html'">← Retour à la connexion</button>
+
+  <div class="log" id="log"></div>
+  <div class="success-banner" id="success-banner">
+    ✅ Initialisation terminée ! <a href="login.html" style="color:#16A34A;font-weight:700">Cliquez ici pour vous connecter</a>
+  </div>
+</div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import { getFirestore, collection, addDoc, getDocs, deleteDoc, doc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyDjrBnsTu7CNWnqeqSm29-arbs8MPoTBJ0",
+  authDomain: "ilch-plateforme.firebaseapp.com",
+  projectId: "ilch-plateforme",
+  storageBucket: "ilch-plateforme.firebasestorage.app",
+  messagingSenderId: "978336467476",
+  appId: "1:978336467476:web:1f716ca406469a0c62b501"
+};
+
+const app = initializeApp(firebaseConfig);
+const db  = getFirestore(app);
+
+// ── Données d'exemple ──────────────────────────────────────
+
+const utilisateurs = [
+  {identifiant:'admin',       motDePasse:'ilch2026',    role:'admin',        prenom:'Jean',    nom:'Baptiste',   titre:'Directeur'},
+  {identifiant:'proprietaire',motDePasse:'owner2026',   role:'owner',        prenom:'Louis',   nom:'Chauvet',    titre:'Propriétaire'},
+  {identifiant:'resp.cycle1', motDePasse:'resp2026',    role:'responsable',  prenom:'Marie',   nom:'Joseph',     section:'cycle1',    sectionNom:'Fondamental Cycle 1'},
+  {identifiant:'resp.cycle2', motDePasse:'resp2026',    role:'responsable',  prenom:'Pierre',  nom:'André',      section:'cycle2',    sectionNom:'Fondamental Cycle 2'},
+  {identifiant:'resp.cycle3', motDePasse:'resp2026',    role:'responsable',  prenom:'Claire',  nom:'Dupont',     section:'cycle3',    sectionNom:'Fondamental Cycle 3'},
+  {identifiant:'resp.secondaire',motDePasse:'resp2026', role:'responsable',  prenom:'Robert',  nom:'Michel',     section:'secondaire',sectionNom:'Secondaire'},
+  {identifiant:'resp.prescolaire',motDePasse:'resp2026',role:'responsable',  prenom:'Anne',    nom:'François',   section:'prescolaire',sectionNom:'Préscolaire'},
+  {identifiant:'infirmiere',  motDePasse:'inf2026',     role:'infirmiere',   prenom:'Nadège',  nom:'Pierre',     titre:'Infirmière scolaire'},
+  {identifiant:'comptable',   motDePasse:'compta2026',  role:'comptable',    prenom:'Carole',  nom:'Jean-Louis', titre:'Comptable'},
+  {identifiant:'bibliothecaire',motDePasse:'bib2026',   role:'bibliotheque', prenom:'Judith',  nom:'Marcelin',   titre:'Bibliothécaire'},
+];
+
+const professeurs = [
+  {identifiant:'prof.marie',   motDePasse:'prof2026', prenom:'Marie',   nom:'Céleste',   matieres:['Mathématiques'],        classes:['Terminale A','Terminale B'], tel:'+509 3X XX XX XX'},
+  {identifiant:'prof.rene',    motDePasse:'prof2026', prenom:'René',    nom:'Joseph',    matieres:['Français'],             classes:['Rhétorique','Terminale A'],  tel:'+509 3X XX XX XX'},
+  {identifiant:'prof.paul',    motDePasse:'prof2026', prenom:'Paul',    nom:'Étienne',   matieres:['Sciences naturelles'],  classes:['Terminale A','Terminale B'], tel:'+509 3X XX XX XX'},
+  {identifiant:'prof.claire',  motDePasse:'prof2026', prenom:'Claire',  nom:'Moreau',    matieres:['Histoire-Géographie'],  classes:['Rhétorique','Terminale B'],  tel:'+509 3X XX XX XX'},
+  {identifiant:'prof.jean',    motDePasse:'prof2026', prenom:'Jean',    nom:'Pierre',    matieres:['Anglais'],              classes:['Terminale A','Terminale B','Rhétorique'], tel:'+509 3X XX XX XX'},
+  {identifiant:'prof.anne',    motDePasse:'prof2026', prenom:'Anne',    nom:'Dupont',    matieres:['Philosophie'],          classes:['Terminale A','Terminale B'], tel:'+509 3X XX XX XX'},
+  {identifiant:'prof.marc',    motDePasse:'prof2026', prenom:'Marc',    nom:'Antoine',   matieres:['Informatique'],         classes:['Terminale A','Terminale B','Rhétorique'], tel:'+509 3X XX XX XX'},
+  {identifiant:'prof.lucie',   motDePasse:'prof2026', prenom:'Lucie',   nom:'Bernard',   matieres:['Espagnol'],             classes:['Rhétorique','Terminale A'],  tel:'+509 3X XX XX XX'},
+];
+
+const eleves = [
+  {identifiant:'eleve.jean',   motDePasse:'eleve2026', prenom:'Jean',    nom:'Pierre',    classe:'Terminale A', parentNom:'Marie Pierre',    tel:'+509 3X XX XX XX'},
+  {identifiant:'eleve.sophie', motDePasse:'eleve2026', prenom:'Sophie',  nom:'Marc',      classe:'Terminale A', parentNom:'Robert Marc',      tel:'+509 3X XX XX XX'},
+  {identifiant:'eleve.marc',   motDePasse:'eleve2026', prenom:'Marc',    nom:'Antoine',   classe:'Terminale B', parentNom:'Louise Antoine',   tel:'+509 3X XX XX XX'},
+  {identifiant:'eleve.claire', motDePasse:'eleve2026', prenom:'Claire',  nom:'Dupont',    classe:'Terminale B', parentNom:'Henri Dupont',     tel:'+509 3X XX XX XX'},
+  {identifiant:'eleve.paul',   motDePasse:'eleve2026', prenom:'Paul',    nom:'Étienne',   classe:'Rhétorique',  parentNom:'Paul Étienne Sr',  tel:'+509 3X XX XX XX'},
+  {identifiant:'eleve.nadege', motDePasse:'eleve2026', prenom:'Nadège',  nom:'François',  classe:'Rhétorique',  parentNom:'Carole François',  tel:'+509 3X XX XX XX'},
+  {identifiant:'eleve.robert', motDePasse:'eleve2026', prenom:'Robert',  nom:'Michel',    classe:'Terminale A', parentNom:'Anne Michel',      tel:'+509 3X XX XX XX'},
+  {identifiant:'eleve.anne',   motDePasse:'eleve2026', prenom:'Anne',    nom:'Moreau',    classe:'Terminale B', parentNom:'Pierre Moreau',    tel:'+509 3X XX XX XX'},
+  {identifiant:'eleve.louis',  motDePasse:'eleve2026', prenom:'Louis',   nom:'Charles',   classe:'9ème Fondamentale', parentNom:'Josette Charles', tel:'+509 3X XX XX XX'},
+  {identifiant:'eleve.grace',  motDePasse:'eleve2026', prenom:'Grâce',   nom:'Bien-Aimé', classe:'8ème Fondamentale', parentNom:'Joseph Bien-Aimé', tel:'+509 3X XX XX XX'},
+];
+
+const parents = [
+  {identifiant:'parent.marie',  motDePasse:'parent2026', prenom:'Marie',   nom:'Pierre',    tel:'+509 3X XX XX XX', email:'marie.pierre@email.com',  enfants:['Jean Pierre']},
+  {identifiant:'parent.robert', motDePasse:'parent2026', prenom:'Robert',  nom:'Marc',      tel:'+509 3X XX XX XX', email:'robert.marc@email.com',   enfants:['Sophie Marc']},
+  {identifiant:'parent.louise', motDePasse:'parent2026', prenom:'Louise',  nom:'Antoine',   tel:'+509 3X XX XX XX', email:'',                        enfants:['Marc Antoine']},
+  {identifiant:'parent.henri',  motDePasse:'parent2026', prenom:'Henri',   nom:'Dupont',    tel:'+509 3X XX XX XX', email:'henri.dupont@email.com',  enfants:['Claire Dupont']},
+  {identifiant:'parent.paul',   motDePasse:'parent2026', prenom:'Paul',    nom:'Étienne Sr',tel:'+509 3X XX XX XX', email:'',                        enfants:['Paul Étienne']},
+];
+
+const livres = [
+  {titre:'Le Petit Prince',         auteur:'Antoine de Saint-Exupéry', genre:'Roman',       stock:3, annee:'1943', langue:'Français',    desc:'Un pilote rencontre un petit prince venu d\'une autre planète.'},
+  {titre:'Les Misérables',          auteur:'Victor Hugo',               genre:'Roman',       stock:2, annee:'1862', langue:'Français',    desc:'L\'histoire de Jean Valjean, un ancien forçat cherchant la rédemption.'},
+  {titre:'1984',                    auteur:'George Orwell',             genre:'Science-Fiction', stock:2, annee:'1949', langue:'Français', desc:'Une dystopie sur un régime totalitaire qui surveille tout.'},
+  {titre:'Sherlock Holmes',         auteur:'Arthur Conan Doyle',        genre:'Policier',    stock:3, annee:'1887', langue:'Français',    desc:'Les aventures du célèbre détective londonien.'},
+  {titre:'Haïti Chérie',            auteur:'Auteur Haïtien',            genre:'Histoire',    stock:4, annee:'2010', langue:'Créole haïtien', desc:'L\'histoire et la culture d\'Haïti racontées avec passion.'},
+  {titre:'Le Seigneur des Anneaux', auteur:'J.R.R. Tolkien',           genre:'Science-Fiction', stock:1, annee:'1954', langue:'Français', desc:'Une épopée fantastique dans un monde imaginaire.'},
+  {titre:'Biographie de Toussaint', auteur:'Historien Local',           genre:'Biographie',  stock:2, annee:'2015', langue:'Français',    desc:'La vie de Toussaint Louverture, héros de l\'indépendance haïtienne.'},
+  {titre:'Contes pour enfants',     auteur:'Auteur Local',              genre:'Jeunesse',    stock:5, annee:'2018', langue:'Créole haïtien', desc:'Des contes traditionnels haïtiens pour les jeunes lecteurs.'},
+];
+
+const devoirs = [
+  {titre:'Exercices équations du 2e degré', matiere:'Mathématiques', classe:'Terminale A', deadline: new Date(Date.now()+7*24*60*60*1000).toISOString().slice(0,10), desc:'Résoudre les exercices 1 à 10 du chapitre 5.', corrige:null, dateCreation: new Date().toLocaleDateString('fr-FR')},
+  {titre:'Dissertation sur Les Misérables', matiere:'Français',       classe:'Terminale A', deadline: new Date(Date.now()+14*24*60*60*1000).toISOString().slice(0,10), desc:'Rédiger une dissertation de 3 pages sur le personnage de Jean Valjean.', corrige:'Correction : Introduction — Jean Valjean représente la rédemption...', dateCreation: new Date().toLocaleDateString('fr-FR')},
+  {titre:'Résumé chapitre écosystèmes',     matiere:'Sciences naturelles', classe:'Terminale B', deadline: new Date(Date.now()+5*24*60*60*1000).toISOString().slice(0,10), desc:'Faire un résumé d\'une page sur les écosystèmes marins.', corrige:null, dateCreation: new Date().toLocaleDateString('fr-FR')},
+];
+
+const annonces = [
+  {titre:'Réunion de parents — Vendredi 10 juillet', contenu:'Une réunion de parents est prévue le vendredi 10 juillet à 16h00. Tous les parents sont invités à y assister.', destinataires:'Parents', type:'event', date: new Date().toISOString()},
+  {titre:'Examens de fin de trimestre', contenu:'Les examens du trimestre 2 auront lieu du 15 au 19 juillet 2026. Les élèves doivent se préparer.', destinataires:'Tous', type:'urgent', date: new Date().toISOString()},
+  {titre:'Journée culturelle ILCH', contenu:'La journée culturelle annuelle est prévue le 25 juillet. Des activités sportives et artistiques sont au programme.', destinataires:'Tous', type:'event', date: new Date().toISOString()},
+];
+
+// ── Fonctions ──────────────────────────────────────────────
+
+function log(msg, type='info') {
+  const div = document.getElementById('log');
+  const line = document.createElement('div');
+  line.className = 'log-line ' + type;
+  line.textContent = new Date().toLocaleTimeString('fr-FR') + ' — ' + msg;
+  div.appendChild(line);
+  div.scrollTop = div.scrollHeight;
+}
+
+function setProgress(pct) {
+  document.getElementById('progress-bar').style.width = pct + '%';
+}
+
+async function addAll(colName, items, countId) {
+  log('📁 Création collection "' + colName + '" (' + items.length + ' documents)...', 'info');
+  let count = 0;
+  for (const item of items) {
+    try {
+      await addDoc(collection(db, colName), { ...item, dateCreation: new Date().toISOString() });
+      count++;
+      document.getElementById(countId).textContent = count;
+    } catch(e) {
+      log('❌ Erreur : ' + e.message, 'err');
+    }
+  }
+  log('✅ ' + count + ' documents ajoutés dans "' + colName + '"', 'ok');
+  return count;
+}
+
+window.initAll = async function() {
+  const btn = document.getElementById('init-btn');
+  btn.disabled = true;
+  btn.textContent = '⏳ Initialisation en cours...';
+
+  log('🚀 Démarrage de l\'initialisation ILCH...', 'info');
+  log('🔥 Connexion à Firebase : ilch-plateforme', 'info');
+
+  try {
+    setProgress(5);
+    log('👥 Ajout des utilisateurs (admin, propriétaire, responsables, personnel)...', 'info');
+    await addAll('utilisateurs', utilisateurs, 'cnt-users');
+    setProgress(20);
+
+    log('🎓 Ajout des professeurs...', 'info');
+    await addAll('professeurs', professeurs, 'cnt-profs');
+    setProgress(40);
+
+    log('📚 Ajout des élèves...', 'info');
+    await addAll('eleves', eleves, 'cnt-eleves');
+    setProgress(60);
+
+    log('👨‍👩‍👧 Ajout des parents...', 'info');
+    await addAll('parents', parents, 'cnt-parents');
+    setProgress(75);
+
+    log('📖 Ajout du catalogue bibliothèque...', 'info');
+    await addAll('livres', livres, 'cnt-users');
+    setProgress(85);
+
+    log('📋 Ajout des devoirs exemples...', 'info');
+    await addAll('devoirs', devoirs, 'cnt-users');
+    setProgress(92);
+
+    log('📢 Ajout des annonces...', 'info');
+    await addAll('annonces', annonces, 'cnt-users');
+    setProgress(100);
+
+    log('', 'info');
+    log('════════════════════════════════════════', 'info');
+    log('🎉 INITIALISATION TERMINÉE AVEC SUCCÈS !', 'ok');
+    log('════════════════════════════════════════', 'info');
+    log('', 'info');
+    log('📋 COMPTES DE CONNEXION :', 'info');
+    log('Admin          → admin / ilch2026', 'ok');
+    log('Propriétaire   → proprietaire / owner2026', 'ok');
+    log('Professeur     → prof.marie / prof2026', 'ok');
+    log('Élève          → eleve.jean / eleve2026', 'ok');
+    log('Parent         → parent.marie / parent2026', 'ok');
+    log('Responsable    → resp.cycle1 / resp2026', 'ok');
+    log('Infirmière     → infirmiere / inf2026', 'ok');
+    log('Comptable      → comptable / compta2026', 'ok');
+    log('Bibliothécaire → bibliothecaire / bib2026', 'ok');
+
+    document.getElementById('success-banner').style.display = 'block';
+    btn.textContent = '✅ Terminé !';
+
+  } catch(e) {
+    log('❌ Erreur fatale : ' + e.message, 'err');
+    btn.disabled = false;
+    btn.textContent = '▶ Réessayer';
+  }
+};
+</script>
+</body>
+</html>

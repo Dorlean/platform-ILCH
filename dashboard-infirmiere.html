@@ -1,0 +1,561 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Infirmerie — ILCH</title>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
+  <style>
+    *{margin:0;padding:0;box-sizing:border-box}
+    :root{
+      --navy:#0D2B4E;--navy2:#1A3D6B;--gold:#C9A96E;--gold-bg:#FAF3E8;
+      --cream:#FAFAF8;--white:#fff;--gray:#6B7280;--gray-light:#F3F4F6;
+      --border:#E5E7EB;--text:#1F2937;--muted:#9CA3AF;
+      --green:#16A34A;--green-bg:#F0FDF4;--blue:#2563EB;--blue-bg:#EFF6FF;
+      --red:#DC2626;--red-bg:#FEF2F2;--orange:#D97706;--orange-bg:#FFFBEB;
+      --rose:#E11D48;--rose-bg:#FFF1F2;--rose-light:#FB7185;
+    }
+    body{font-family:'Inter',sans-serif;background:var(--cream);color:var(--text);display:flex;min-height:100vh}
+    a{text-decoration:none;color:inherit}
+
+    /* SIDEBAR */
+    .sidebar{width:230px;background:var(--navy);flex-shrink:0;display:flex;flex-direction:column;min-height:100vh;position:fixed;top:0;left:0;bottom:0;z-index:50}
+    .sb-logo{padding:1.25rem 1rem;border-bottom:1px solid rgba(255,255,255,0.08)}
+    .sb-logo-mark{display:flex;align-items:center;gap:10px}
+    .sb-badge{width:32px;height:32px;background:var(--rose);display:flex;align-items:center;justify-content:center;font-size:16px;color:var(--white);flex-shrink:0}
+    .sb-name{font-size:12px;font-weight:600;color:var(--white);line-height:1.3}
+    .sb-name small{display:block;font-size:9px;color:rgba(255,255,255,0.4);font-weight:300}
+    .sb-nav{flex:1;padding:1rem 0}
+    .sb-section{font-size:9px;color:rgba(255,255,255,0.25);letter-spacing:0.12em;text-transform:uppercase;padding:0.75rem 1rem 0.35rem}
+    .sb-item{display:flex;align-items:center;gap:10px;padding:10px 1rem;font-size:12px;color:rgba(255,255,255,0.6);cursor:pointer;border-left:3px solid transparent;transition:all 0.15s;user-select:none}
+    .sb-item:hover{background:rgba(255,255,255,0.06);color:var(--white)}
+    .sb-item.active{background:rgba(225,29,72,0.15);color:var(--rose-light);border-left-color:var(--rose)}
+    .sb-item i{font-size:16px;width:18px;flex-shrink:0}
+    .sb-count{margin-left:auto;background:var(--rose);color:var(--white);font-size:9px;font-weight:700;padding:2px 6px;border-radius:8px}
+    .sb-user{padding:1rem;border-top:1px solid rgba(255,255,255,0.08)}
+    .sb-user-row{display:flex;align-items:center;gap:9px}
+    .sb-avatar{width:34px;height:34px;border-radius:50%;background:var(--rose);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:var(--white);flex-shrink:0}
+    .sb-user-name{font-size:12px;color:var(--white);font-weight:500}
+    .sb-user-role{font-size:9px;color:var(--rose-light)}
+    .logout-btn{display:inline-flex;align-items:center;gap:5px;font-size:11px;color:rgba(255,255,255,0.3);cursor:pointer;margin-top:8px;transition:color 0.15s;background:none;border:none;font-family:'Inter',sans-serif;padding:0}
+    .logout-btn:hover{color:var(--rose-light)}
+
+    /* MAIN */
+    .main{flex:1;margin-left:230px;display:flex;flex-direction:column;min-height:100vh}
+    .topbar{background:var(--white);border-bottom:1px solid var(--border);padding:0.75rem 1.75rem;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:40}
+    .topbar-title{font-family:'Playfair Display',serif;font-size:16px;font-weight:700;color:var(--navy)}
+    .nurse-pill{background:var(--rose-bg);border:1px solid rgba(225,29,72,0.2);color:var(--rose);font-size:11px;font-weight:600;padding:5px 12px;display:flex;align-items:center;gap:5px}
+    .content{flex:1;padding:1.5rem;background:var(--cream)}
+    .panel{display:none}
+    .panel.active{display:block}
+
+    /* STATS */
+    .stats-row{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:1.5rem}
+    .stat-card{background:var(--white);border:0.5px solid var(--border);padding:1.1rem 1.25rem;position:relative;overflow:hidden}
+    .stat-card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px}
+    .stat-card.rose::before{background:var(--rose)}
+    .stat-card.orange::before{background:var(--orange)}
+    .stat-card.green::before{background:var(--green)}
+    .stat-card.blue::before{background:var(--blue)}
+    .stat-label{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:0.07em;margin-bottom:4px;font-weight:500}
+    .stat-val{font-family:'Playfair Display',serif;font-size:1.9rem;color:var(--navy);font-weight:700;line-height:1}
+    .stat-sub{font-size:11px;color:var(--gray);margin-top:4px}
+    .stat-icon{position:absolute;top:1rem;right:1rem;font-size:20px;color:var(--gray-light)}
+
+    /* TABLES */
+    .data-table{width:100%;border-collapse:collapse;background:var(--white);border:0.5px solid var(--border)}
+    .data-table th{background:var(--navy);color:var(--white);font-size:10px;font-weight:600;letter-spacing:0.06em;text-transform:uppercase;padding:10px 14px;text-align:left}
+    .data-table td{padding:10px 14px;font-size:12px;border-bottom:0.5px solid var(--border);color:var(--text)}
+    .data-table tr:last-child td{border-bottom:none}
+    .data-table tr:hover td{background:var(--gray-light)}
+
+    /* BADGES */
+    .badge{font-size:10px;font-weight:600;padding:3px 8px}
+    .badge-grave{background:var(--red-bg);color:var(--red)}
+    .badge-moyen{background:var(--orange-bg);color:var(--orange)}
+    .badge-leger{background:var(--green-bg);color:var(--green)}
+    .badge-suivi{background:var(--blue-bg);color:var(--blue)}
+    .badge-renvoye{background:var(--rose-bg);color:var(--rose)}
+    .badge-traite{background:var(--green-bg);color:var(--green)}
+
+    /* BUTTONS */
+    .btn-rose{background:var(--rose);color:var(--white);border:none;padding:8px 14px;font-size:11px;font-weight:600;cursor:pointer;font-family:'Inter',sans-serif;display:inline-flex;align-items:center;gap:6px;transition:background 0.15s}
+    .btn-rose:hover{background:#be123c}
+    .btn-primary{background:var(--navy);color:var(--white);border:none;padding:8px 14px;font-size:11px;font-weight:600;cursor:pointer;font-family:'Inter',sans-serif;display:inline-flex;align-items:center;gap:6px;transition:background 0.15s}
+    .btn-primary:hover{background:var(--navy2)}
+    .btn-sm{background:var(--gray-light);color:var(--text);border:0.5px solid var(--border);padding:5px 10px;font-size:11px;cursor:pointer;font-family:'Inter',sans-serif}
+
+    /* SECTION HDR */
+    .section-hdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem}
+    .section-hdr-title{font-size:13px;font-weight:600;color:var(--navy)}
+
+    /* FORM */
+    .form-card{background:var(--white);border:0.5px solid var(--border);padding:1.5rem;margin-bottom:1.25rem;display:none}
+    .form-card.open{display:block}
+    .form-title{font-size:13px;font-weight:600;color:var(--navy);margin-bottom:1rem;padding-bottom:0.75rem;border-bottom:1px solid var(--border)}
+    .form-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px}
+    .form-group{display:flex;flex-direction:column;gap:4px}
+    .form-group label{font-size:10px;font-weight:600;color:var(--navy);text-transform:uppercase;letter-spacing:0.06em}
+    .form-group input,.form-group select,.form-group textarea{border:1px solid var(--border);padding:8px 12px;font-size:13px;background:var(--cream);outline:none;font-family:'Inter',sans-serif;color:var(--text)}
+    .form-group input:focus,.form-group select:focus,.form-group textarea:focus{border-color:var(--rose)}
+    .form-actions{display:flex;gap:8px;margin-top:12px}
+
+    /* STOCK */
+    .stock-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:1.25rem}
+    .stock-card{background:var(--white);border:0.5px solid var(--border);padding:1rem 1.25rem}
+    .stock-name{font-size:13px;font-weight:600;color:var(--navy);margin-bottom:4px}
+    .stock-qty{font-family:'Playfair Display',serif;font-size:1.6rem;font-weight:700;margin-bottom:2px}
+    .stock-qty.ok{color:var(--green)}
+    .stock-qty.low{color:var(--orange)}
+    .stock-qty.empty{color:var(--red)}
+    .stock-unit{font-size:11px;color:var(--muted)}
+    .stock-bar-wrap{height:5px;background:var(--gray-light);margin-top:8px}
+    .stock-bar{height:100%}
+
+    /* FICHE ÉLÈVE */
+    .fiche-card{background:var(--white);border:0.5px solid var(--border);padding:1.25rem;margin-bottom:10px}
+    .fiche-header{display:flex;align-items:center;gap:12px;margin-bottom:1rem;padding-bottom:0.75rem;border-bottom:1px solid var(--border)}
+    .fiche-avatar{width:40px;height:40px;border-radius:50%;background:var(--rose-bg);display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700;color:var(--rose);flex-shrink:0}
+    .fiche-name{font-size:14px;font-weight:600;color:var(--navy)}
+    .fiche-meta{font-size:11px;color:var(--muted)}
+    .fiche-row{display:flex;justify-content:space-between;font-size:12px;padding:5px 0;border-bottom:0.5px solid var(--gray-light)}
+    .fiche-row:last-child{border-bottom:none}
+    .fiche-val{font-weight:500;color:var(--text)}
+
+    /* MESSAGES */
+    .msg-layout{display:grid;grid-template-columns:190px 1fr;background:var(--white);border:0.5px solid var(--border);height:420px}
+    .msg-contacts{border-right:0.5px solid var(--border);overflow-y:auto}
+    .msg-contact-header{padding:9px 12px;border-bottom:0.5px solid var(--border);font-size:10px;font-weight:600;color:var(--navy);text-transform:uppercase;letter-spacing:0.07em}
+    .contact-item{padding:9px 12px;cursor:pointer;display:flex;align-items:center;gap:8px;border-bottom:0.5px solid var(--border);transition:background 0.15s;border-left:3px solid transparent}
+    .contact-item:hover{background:var(--rose-bg)}
+    .contact-item.active{background:var(--rose-bg);border-left-color:var(--rose)}
+    .contact-avatar{width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:700;color:var(--white);flex-shrink:0}
+    .contact-name{font-size:11px;font-weight:500;color:var(--text)}
+    .contact-role{font-size:9px;color:var(--muted)}
+    .unread-dot{width:7px;height:7px;background:var(--rose);border-radius:50%;margin-left:auto;flex-shrink:0}
+    .msg-thread{display:flex;flex-direction:column}
+    .thread-header{padding:9px 14px;border-bottom:0.5px solid var(--border);display:flex;align-items:center;gap:8px}
+    .thread-messages{flex:1;padding:12px 14px;overflow-y:auto;display:flex;flex-direction:column;gap:8px;background:var(--cream);height:310px}
+    .msg-bubble{max-width:70%;padding:8px 12px;font-size:12px;line-height:1.5}
+    .msg-bubble.received{background:var(--white);border:0.5px solid var(--border);align-self:flex-start}
+    .msg-bubble.sent{background:var(--rose);color:var(--white);align-self:flex-end}
+    .msg-time{font-size:10px;margin-top:3px;opacity:0.45}
+    .thread-input{padding:9px 12px;border-top:0.5px solid var(--border);display:flex;gap:8px;background:var(--white)}
+    .thread-input input{flex:1;border:1px solid var(--border);padding:8px 12px;font-size:12px;outline:none;background:var(--cream);font-family:'Inter',sans-serif}
+    .thread-input input:focus{border-color:var(--rose)}
+    .send-btn{background:var(--rose);border:none;padding:8px 12px;cursor:pointer;color:var(--white)}
+
+    /* TOAST */
+    .toast{position:fixed;bottom:1.5rem;right:1.5rem;background:var(--navy);color:var(--white);padding:11px 20px;font-size:13px;font-weight:500;z-index:999;display:none;align-items:center;gap:8px;border-left:3px solid var(--rose)}
+    .toast.show{display:flex}
+    .toast i{color:var(--rose-light);font-size:17px}
+  </style>
+</head>
+<body>
+
+<div class="toast" id="toast"><i class="ti ti-check" aria-hidden="true"></i><span id="toast-msg"></span></div>
+
+<aside class="sidebar">
+  <div class="sb-logo">
+    <div class="sb-logo-mark">
+      <div class="sb-badge">🏥</div>
+      <div class="sb-name">Infirmerie ILCH<small>Institution Louis Chauvet</small></div>
+    </div>
+  </div>
+  <nav class="sb-nav">
+    <div class="sb-section">Infirmerie</div>
+    <div class="sb-item active" onclick="showPanel('dash',this)"><i class="ti ti-home" aria-hidden="true"></i>Tableau de bord</div>
+    <div class="sb-item" onclick="showPanel('consultations',this)"><i class="ti ti-stethoscope" aria-hidden="true"></i>Consultations<span class="sb-count">3</span></div>
+    <div class="sb-item" onclick="showPanel('nouvelle',this)"><i class="ti ti-plus" aria-hidden="true"></i>Nouvelle consultation</div>
+    <div class="sb-item" onclick="showPanel('fiches',this)"><i class="ti ti-file-text" aria-hidden="true"></i>Fiches élèves</div>
+    <div class="sb-item" onclick="showPanel('stock',this)"><i class="ti ti-medicine-syrup" aria-hidden="true"></i>Stock médicaments</div>
+    <div class="sb-section">Communication</div>
+    <div class="sb-item" onclick="showPanel('messages',this)"><i class="ti ti-message" aria-hidden="true"></i>Messages<span class="sb-count">2</span></div>
+    <div class="sb-section">Rapports</div>
+    <div class="sb-item" onclick="showPanel('rapports',this)"><i class="ti ti-file-analytics" aria-hidden="true"></i>Rapport médical</div>
+  </nav>
+  <div class="sb-user">
+    <div class="sb-user-row">
+      <div class="sb-avatar">INF</div>
+      <div><div class="sb-user-name">Infirmière ILCH</div><div class="sb-user-role">Service médical scolaire</div></div>
+    </div>
+    <button class="logout-btn" onclick="window.location.href='login.html'"><i class="ti ti-logout" style="font-size:13px" aria-hidden="true"></i> Déconnexion</button>
+  </div>
+</aside>
+
+<div class="main">
+  <div class="topbar">
+    <div class="topbar-title" id="topbar-title">Tableau de bord — Infirmerie</div>
+    <div class="nurse-pill"><i class="ti ti-heart-rate-monitor" aria-hidden="true"></i>Service médical scolaire</div>
+  </div>
+
+  <div class="content">
+
+    <!-- DASHBOARD -->
+    <div class="panel active" id="panel-dash">
+      <div class="stats-row">
+        <div class="stat-card rose"><i class="ti ti-stethoscope stat-icon" aria-hidden="true"></i><div class="stat-label">Consultations aujourd'hui</div><div class="stat-val">3</div><div class="stat-sub">2 juillet 2026</div></div>
+        <div class="stat-card orange"><i class="ti ti-user-exclamation stat-icon" aria-hidden="true"></i><div class="stat-label">Élèves renvoyés chez eux</div><div class="stat-val">1</div><div class="stat-sub">Ce mois</div></div>
+        <div class="stat-card green"><i class="ti ti-medicine-syrup stat-icon" aria-hidden="true"></i><div class="stat-label">Médicaments en stock</div><div class="stat-val">12</div><div class="stat-sub">Types disponibles</div></div>
+        <div class="stat-card blue"><i class="ti ti-calendar-stats stat-icon" aria-hidden="true"></i><div class="stat-label">Consultations ce mois</div><div class="stat-val">28</div><div class="stat-sub">Juin 2026</div></div>
+      </div>
+
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">
+        <div>
+          <div class="section-hdr"><div class="section-hdr-title">Consultations récentes</div><button class="btn-rose" onclick="showPanel('nouvelle',document.querySelector('.sb-item:nth-child(3)'))"><i class="ti ti-plus" aria-hidden="true"></i>Nouvelle</button></div>
+          <div style="display:flex;flex-direction:column;gap:8px">
+            <div style="background:var(--white);border:0.5px solid var(--border);padding:10px 14px;display:flex;align-items:center;gap:10px">
+              <div style="width:30px;height:30px;background:var(--orange-bg);color:var(--orange);display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0"><i class="ti ti-temperature" aria-hidden="true"></i></div>
+              <div><div style="font-size:12px;font-weight:500">Jean Pierre — Fièvre 38.5°C</div><div style="font-size:10px;color:var(--muted)">Terminale A · 14h00 · Traité et renvoyé</div></div>
+              <span class="badge badge-renvoye" style="margin-left:auto">Renvoyé</span>
+            </div>
+            <div style="background:var(--white);border:0.5px solid var(--border);padding:10px 14px;display:flex;align-items:center;gap:10px">
+              <div style="width:30px;height:30px;background:var(--rose-bg);color:var(--rose);display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0"><i class="ti ti-bandage" aria-hidden="true"></i></div>
+              <div><div style="font-size:12px;font-weight:500">Sophie Marc — Blessure légère au genou</div><div style="font-size:10px;color:var(--muted)">Terminale B · 11h30 · Soins appliqués</div></div>
+              <span class="badge badge-traite" style="margin-left:auto">Traité</span>
+            </div>
+            <div style="background:var(--white);border:0.5px solid var(--border);padding:10px 14px;display:flex;align-items:center;gap:10px">
+              <div style="width:30px;height:30px;background:var(--blue-bg);color:var(--blue);display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0"><i class="ti ti-headache" aria-hidden="true"></i></div>
+              <div><div style="font-size:12px;font-weight:500">Marc Antoine — Maux de tête</div><div style="font-size:10px;color:var(--muted)">Terminale A · 9h15 · Repos infirmerie</div></div>
+              <span class="badge badge-suivi" style="margin-left:auto">En suivi</span>
+            </div>
+          </div>
+        </div>
+        <div>
+          <div class="section-hdr"><div class="section-hdr-title">Alertes stock</div></div>
+          <div style="display:flex;flex-direction:column;gap:8px">
+            <div style="background:var(--red-bg);border:0.5px solid #FECACA;padding:10px 14px;display:flex;align-items:center;gap:10px">
+              <i class="ti ti-alert-triangle" style="color:var(--red);font-size:18px" aria-hidden="true"></i>
+              <div><div style="font-size:12px;font-weight:600;color:var(--red)">Paracétamol — Stock critique</div><div style="font-size:10px;color:var(--muted)">3 comprimés restants · Renouveler urgemment</div></div>
+            </div>
+            <div style="background:var(--orange-bg);border:0.5px solid #FDE68A;padding:10px 14px;display:flex;align-items:center;gap:10px">
+              <i class="ti ti-alert-circle" style="color:var(--orange);font-size:18px" aria-hidden="true"></i>
+              <div><div style="font-size:12px;font-weight:600;color:var(--orange)">Compresses stériles — Stock faible</div><div style="font-size:10px;color:var(--muted)">8 unités restantes</div></div>
+            </div>
+            <div style="background:var(--orange-bg);border:0.5px solid #FDE68A;padding:10px 14px;display:flex;align-items:center;gap:10px">
+              <i class="ti ti-alert-circle" style="color:var(--orange);font-size:18px" aria-hidden="true"></i>
+              <div><div style="font-size:12px;font-weight:600;color:var(--orange)">Antiseptique — Stock faible</div><div style="font-size:10px;color:var(--muted)">1 flacon restant</div></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- CONSULTATIONS -->
+    <div class="panel" id="panel-consultations">
+      <div class="section-hdr">
+        <div class="section-hdr-title">Historique des consultations</div>
+        <button class="btn-rose" onclick="showToast('Export téléchargé')"><i class="ti ti-download" aria-hidden="true"></i>Exporter</button>
+      </div>
+      <table class="data-table">
+        <thead><tr><th>Date & heure</th><th>Élève</th><th>Classe</th><th>Motif</th><th>Traitement</th><th>Suite</th></tr></thead>
+        <tbody>
+          <tr><td>02/07 · 14h00</td><td><strong>Jean Pierre</strong></td><td>Terminale A</td><td>Fièvre 38.5°C</td><td>Paracétamol + repos</td><td><span class="badge badge-renvoye">Renvoyé chez lui</span></td></tr>
+          <tr><td>02/07 · 11h30</td><td><strong>Sophie Marc</strong></td><td>Terminale B</td><td>Blessure genou</td><td>Désinfection + bandage</td><td><span class="badge badge-traite">Retour en classe</span></td></tr>
+          <tr><td>02/07 · 09h15</td><td><strong>Marc Antoine</strong></td><td>Terminale A</td><td>Maux de tête</td><td>Repos + hydratation</td><td><span class="badge badge-suivi">Suivi</span></td></tr>
+          <tr><td>01/07 · 10h00</td><td><strong>Claire Dupont</strong></td><td>Terminale A</td><td>Nausées</td><td>Repos 30 min</td><td><span class="badge badge-traite">Retour en classe</span></td></tr>
+          <tr><td>30/06 · 15h00</td><td><strong>Paul Étienne</strong></td><td>Terminale A</td><td>Douleur abdominale</td><td>Repos + appel parent</td><td><span class="badge badge-renvoye">Renvoyé chez lui</span></td></tr>
+          <tr><td>28/06 · 08h45</td><td><strong>Sophie Marc</strong></td><td>Terminale B</td><td>Allergie (rougeurs)</td><td>Antihistaminique</td><td><span class="badge badge-suivi">Suivi 48h</span></td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- NOUVELLE CONSULTATION -->
+    <div class="panel" id="panel-nouvelle">
+      <div class="form-card open" style="display:block">
+        <div class="form-title">📋 Nouvelle fiche de consultation</div>
+        <div class="form-grid">
+          <div class="form-group"><label>Nom de l'élève</label><input type="text" id="c-nom" placeholder="Prénom Nom"></div>
+          <div class="form-group"><label>Classe</label><select id="c-classe"><option>Préscolaire</option><option>1ère année</option><option>2ème année</option><option>3ème année</option><option>4ème année</option><option>5ème année</option><option>6ème année</option><option>7ème année</option><option>8ème année</option><option>9ème année</option><option>Nouveau Secondaire</option><option>Rhétorique</option><option>Terminale A</option><option>Terminale B</option></select></div>
+        </div>
+        <div class="form-grid">
+          <div class="form-group"><label>Date & heure</label><input type="datetime-local" id="c-date"></div>
+          <div class="form-group"><label>Température (°C)</label><input type="text" id="c-temp" placeholder="Ex : 37.5"></div>
+        </div>
+        <div class="form-group" style="margin-bottom:10px"><label>Motif de consultation</label>
+          <select id="c-motif"><option>Fièvre</option><option>Maux de tête</option><option>Douleur abdominale</option><option>Blessure / Plaie</option><option>Nausées / Vomissements</option><option>Allergie</option><option>Malaise / Évanouissement</option><option>Douleur dentaire</option><option>Autre</option></select>
+        </div>
+        <div class="form-group" style="margin-bottom:10px"><label>Description des symptômes</label><textarea rows="2" id="c-symptomes" placeholder="Décrivez les symptômes observés..." style="width:100%;resize:vertical"></textarea></div>
+        <div class="form-group" style="margin-bottom:10px"><label>Traitement administré</label><textarea rows="2" id="c-traitement" placeholder="Médicaments donnés, soins effectués..." style="width:100%;resize:vertical"></textarea></div>
+        <div class="form-group" style="margin-bottom:10px"><label>Suite donnée</label>
+          <select id="c-suite"><option>Retour en classe</option><option>Repos à l'infirmerie (30 min)</option><option>Repos à l'infirmerie (1h+)</option><option>Renvoyé chez lui — Parent prévenu</option><option>Envoyé à l'hôpital</option><option>Suivi médical recommandé</option></select>
+        </div>
+        <div class="form-group" style="margin-bottom:12px"><label>Notes supplémentaires</label><textarea rows="2" id="c-notes" placeholder="Informations complémentaires..." style="width:100%;resize:vertical"></textarea></div>
+        <div class="form-actions">
+          <button class="btn-rose" onclick="saveConsultation()"><i class="ti ti-device-floppy" aria-hidden="true"></i>Enregistrer la consultation</button>
+          <button class="btn-sm" onclick="clearForm()">Effacer</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- FICHES ÉLÈVES -->
+    <div class="panel" id="panel-fiches">
+      <div class="section-hdr">
+        <div class="section-hdr-title">Fiches médicales des élèves</div>
+        <input type="text" placeholder="Rechercher un élève..." style="border:1px solid var(--border);padding:7px 12px;font-size:12px;outline:none;background:var(--white);width:220px">
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+        <div class="fiche-card">
+          <div class="fiche-header">
+            <div class="fiche-avatar">JP</div>
+            <div><div class="fiche-name">Jean Pierre</div><div class="fiche-meta">Terminale A · 17 ans</div></div>
+            <span class="badge badge-suivi" style="margin-left:auto">3 visites</span>
+          </div>
+          <div class="fiche-row"><span>Groupe sanguin</span><span class="fiche-val">A+</span></div>
+          <div class="fiche-row"><span>Allergies connues</span><span class="fiche-val">Aucune</span></div>
+          <div class="fiche-row"><span>Maladie chronique</span><span class="fiche-val">Aucune</span></div>
+          <div class="fiche-row"><span>Parent urgence</span><span class="fiche-val">Marie Pierre · +509 3X XX</span></div>
+          <div class="fiche-row"><span>Dernière visite</span><span class="fiche-val">02/07/2026 · Fièvre</span></div>
+        </div>
+        <div class="fiche-card">
+          <div class="fiche-header">
+            <div class="fiche-avatar">SM</div>
+            <div><div class="fiche-name">Sophie Marc</div><div class="fiche-meta">Terminale B · 17 ans</div></div>
+            <span class="badge badge-suivi" style="margin-left:auto">2 visites</span>
+          </div>
+          <div class="fiche-row"><span>Groupe sanguin</span><span class="fiche-val">O+</span></div>
+          <div class="fiche-row"><span>Allergies connues</span><span class="fiche-val">Poussière (rhinite)</span></div>
+          <div class="fiche-row"><span>Maladie chronique</span><span class="fiche-val">Asthme léger</span></div>
+          <div class="fiche-row"><span>Parent urgence</span><span class="fiche-val">Robert Marc · +509 3X XX</span></div>
+          <div class="fiche-row"><span>Dernière visite</span><span class="fiche-val">02/07/2026 · Blessure</span></div>
+        </div>
+        <div class="fiche-card">
+          <div class="fiche-header">
+            <div class="fiche-avatar">MA</div>
+            <div><div class="fiche-name">Marc Antoine</div><div class="fiche-meta">Terminale A · 18 ans</div></div>
+            <span class="badge badge-grave" style="margin-left:auto">4 visites</span>
+          </div>
+          <div class="fiche-row"><span>Groupe sanguin</span><span class="fiche-val">B+</span></div>
+          <div class="fiche-row"><span>Allergies connues</span><span class="fiche-val">Pénicilline</span></div>
+          <div class="fiche-row"><span>Maladie chronique</span><span class="fiche-val">Drépanocytose</span></div>
+          <div class="fiche-row"><span>Parent urgence</span><span class="fiche-val">Louise Antoine · +509 3X XX</span></div>
+          <div class="fiche-row"><span>Dernière visite</span><span class="fiche-val">02/07/2026 · Maux de tête</span></div>
+        </div>
+        <div class="fiche-card">
+          <div class="fiche-header">
+            <div class="fiche-avatar">CD</div>
+            <div><div class="fiche-name">Claire Dupont</div><div class="fiche-meta">Terminale A · 17 ans</div></div>
+            <span class="badge badge-leger" style="margin-left:auto">1 visite</span>
+          </div>
+          <div class="fiche-row"><span>Groupe sanguin</span><span class="fiche-val">AB+</span></div>
+          <div class="fiche-row"><span>Allergies connues</span><span class="fiche-val">Aucune</span></div>
+          <div class="fiche-row"><span>Maladie chronique</span><span class="fiche-val">Aucune</span></div>
+          <div class="fiche-row"><span>Parent urgence</span><span class="fiche-val">Henri Dupont · +509 3X XX</span></div>
+          <div class="fiche-row"><span>Dernière visite</span><span class="fiche-val">01/07/2026 · Nausées</span></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- STOCK -->
+    <div class="panel" id="panel-stock">
+      <div class="section-hdr">
+        <div class="section-hdr-title">Stock de l'infirmerie</div>
+        <button class="btn-rose" onclick="showToast('Demande de réapprovisionnement envoyée')"><i class="ti ti-truck" aria-hidden="true"></i>Demander réapprovisionnement</button>
+      </div>
+      <div class="stock-grid">
+        <div class="stock-card">
+          <div class="stock-name">Paracétamol 500mg</div>
+          <div class="stock-qty empty">3</div>
+          <div class="stock-unit">comprimés restants</div>
+          <div class="stock-bar-wrap"><div class="stock-bar" style="width:5%;background:var(--red)"></div></div>
+          <div style="font-size:10px;color:var(--red);margin-top:6px;font-weight:600">⚠️ Stock critique</div>
+        </div>
+        <div class="stock-card">
+          <div class="stock-name">Ibuprofène 200mg</div>
+          <div class="stock-qty ok">24</div>
+          <div class="stock-unit">comprimés restants</div>
+          <div class="stock-bar-wrap"><div class="stock-bar" style="width:60%;background:var(--green)"></div></div>
+          <div style="font-size:10px;color:var(--green);margin-top:6px">✓ Stock suffisant</div>
+        </div>
+        <div class="stock-card">
+          <div class="stock-name">Compresses stériles</div>
+          <div class="stock-qty low">8</div>
+          <div class="stock-unit">unités restantes</div>
+          <div class="stock-bar-wrap"><div class="stock-bar" style="width:20%;background:var(--orange)"></div></div>
+          <div style="font-size:10px;color:var(--orange);margin-top:6px;font-weight:600">⚡ Stock faible</div>
+        </div>
+        <div class="stock-card">
+          <div class="stock-name">Antiseptique (Bétadine)</div>
+          <div class="stock-qty low">1</div>
+          <div class="stock-unit">flacon restant</div>
+          <div class="stock-bar-wrap"><div class="stock-bar" style="width:10%;background:var(--orange)"></div></div>
+          <div style="font-size:10px;color:var(--orange);margin-top:6px;font-weight:600">⚡ Stock faible</div>
+        </div>
+        <div class="stock-card">
+          <div class="stock-name">Bandages élastiques</div>
+          <div class="stock-qty ok">12</div>
+          <div class="stock-unit">rouleaux restants</div>
+          <div class="stock-bar-wrap"><div class="stock-bar" style="width:60%;background:var(--green)"></div></div>
+          <div style="font-size:10px;color:var(--green);margin-top:6px">✓ Stock suffisant</div>
+        </div>
+        <div class="stock-card">
+          <div class="stock-name">Antihistaminique</div>
+          <div class="stock-qty ok">18</div>
+          <div class="stock-unit">comprimés restants</div>
+          <div class="stock-bar-wrap"><div class="stock-bar" style="width:45%;background:var(--green)"></div></div>
+          <div style="font-size:10px;color:var(--green);margin-top:6px">✓ Stock suffisant</div>
+        </div>
+        <div class="stock-card">
+          <div class="stock-name">Thermomètre</div>
+          <div class="stock-qty ok">2</div>
+          <div class="stock-unit">disponibles</div>
+          <div class="stock-bar-wrap"><div class="stock-bar" style="width:100%;background:var(--green)"></div></div>
+          <div style="font-size:10px;color:var(--green);margin-top:6px">✓ Disponible</div>
+        </div>
+        <div class="stock-card">
+          <div class="stock-name">Sérum physiologique</div>
+          <div class="stock-qty ok">6</div>
+          <div class="stock-unit">flacons restants</div>
+          <div class="stock-bar-wrap"><div class="stock-bar" style="width:40%;background:var(--green)"></div></div>
+          <div style="font-size:10px;color:var(--green);margin-top:6px">✓ Stock suffisant</div>
+        </div>
+        <div class="stock-card">
+          <div class="stock-name">Sparadraps</div>
+          <div class="stock-qty ok">30</div>
+          <div class="stock-unit">unités restantes</div>
+          <div class="stock-bar-wrap"><div class="stock-bar" style="width:75%;background:var(--green)"></div></div>
+          <div style="font-size:10px;color:var(--green);margin-top:6px">✓ Stock suffisant</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- MESSAGES -->
+    <div class="panel" id="panel-messages">
+      <div class="msg-layout">
+        <div class="msg-contacts">
+          <div class="msg-contact-header">Contacts</div>
+          <div style="padding:5px 10px;font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:0.08em;background:var(--gray-light)">Administration</div>
+          <div class="contact-item active" onclick="switchMsg('Administration ILCH','Direction','AD','var(--navy)',this)">
+            <div class="contact-avatar" style="background:var(--navy)">AD</div>
+            <div><div class="contact-name">Administration</div><div class="contact-role">Direction ILCH</div></div>
+            <div class="unread-dot"></div>
+          </div>
+          <div style="padding:5px 10px;font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:0.08em;background:var(--gray-light)">Parents</div>
+          <div class="contact-item" onclick="switchMsg('Marie Pierre','Parent de Jean Pierre','MP','var(--rose)',this)">
+            <div class="contact-avatar" style="background:var(--rose)">MP</div>
+            <div><div class="contact-name">Marie Pierre</div><div class="contact-role">Parent · Jean Pierre</div></div>
+            <div class="unread-dot"></div>
+          </div>
+          <div class="contact-item" onclick="switchMsg('Louise Antoine','Parent de Marc Antoine','LA','var(--orange)',this)">
+            <div class="contact-avatar" style="background:var(--orange)">LA</div>
+            <div><div class="contact-name">Louise Antoine</div><div class="contact-role">Parent · Marc Antoine</div></div>
+          </div>
+        </div>
+        <div class="msg-thread">
+          <div class="thread-header">
+            <div class="contact-avatar" id="msg-avatar" style="background:var(--navy)">AD</div>
+            <div><strong id="msg-name">Administration ILCH</strong><br><span id="msg-sub" style="font-size:10px;color:var(--muted)">Direction</span></div>
+          </div>
+          <div class="thread-messages" id="msg-thread">
+            <div class="msg-bubble received">Bonjour, Jean Pierre a eu de la fièvre aujourd'hui. Pouvez-vous prévenir ses parents ?<div class="msg-time">Aujourd'hui, 14h05</div></div>
+            <div class="msg-bubble sent">Bonjour, j'ai déjà contacté la famille. Jean est renvoyé chez lui avec une ordonnance de repos.<div class="msg-time">Aujourd'hui, 14h20</div></div>
+          </div>
+          <div class="thread-input">
+            <input type="text" id="msg-input" placeholder="Écrire un message...">
+            <button class="send-btn" onclick="sendMsg()" aria-label="Envoyer"><i class="ti ti-send" aria-hidden="true"></i></button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- RAPPORTS -->
+    <div class="panel" id="panel-rapports">
+      <div class="section-hdr">
+        <div class="section-hdr-title">Rapport médical mensuel</div>
+        <button class="btn-rose" onclick="showToast('Rapport PDF téléchargé')"><i class="ti ti-file-download" aria-hidden="true"></i>Exporter PDF</button>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">
+        <div style="background:var(--white);border:0.5px solid var(--border);padding:1.25rem">
+          <div style="font-size:11px;font-weight:600;color:var(--navy);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:1rem;padding-bottom:0.5rem;border-bottom:1px solid var(--border)">Statistiques juin 2026</div>
+          <div style="display:flex;justify-content:space-between;font-size:12px;padding:6px 0;border-bottom:0.5px solid var(--gray-light)"><span>Total consultations</span><span style="font-weight:600;color:var(--navy)">28</span></div>
+          <div style="display:flex;justify-content:space-between;font-size:12px;padding:6px 0;border-bottom:0.5px solid var(--gray-light)"><span>Élèves renvoyés chez eux</span><span style="font-weight:600;color:var(--red)">5</span></div>
+          <div style="display:flex;justify-content:space-between;font-size:12px;padding:6px 0;border-bottom:0.5px solid var(--gray-light)"><span>Envoyés à l'hôpital</span><span style="font-weight:600;color:var(--red)">1</span></div>
+          <div style="display:flex;justify-content:space-between;font-size:12px;padding:6px 0;border-bottom:0.5px solid var(--gray-light)"><span>Motif le plus fréquent</span><span style="font-weight:600;color:var(--navy)">Fièvre (8 cas)</span></div>
+          <div style="display:flex;justify-content:space-between;font-size:12px;padding:6px 0;border-bottom:0.5px solid var(--gray-light)"><span>Classe la plus concernée</span><span style="font-weight:600;color:var(--navy)">Terminale A</span></div>
+          <div style="display:flex;justify-content:space-between;font-size:12px;padding:6px 0"><span>Médicament le + utilisé</span><span style="font-weight:600;color:var(--navy)">Paracétamol</span></div>
+        </div>
+        <div style="background:var(--white);border:0.5px solid var(--border);padding:1.25rem">
+          <div style="font-size:11px;font-weight:600;color:var(--navy);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:1rem;padding-bottom:0.5rem;border-bottom:1px solid var(--border)">Motifs de consultation</div>
+          <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px"><div style="font-size:11px;color:var(--gray);width:120px;text-align:right">Fièvre</div><div style="flex:1;height:14px;background:var(--gray-light)"><div style="width:57%;height:100%;background:var(--rose)"></div></div><div style="font-size:11px;font-weight:600;color:var(--navy);width:25px">8</div></div>
+          <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px"><div style="font-size:11px;color:var(--gray);width:120px;text-align:right">Blessure / Plaie</div><div style="flex:1;height:14px;background:var(--gray-light)"><div style="width:35%;height:100%;background:var(--orange)"></div></div><div style="font-size:11px;font-weight:600;color:var(--navy);width:25px">5</div></div>
+          <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px"><div style="font-size:11px;color:var(--gray);width:120px;text-align:right">Maux de tête</div><div style="flex:1;height:14px;background:var(--gray-light)"><div style="width:28%;height:100%;background:var(--blue)"></div></div><div style="font-size:11px;font-weight:600;color:var(--navy);width:25px">4</div></div>
+          <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px"><div style="font-size:11px;color:var(--gray);width:120px;text-align:right">Nausées</div><div style="flex:1;height:14px;background:var(--gray-light)"><div style="width:21%;height:100%;background:var(--green)"></div></div><div style="font-size:11px;font-weight:600;color:var(--navy);width:25px">3</div></div>
+          <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px"><div style="font-size:11px;color:var(--gray);width:120px;text-align:right">Allergie</div><div style="flex:1;height:14px;background:var(--gray-light)"><div style="width:14%;height:100%;background:var(--purple,#7C3AED)"></div></div><div style="font-size:11px;font-weight:600;color:var(--navy);width:25px">2</div></div>
+          <div style="display:flex;align-items:center;gap:10px"><div style="font-size:11px;color:var(--gray);width:120px;text-align:right">Autre</div><div style="flex:1;height:14px;background:var(--gray-light)"><div style="width:42%;height:100%;background:var(--muted)"></div></div><div style="font-size:11px;font-weight:600;color:var(--navy);width:25px">6</div></div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+  var titles={dash:'Tableau de bord — Infirmerie',consultations:'Historique des consultations',nouvelle:'Nouvelle consultation',fiches:'Fiches médicales des élèves',stock:'Stock de l\'infirmerie',messages:'Messages',rapports:'Rapport médical mensuel'};
+
+  function showPanel(id,el){
+    document.querySelectorAll('.panel').forEach(function(p){p.classList.remove('active')});
+    document.getElementById('panel-'+id).classList.add('active');
+    document.querySelectorAll('.sb-item').forEach(function(i){i.classList.remove('active')});
+    if(el) el.classList.add('active');
+    document.getElementById('topbar-title').textContent=titles[id]||id;
+  }
+
+  function saveConsultation(){
+    var nom=document.getElementById('c-nom').value.trim();
+    if(!nom){showToast('Veuillez saisir le nom de l\'élève');return;}
+    showToast('Consultation de '+nom+' enregistrée avec succès');
+    clearForm();
+  }
+
+  function clearForm(){
+    document.getElementById('c-nom').value='';
+    document.getElementById('c-temp').value='';
+    document.getElementById('c-symptomes').value='';
+    document.getElementById('c-traitement').value='';
+    document.getElementById('c-notes').value='';
+  }
+
+  function switchMsg(name,sub,initials,bg,el){
+    document.querySelectorAll('.contact-item').forEach(function(i){i.classList.remove('active')});
+    el.classList.add('active');
+    var dot=el.querySelector('.unread-dot');
+    if(dot)dot.remove();
+    document.getElementById('msg-name').textContent=name;
+    document.getElementById('msg-sub').textContent=sub;
+    document.getElementById('msg-avatar').textContent=initials;
+    document.getElementById('msg-thread').innerHTML='<div class="msg-bubble received">Bonjour, comment puis-je vous aider ?<div class="msg-time">Aujourd\'hui</div></div>';
+  }
+
+  function sendMsg(){
+    var inp=document.getElementById('msg-input');
+    var txt=inp.value.trim();
+    if(!txt)return;
+    var t=document.getElementById('msg-thread');
+    var b=document.createElement('div');
+    b.className='msg-bubble sent';
+    b.innerHTML=txt+'<div class="msg-time">À l\'instant</div>';
+    t.appendChild(b);
+    t.scrollTop=t.scrollHeight;
+    inp.value='';
+    showToast('Message envoyé');
+  }
+
+  function showToast(msg){
+    var t=document.getElementById('toast');
+    document.getElementById('toast-msg').textContent=msg;
+    t.classList.add('show');
+    setTimeout(function(){t.classList.remove('show')},3000);
+  }
+
+  document.addEventListener('keydown',function(e){
+    if(e.key==='Enter'&&document.activeElement===document.getElementById('msg-input'))sendMsg();
+  });
+
+  // Date par défaut
+  var now=new Date();
+  var dt=now.toISOString().slice(0,16);
+  if(document.getElementById('c-date')) document.getElementById('c-date').value=dt;
+</script>
+</body>
+</html>

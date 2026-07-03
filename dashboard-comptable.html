@@ -1,0 +1,896 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Comptabilité — ILCH</title>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
+  <style>
+    *{margin:0;padding:0;box-sizing:border-box}
+    :root{
+      --navy:#0D2B4E;--navy2:#1A3D6B;--gold:#C9A96E;--gold-bg:#FAF3E8;--gold-light:#E8D5B0;
+      --cream:#FAFAF8;--white:#fff;--gray:#6B7280;--gray-light:#F3F4F6;
+      --border:#E5E7EB;--text:#1F2937;--muted:#9CA3AF;
+      --green:#16A34A;--green-bg:#F0FDF4;--blue:#2563EB;--blue-bg:#EFF6FF;
+      --red:#DC2626;--red-bg:#FEF2F2;--orange:#D97706;--orange-bg:#FFFBEB;
+      --purple:#7C3AED;--purple-bg:#F5F3FF;
+    }
+    body{font-family:'Inter',sans-serif;background:var(--cream);color:var(--text);display:flex;min-height:100vh}
+    a{text-decoration:none;color:inherit}
+
+    /* SIDEBAR */
+    .sidebar{width:230px;background:var(--navy);flex-shrink:0;display:flex;flex-direction:column;min-height:100vh;position:fixed;top:0;left:0;bottom:0;z-index:50}
+    .sb-logo{padding:1.25rem 1rem;border-bottom:1px solid rgba(255,255,255,0.08)}
+    .sb-logo-mark{display:flex;align-items:center;gap:10px}
+    .sb-badge{width:32px;height:32px;background:var(--purple);display:flex;align-items:center;justify-content:center;font-size:15px;color:var(--white);flex-shrink:0}
+    .sb-name{font-size:12px;font-weight:600;color:var(--white);line-height:1.3}
+    .sb-name small{display:block;font-size:9px;color:rgba(255,255,255,0.4);font-weight:300}
+    .sb-nav{flex:1;padding:1rem 0;overflow-y:auto}
+    .sb-section{font-size:9px;color:rgba(255,255,255,0.3);letter-spacing:0.12em;text-transform:uppercase;padding:0.75rem 1rem 0.35rem}
+    .sb-item{display:flex;align-items:center;gap:10px;padding:10px 1rem;font-size:12px;color:rgba(255,255,255,0.6);cursor:pointer;border-left:3px solid transparent;transition:all 0.15s;user-select:none}
+    .sb-item:hover{background:rgba(255,255,255,0.06);color:var(--white)}
+    .sb-item.active{background:rgba(124,58,237,0.15);color:#A78BFA;border-left-color:var(--purple)}
+    .sb-item i{font-size:16px;width:18px;flex-shrink:0}
+    .sb-count{margin-left:auto;background:var(--red);color:var(--white);font-size:9px;font-weight:700;padding:2px 6px;border-radius:8px}
+    .sb-user{padding:1rem;border-top:1px solid rgba(255,255,255,0.08)}
+    .sb-user-row{display:flex;align-items:center;gap:9px}
+    .sb-avatar{width:34px;height:34px;border-radius:50%;background:var(--purple);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:var(--white);flex-shrink:0}
+    .sb-user-name{font-size:12px;color:var(--white);font-weight:500}
+    .sb-user-role{font-size:9px;color:#A78BFA}
+    .logout-btn{display:inline-flex;align-items:center;gap:5px;font-size:11px;color:rgba(255,255,255,0.3);cursor:pointer;margin-top:8px;transition:color 0.15s;background:none;border:none;font-family:'Inter',sans-serif;padding:0}
+    .logout-btn:hover{color:#A78BFA}
+
+    /* MAIN */
+    .main{flex:1;margin-left:230px;display:flex;flex-direction:column;min-height:100vh}
+    .topbar{background:var(--white);border-bottom:1px solid var(--border);padding:0.75rem 1.75rem;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:40}
+    .topbar-title{font-family:'Playfair Display',serif;font-size:16px;font-weight:700;color:var(--navy)}
+    .compta-badge{background:var(--purple-bg);border:1px solid rgba(124,58,237,0.2);color:var(--purple);font-size:11px;font-weight:600;padding:5px 12px;display:flex;align-items:center;gap:5px}
+    .content{flex:1;padding:1.5rem;background:var(--cream)}
+    .panel{display:none}.panel.active{display:block}
+
+    /* STATS */
+    .stats-row{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:1.5rem}
+    .stat-card{background:var(--white);border:0.5px solid var(--border);padding:1.1rem 1.25rem;position:relative;overflow:hidden}
+    .stat-card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px}
+    .stat-card.green::before{background:var(--green)}
+    .stat-card.red::before{background:var(--red)}
+    .stat-card.orange::before{background:var(--orange)}
+    .stat-card.purple::before{background:var(--purple)}
+    .stat-label{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:0.07em;margin-bottom:4px;font-weight:500}
+    .stat-val{font-family:'Playfair Display',serif;font-size:1.7rem;color:var(--navy);font-weight:700;line-height:1}
+    .stat-sub{font-size:11px;color:var(--gray);margin-top:4px}
+    .stat-icon{position:absolute;top:1rem;right:1rem;font-size:20px;color:var(--gray-light)}
+
+    /* TABLE */
+    .data-table{width:100%;border-collapse:collapse;background:var(--white);border:0.5px solid var(--border)}
+    .data-table th{background:var(--navy);color:var(--white);font-size:10px;font-weight:600;letter-spacing:0.06em;text-transform:uppercase;padding:10px 14px;text-align:left}
+    .data-table td{padding:10px 14px;font-size:12px;border-bottom:0.5px solid var(--border);color:var(--text);vertical-align:middle}
+    .data-table tr:last-child td{border-bottom:none}
+    .data-table tr:hover td{background:var(--gray-light)}
+
+    /* BADGES */
+    .badge{font-size:10px;font-weight:600;padding:3px 8px}
+    .badge-paid{background:var(--green-bg);color:var(--green)}
+    .badge-partial{background:var(--orange-bg);color:var(--orange)}
+    .badge-unpaid{background:var(--red-bg);color:var(--red)}
+    .badge-income{background:var(--green-bg);color:var(--green)}
+    .badge-expense{background:var(--red-bg);color:var(--red)}
+
+    /* BUTTONS */
+    .btn{border:none;cursor:pointer;font-family:'Inter',sans-serif;display:inline-flex;align-items:center;gap:6px;font-weight:600;transition:all 0.15s;padding:8px 14px;font-size:11px}
+    .btn-purple{background:var(--purple);color:var(--white)}.btn-purple:hover{background:#6D28D9}
+    .btn-gold{background:var(--gold);color:var(--navy)}.btn-gold:hover{background:#d4b57c}
+    .btn-green{background:var(--green);color:var(--white)}.btn-green:hover{background:#15803D}
+    .btn-danger{background:var(--red);color:var(--white);padding:5px 9px;font-size:11px}.btn-danger:hover{background:#b91c1c}
+    .btn-sm{background:var(--gray-light);color:var(--text);border:0.5px solid var(--border);padding:7px 12px;font-size:11px}
+
+    /* SECTION HDR */
+    .section-hdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem;flex-wrap:wrap;gap:8px}
+    .section-hdr-title{font-size:13px;font-weight:600;color:var(--navy)}
+    .search-bar{display:flex;gap:8px;margin-bottom:1rem;flex-wrap:wrap}
+    .search-bar input,.search-bar select{border:1px solid var(--border);padding:7px 12px;font-size:12px;background:var(--white);outline:none;font-family:'Inter',sans-serif}
+    .search-bar input:focus,.search-bar select:focus{border-color:var(--purple)}
+
+    /* MODAL */
+    .modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.45);z-index:200;align-items:center;justify-content:center;padding:1rem}
+    .modal-overlay.open{display:flex}
+    .modal{background:var(--white);width:100%;max-width:520px;max-height:90vh;overflow-y:auto}
+    .modal-header{padding:1.25rem 1.5rem;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;background:var(--white);z-index:1}
+    .modal-title{font-family:'Playfair Display',serif;font-size:1.1rem;color:var(--navy);font-weight:700}
+    .modal-close{background:none;border:none;cursor:pointer;font-size:20px;color:var(--gray)}
+    .modal-body{padding:1.5rem}
+    .modal-footer{padding:1rem 1.5rem;border-top:1px solid var(--border);display:flex;gap:8px;justify-content:flex-end}
+    .form-group{margin-bottom:1rem}
+    .form-group label{display:block;font-size:11px;font-weight:600;color:var(--navy);text-transform:uppercase;letter-spacing:0.05em;margin-bottom:5px}
+    .form-group input,.form-group select,.form-group textarea{width:100%;border:1px solid var(--border);padding:9px 12px;font-size:13px;background:var(--cream);outline:none;font-family:'Inter',sans-serif;color:var(--text)}
+    .form-group input:focus,.form-group select:focus,.form-group textarea:focus{border-color:var(--purple)}
+    .form-row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+    .form-hint{font-size:11px;color:var(--muted);margin-top:4px}
+
+    /* PROGRESS BAR */
+    .progress-wrap{width:100%;height:8px;background:var(--gray-light);border-radius:4px;overflow:hidden}
+    .progress-bar{height:100%;border-radius:4px;transition:width 0.3s}
+
+    /* VERSEMENTS */
+    .versement-list{display:flex;flex-direction:column;gap:6px;margin-top:8px}
+    .versement-item{display:flex;align-items:center;justify-content:space-between;padding:7px 10px;background:var(--gray-light);font-size:12px}
+    .versement-montant{font-weight:700;color:var(--green)}
+    .versement-date{color:var(--muted);font-size:11px}
+
+    /* RECU */
+    .recu-preview{background:var(--white);border:2px solid var(--border);padding:1.5rem;font-family:'Inter',sans-serif}
+    .recu-header{text-align:center;border-bottom:2px solid var(--navy);padding-bottom:1rem;margin-bottom:1rem}
+    .recu-title{font-family:'Playfair Display',serif;font-size:1.2rem;color:var(--navy);font-weight:700}
+    .recu-sub{font-size:11px;color:var(--gray);margin-top:3px}
+    .recu-row{display:flex;justify-content:space-between;padding:5px 0;font-size:12px;border-bottom:0.5px solid var(--gray-light)}
+    .recu-row:last-child{border-bottom:none}
+    .recu-total{font-size:14px;font-weight:700;color:var(--navy);padding-top:8px;display:flex;justify-content:space-between}
+    .recu-footer{text-align:center;margin-top:1rem;font-size:11px;color:var(--muted);border-top:1px solid var(--border);padding-top:0.75rem}
+
+    /* MESSAGES */
+    .msg-layout{display:grid;grid-template-columns:190px 1fr;background:var(--white);border:0.5px solid var(--border);height:420px}
+    .msg-contacts{border-right:0.5px solid var(--border);overflow-y:auto}
+    .msg-contact-header{padding:9px 12px;border-bottom:0.5px solid var(--border);font-size:10px;font-weight:600;color:var(--navy);text-transform:uppercase;letter-spacing:0.07em}
+    .contact-item{padding:9px 12px;cursor:pointer;display:flex;align-items:center;gap:8px;border-bottom:0.5px solid var(--border);transition:background 0.15s;border-left:3px solid transparent}
+    .contact-item:hover{background:var(--purple-bg)}
+    .contact-item.active{background:var(--purple-bg);border-left-color:var(--purple)}
+    .contact-avatar{width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:700;color:var(--white);flex-shrink:0}
+    .contact-name{font-size:11px;font-weight:500;color:var(--text)}
+    .contact-role{font-size:9px;color:var(--muted)}
+    .unread-dot{width:7px;height:7px;background:var(--purple);border-radius:50%;margin-left:auto;flex-shrink:0}
+    .msg-thread{display:flex;flex-direction:column}
+    .thread-header{padding:9px 14px;border-bottom:0.5px solid var(--border);display:flex;align-items:center;gap:8px}
+    .thread-messages{flex:1;padding:12px 14px;overflow-y:auto;display:flex;flex-direction:column;gap:8px;background:var(--cream);height:310px}
+    .msg-bubble{max-width:70%;padding:8px 12px;font-size:12px;line-height:1.5}
+    .msg-bubble.received{background:var(--white);border:0.5px solid var(--border);align-self:flex-start}
+    .msg-bubble.sent{background:var(--purple);color:var(--white);align-self:flex-end}
+    .msg-time{font-size:10px;margin-top:3px;opacity:0.45}
+    .thread-input{padding:9px 12px;border-top:0.5px solid var(--border);display:flex;gap:8px;background:var(--white)}
+    .thread-input input{flex:1;border:1px solid var(--border);padding:8px 12px;font-size:12px;outline:none;background:var(--cream);font-family:'Inter',sans-serif}
+    .thread-input input:focus{border-color:var(--purple)}
+    .send-btn{background:var(--purple);border:none;padding:8px 12px;cursor:pointer;color:var(--white)}
+
+    /* RAPPORT */
+    .rapport-card{background:var(--white);border:0.5px solid var(--border);padding:1.25rem;margin-bottom:12px}
+    .rapport-card h4{font-size:11px;font-weight:600;color:var(--navy);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:0.75rem;padding-bottom:0.5rem;border-bottom:1px solid var(--border)}
+    .rapport-row{display:flex;justify-content:space-between;font-size:12px;padding:6px 0;border-bottom:0.5px solid var(--gray-light)}
+    .rapport-row:last-child{border-bottom:none}
+    .rapport-val{font-weight:700;color:var(--navy)}
+    .bar-row{display:flex;align-items:center;gap:10px;margin-bottom:8px}
+    .bar-label{font-size:11px;color:var(--gray);width:80px;flex-shrink:0;text-align:right}
+    .bar-track{flex:1;height:14px;background:var(--gray-light)}
+    .bar-fill{height:100%}
+    .bar-val{font-size:11px;font-weight:600;color:var(--navy);width:60px;flex-shrink:0}
+
+    /* EMPTY */
+    .empty-state{text-align:center;padding:2.5rem;color:var(--muted)}
+    .empty-state i{font-size:40px;display:block;margin-bottom:0.75rem;color:var(--border)}
+    .empty-state p{font-size:13px}
+
+    /* TOAST */
+    .toast{position:fixed;bottom:1.5rem;right:1.5rem;background:var(--navy);color:var(--white);padding:11px 20px;font-size:13px;font-weight:500;z-index:999;display:none;align-items:center;gap:8px;border-left:3px solid var(--purple)}
+    .toast.show{display:flex}
+    .toast i{color:#A78BFA;font-size:17px}
+  </style>
+</head>
+<body>
+
+<div class="toast" id="toast"><i class="ti ti-check" aria-hidden="true"></i><span id="toast-msg"></span></div>
+
+<!-- MODAL NOUVEAU DOSSIER -->
+<div class="modal-overlay" id="modal-dossier">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title" id="modal-dossier-title">Nouveau dossier de frais</div>
+      <button class="modal-close" onclick="closeModal('modal-dossier')"><i class="ti ti-x" aria-hidden="true"></i></button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="dos-edit-id">
+      <div class="form-row">
+        <div class="form-group"><label>Nom de l'élève *</label><input type="text" id="dos-eleve" placeholder="Prénom Nom"></div>
+        <div class="form-group"><label>Classe *</label><input type="text" id="dos-classe" placeholder="Ex: Terminale A"></div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label>Nom du parent</label><input type="text" id="dos-parent" placeholder="Prénom Nom du parent"></div>
+        <div class="form-group"><label>Téléphone</label><input type="text" id="dos-tel" placeholder="+509 XX XX XX XX"></div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label>Montant total dû (HTG) *</label><input type="number" id="dos-montant" placeholder="Ex: 25000" min="0"></div>
+        <div class="form-group"><label>Année scolaire</label><input type="text" id="dos-annee" value="2025–2026"></div>
+      </div>
+      <div class="form-group"><label>Notes</label><textarea id="dos-notes" rows="2" placeholder="Remarques éventuelles..." style="resize:vertical"></textarea></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-purple" onclick="saveDossier()"><i class="ti ti-check" aria-hidden="true"></i>Enregistrer</button>
+      <button class="btn btn-sm" onclick="closeModal('modal-dossier')">Annuler</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL VERSEMENT -->
+<div class="modal-overlay" id="modal-versement">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title">Enregistrer un versement</div>
+      <button class="modal-close" onclick="closeModal('modal-versement')"><i class="ti ti-x" aria-hidden="true"></i></button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="vers-dossier-id">
+      <div style="background:var(--purple-bg);border:1px solid rgba(124,58,237,0.2);padding:10px 14px;margin-bottom:1rem;font-size:13px;color:var(--navy)">
+        <strong id="vers-eleve-name">Élève</strong> — <span id="vers-reste">Reste à payer : 0 HTG</span>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label>Montant versé (HTG) *</label><input type="number" id="vers-montant" placeholder="Ex: 5000" min="1"></div>
+        <div class="form-group"><label>Date du versement *</label><input type="date" id="vers-date"></div>
+      </div>
+      <div class="form-group"><label>Mode de paiement</label>
+        <select id="vers-mode">
+          <option value="especes">Espèces</option>
+          <option value="virement">Virement bancaire</option>
+          <option value="mobile">Mobile Money (MonCash, NatCash...)</option>
+          <option value="cheque">Chèque</option>
+        </select>
+      </div>
+      <div class="form-group"><label>Reçu N°</label><input type="text" id="vers-recu" placeholder="Ex: ILCH-2026-001"><div class="form-hint">Laissez vide pour génération automatique</div></div>
+      <div class="form-group"><label>Notes</label><input type="text" id="vers-notes" placeholder="Remarques..."></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-green" onclick="saveVersement()"><i class="ti ti-coin" aria-hidden="true"></i>Enregistrer le versement</button>
+      <button class="btn btn-sm" onclick="closeModal('modal-versement')">Annuler</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL REÇU -->
+<div class="modal-overlay" id="modal-recu">
+  <div class="modal" style="max-width:480px">
+    <div class="modal-header">
+      <div class="modal-title">Reçu de paiement</div>
+      <button class="modal-close" onclick="closeModal('modal-recu')"><i class="ti ti-x" aria-hidden="true"></i></button>
+    </div>
+    <div class="modal-body">
+      <div class="recu-preview" id="recu-content">
+        <div class="recu-header">
+          <div style="font-size:11px;font-weight:700;color:var(--navy);letter-spacing:0.1em;text-transform:uppercase">Institution Louis Chauvet</div>
+          <div class="recu-title">REÇU DE PAIEMENT</div>
+          <div class="recu-sub">Thomassin 25, Pétion-Ville, Haïti</div>
+        </div>
+        <div id="recu-rows"></div>
+        <div class="recu-footer">Merci de votre confiance · institutionlouischauvet@gmail.com</div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-purple" onclick="printRecu()"><i class="ti ti-printer" aria-hidden="true"></i>Imprimer</button>
+      <button class="btn btn-sm" onclick="closeModal('modal-recu')">Fermer</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL DÉPENSE -->
+<div class="modal-overlay" id="modal-depense">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title">Enregistrer une dépense</div>
+      <button class="modal-close" onclick="closeModal('modal-depense')"><i class="ti ti-x" aria-hidden="true"></i></button>
+    </div>
+    <div class="modal-body">
+      <div class="form-group"><label>Description *</label><input type="text" id="dep-desc" placeholder="Ex: Achat fournitures scolaires"></div>
+      <div class="form-row">
+        <div class="form-group"><label>Montant (HTG) *</label><input type="number" id="dep-montant" placeholder="Ex: 15000" min="1"></div>
+        <div class="form-group"><label>Date *</label><input type="date" id="dep-date"></div>
+      </div>
+      <div class="form-group"><label>Catégorie</label>
+        <select id="dep-cat">
+          <option>Fournitures scolaires</option>
+          <option>Entretien & réparations</option>
+          <option>Salaires</option>
+          <option>Électricité & eau</option>
+          <option>Matériel informatique</option>
+          <option>Transport</option>
+          <option>Événements scolaires</option>
+          <option>Autre</option>
+        </select>
+      </div>
+      <div class="form-group"><label>Notes</label><textarea id="dep-notes" rows="2" style="resize:vertical"></textarea></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-danger" style="padding:9px 16px" onclick="saveDepense()"><i class="ti ti-check" aria-hidden="true"></i>Enregistrer</button>
+      <button class="btn btn-sm" onclick="closeModal('modal-depense')">Annuler</button>
+    </div>
+  </div>
+</div>
+
+<!-- SIDEBAR -->
+<aside class="sidebar">
+  <div class="sb-logo">
+    <div class="sb-logo-mark">
+      <div class="sb-badge">💰</div>
+      <div class="sb-name">Comptabilité ILCH<small>Institution Louis Chauvet</small></div>
+    </div>
+  </div>
+  <nav class="sb-nav">
+    <div class="sb-section">Vue d'ensemble</div>
+    <div class="sb-item active" onclick="showPanel('dash',this)"><i class="ti ti-home" aria-hidden="true"></i>Tableau de bord</div>
+    <div class="sb-section">Frais scolaires</div>
+    <div class="sb-item" onclick="showPanel('dossiers',this)"><i class="ti ti-folder" aria-hidden="true"></i>Dossiers élèves</div>
+    <div class="sb-item" onclick="showPanel('impayés',this)"><i class="ti ti-alert-circle" aria-hidden="true"></i>Impayés<span class="sb-count" id="impaye-count">0</span></div>
+    <div class="sb-item" onclick="showPanel('versements',this)"><i class="ti ti-coin" aria-hidden="true"></i>Historique versements</div>
+    <div class="sb-section">Dépenses</div>
+    <div class="sb-item" onclick="showPanel('depenses',this)"><i class="ti ti-receipt" aria-hidden="true"></i>Dépenses</div>
+    <div class="sb-section">Rapports</div>
+    <div class="sb-item" onclick="showPanel('rapport',this)"><i class="ti ti-file-analytics" aria-hidden="true"></i>Rapport financier</div>
+    <div class="sb-section">Communication</div>
+    <div class="sb-item" onclick="showPanel('messages',this)"><i class="ti ti-message" aria-hidden="true"></i>Messages</div>
+  </nav>
+  <div class="sb-user">
+    <div class="sb-user-row">
+      <div class="sb-avatar">CO</div>
+      <div><div class="sb-user-name">Comptable ILCH</div><div class="sb-user-role">Service financier</div></div>
+    </div>
+    <button class="logout-btn" onclick="window.location.href='login.html'"><i class="ti ti-logout" style="font-size:13px" aria-hidden="true"></i> Déconnexion</button>
+  </div>
+</aside>
+
+<div class="main">
+  <div class="topbar">
+    <div class="topbar-title" id="topbar-title">Tableau de bord</div>
+    <div class="compta-badge"><i class="ti ti-calculator" aria-hidden="true"></i>Service comptabilité</div>
+  </div>
+  <div class="content">
+
+    <!-- DASHBOARD -->
+    <div class="panel active" id="panel-dash">
+      <div class="stats-row">
+        <div class="stat-card green"><i class="ti ti-coin stat-icon" aria-hidden="true"></i><div class="stat-label">Total encaissé (HTG)</div><div class="stat-val" id="ds-encaisse">0</div><div class="stat-sub">Année 2025–2026</div></div>
+        <div class="stat-card red"><i class="ti ti-coin-off stat-icon" aria-hidden="true"></i><div class="stat-label">Total impayé (HTG)</div><div class="stat-val" id="ds-impaye">0</div><div class="stat-sub">À recouvrer</div></div>
+        <div class="stat-card orange"><i class="ti ti-receipt stat-icon" aria-hidden="true"></i><div class="stat-label">Total dépenses (HTG)</div><div class="stat-val" id="ds-depenses">0</div><div class="stat-sub">Ce mois</div></div>
+        <div class="stat-card purple"><i class="ti ti-users stat-icon" aria-hidden="true"></i><div class="stat-label">Dossiers élèves</div><div class="stat-val" id="ds-dossiers">0</div><div class="stat-sub">Enregistrés</div></div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">
+        <div>
+          <div style="font-size:13px;font-weight:600;color:var(--navy);margin-bottom:10px">Actions rapides</div>
+          <div style="display:flex;flex-direction:column;gap:8px">
+            <button class="btn btn-purple" style="width:100%;justify-content:center" onclick="openModal('modal-dossier');resetDossierForm()"><i class="ti ti-folder-plus" aria-hidden="true"></i>Nouveau dossier élève</button>
+            <button class="btn btn-green" style="width:100%;justify-content:center" onclick="showPanel('dossiers',document.querySelector('.sb-item:nth-child(4)'))"><i class="ti ti-coin" aria-hidden="true"></i>Enregistrer un versement</button>
+            <button class="btn btn-danger" style="width:100%;justify-content:center" onclick="openModal('modal-depense');resetDepenseForm()"><i class="ti ti-receipt" aria-hidden="true"></i>Enregistrer une dépense</button>
+            <button class="btn btn-gold" style="width:100%;justify-content:center" onclick="showPanel('rapport',document.querySelector('.sb-item:nth-child(9)'))"><i class="ti ti-file-analytics" aria-hidden="true"></i>Voir le rapport financier</button>
+          </div>
+        </div>
+        <div>
+          <div style="font-size:13px;font-weight:600;color:var(--navy);margin-bottom:10px">Derniers versements</div>
+          <div id="recent-versements" style="display:flex;flex-direction:column;gap:8px"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- DOSSIERS ÉLÈVES -->
+    <div class="panel" id="panel-dossiers">
+      <div class="section-hdr">
+        <div class="section-hdr-title">Dossiers de frais scolaires</div>
+        <button class="btn btn-purple" onclick="openModal('modal-dossier');resetDossierForm()"><i class="ti ti-plus" aria-hidden="true"></i>Nouveau dossier</button>
+      </div>
+      <div class="search-bar">
+        <input type="text" id="search-dos" placeholder="Rechercher un élève..." oninput="filterTable('tbl-dossiers','search-dos')">
+        <select onchange="filterTable('tbl-dossiers','search-dos')" id="filter-statut">
+          <option value="">Tous les statuts</option>
+          <option value="Soldé">Soldé</option>
+          <option value="Partiel">Partiel</option>
+          <option value="Impayé">Impayé</option>
+        </select>
+      </div>
+      <table class="data-table" id="tbl-dossiers">
+        <thead><tr><th>Élève</th><th>Classe</th><th>Total dû</th><th>Versé</th><th>Reste</th><th>Progression</th><th>Statut</th><th>Actions</th></tr></thead>
+        <tbody id="tbody-dossiers"></tbody>
+      </table>
+    </div>
+
+    <!-- IMPAYÉS -->
+    <div class="panel" id="panel-impayés">
+      <div class="section-hdr"><div class="section-hdr-title">Dossiers avec solde impayé</div></div>
+      <table class="data-table" id="tbl-impayes">
+        <thead><tr><th>Élève</th><th>Classe</th><th>Parent / Contact</th><th>Montant dû</th><th>Versé</th><th>Reste</th><th>Actions</th></tr></thead>
+        <tbody id="tbody-impayes"></tbody>
+      </table>
+    </div>
+
+    <!-- HISTORIQUE VERSEMENTS -->
+    <div class="panel" id="panel-versements">
+      <div class="section-hdr">
+        <div class="section-hdr-title">Historique de tous les versements</div>
+        <button class="btn btn-gold" onclick="exportVersements()"><i class="ti ti-download" aria-hidden="true"></i>Exporter</button>
+      </div>
+      <table class="data-table" id="tbl-versements">
+        <thead><tr><th>Date</th><th>Élève</th><th>Classe</th><th>Montant (HTG)</th><th>Mode</th><th>Reçu N°</th><th>Actions</th></tr></thead>
+        <tbody id="tbody-versements"></tbody>
+      </table>
+    </div>
+
+    <!-- DÉPENSES -->
+    <div class="panel" id="panel-depenses">
+      <div class="section-hdr">
+        <div class="section-hdr-title">Dépenses de l'école</div>
+        <button class="btn btn-danger" style="padding:8px 14px" onclick="openModal('modal-depense');resetDepenseForm()"><i class="ti ti-plus" aria-hidden="true"></i>Nouvelle dépense</button>
+      </div>
+      <table class="data-table" id="tbl-depenses">
+        <thead><tr><th>Date</th><th>Description</th><th>Catégorie</th><th>Montant (HTG)</th><th>Notes</th><th>Actions</th></tr></thead>
+        <tbody id="tbody-depenses"></tbody>
+      </table>
+    </div>
+
+    <!-- RAPPORT -->
+    <div class="panel" id="panel-rapport">
+      <div class="section-hdr">
+        <div class="section-hdr-title">Rapport financier — Année 2025–2026</div>
+        <button class="btn btn-purple" onclick="printRapport()"><i class="ti ti-printer" aria-hidden="true"></i>Imprimer</button>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px">
+        <div class="rapport-card">
+          <h4>Résumé financier</h4>
+          <div class="rapport-row"><span>Total attendu</span><span class="rapport-val" id="rp-attendu">0 HTG</span></div>
+          <div class="rapport-row"><span>Total encaissé</span><span class="rapport-val" style="color:var(--green)" id="rp-encaisse">0 HTG</span></div>
+          <div class="rapport-row"><span>Total impayé</span><span class="rapport-val" style="color:var(--red)" id="rp-impaye">0 HTG</span></div>
+          <div class="rapport-row"><span>Total dépenses</span><span class="rapport-val" style="color:var(--orange)" id="rp-depenses">0 HTG</span></div>
+          <div class="rapport-row"><span>Solde net</span><span class="rapport-val" id="rp-solde">0 HTG</span></div>
+          <div class="rapport-row"><span>Taux de recouvrement</span><span class="rapport-val" id="rp-taux">0%</span></div>
+        </div>
+        <div class="rapport-card">
+          <h4>Répartition par statut</h4>
+          <div class="bar-row"><div class="bar-label">Soldés</div><div class="bar-track"><div class="bar-fill" id="bar-solde" style="background:var(--green);width:0%"></div></div><div class="bar-val" id="nb-solde">0</div></div>
+          <div class="bar-row"><div class="bar-label">Partiels</div><div class="bar-track"><div class="bar-fill" id="bar-partial" style="background:var(--orange);width:0%"></div></div><div class="bar-val" id="nb-partial">0</div></div>
+          <div class="bar-row"><div class="bar-label">Impayés</div><div class="bar-track"><div class="bar-fill" id="bar-unpaid" style="background:var(--red);width:0%"></div></div><div class="bar-val" id="nb-unpaid">0</div></div>
+        </div>
+      </div>
+      <div class="rapport-card">
+        <h4>Dépenses par catégorie</h4>
+        <div id="dep-categories"></div>
+      </div>
+    </div>
+
+    <!-- MESSAGES -->
+    <div class="panel" id="panel-messages">
+      <div class="msg-layout">
+        <div class="msg-contacts">
+          <div class="msg-contact-header">Contacts</div>
+          <div class="contact-item active" onclick="switchMsg('Administration ILCH','Direction','AD','var(--navy)',this)">
+            <div class="contact-avatar" style="background:var(--navy)">AD</div>
+            <div><div class="contact-name">Administration</div><div class="contact-role">Direction ILCH</div></div>
+            <div class="unread-dot"></div>
+          </div>
+          <div class="contact-item" onclick="switchMsg('Marie Pierre','Parent · Jean Pierre','MP','var(--green)',this)">
+            <div class="contact-avatar" style="background:var(--green)">MP</div>
+            <div><div class="contact-name">Marie Pierre</div><div class="contact-role">Parent · Jean Pierre</div></div>
+          </div>
+          <div class="contact-item" onclick="switchMsg('Louise Antoine','Parent · Marc Antoine','LA','var(--orange)',this)">
+            <div class="contact-avatar" style="background:var(--orange)">LA</div>
+            <div><div class="contact-name">Louise Antoine</div><div class="contact-role">Parent · Marc Antoine</div></div>
+            <div class="unread-dot"></div>
+          </div>
+        </div>
+        <div class="msg-thread">
+          <div class="thread-header">
+            <div class="contact-avatar" id="msg-avatar" style="background:var(--navy)">AD</div>
+            <div><strong id="msg-name">Administration ILCH</strong><br><span id="msg-sub" style="font-size:10px;color:var(--muted)">Direction</span></div>
+          </div>
+          <div class="thread-messages" id="msg-thread">
+            <div class="msg-bubble received">Bonjour, pouvez-vous me confirmer le solde de la famille Antoine ?<div class="msg-time">Aujourd'hui, 9h00</div></div>
+            <div class="msg-bubble sent">Bonjour, la famille Antoine a un solde impayé de 18,000 HTG. Je vais les relancer.<div class="msg-time">Aujourd'hui, 9h15</div></div>
+          </div>
+          <div class="thread-input">
+            <input type="text" id="msg-input" placeholder="Écrire un message...">
+            <button class="send-btn" onclick="sendMsg()"><i class="ti ti-send" aria-hidden="true"></i></button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+// ─── STORAGE ───────────────────────────────────────────────
+var DB={
+  get:function(k){try{return JSON.parse(localStorage.getItem('ilch_compta_'+k))||[];}catch(e){return [];}},
+  set:function(k,v){localStorage.setItem('ilch_compta_'+k,JSON.stringify(v));},
+  id:function(){return 'co_'+Date.now()+'_'+Math.random().toString(36).substr(2,4);}
+};
+
+// ─── UTILS ─────────────────────────────────────────────────
+function fmt(n){return Number(n||0).toLocaleString('fr-FR');}
+
+function getTotalVerse(dossierId){
+  return DB.get('versements').filter(function(v){return v.dossierId===dossierId;})
+    .reduce(function(s,v){return s+Number(v.montant);},0);
+}
+
+function getStatut(dossier){
+  var verse=getTotalVerse(dossier.id);
+  if(verse<=0) return 'Impayé';
+  if(verse>=Number(dossier.montant)) return 'Soldé';
+  return 'Partiel';
+}
+
+function openModal(id){document.getElementById(id).classList.add('open');}
+function closeModal(id){document.getElementById(id).classList.remove('open');}
+
+function showPanel(id,el){
+  document.querySelectorAll('.panel').forEach(function(p){p.classList.remove('active')});
+  document.getElementById('panel-'+id).classList.add('active');
+  document.querySelectorAll('.sb-item').forEach(function(i){i.classList.remove('active')});
+  if(el)el.classList.add('active');
+  var titles={dash:'Tableau de bord',dossiers:'Dossiers élèves',impayés:'Impayés',versements:'Historique des versements',depenses:'Dépenses',rapport:'Rapport financier',messages:'Messages'};
+  document.getElementById('topbar-title').textContent=titles[id]||id;
+  renderAll();
+}
+
+function renderAll(){
+  renderDossiers(); renderImpayes(); renderVersements(); renderDepenses(); renderRapport(); renderDash();
+}
+
+// ─── DASHBOARD ─────────────────────────────────────────────
+function renderDash(){
+  var dossiers=DB.get('dossiers');
+  var versements=DB.get('versements');
+  var depenses=DB.get('depenses');
+  var totalEncaisse=versements.reduce(function(s,v){return s+Number(v.montant);},0);
+  var totalAttendu=dossiers.reduce(function(s,d){return s+Number(d.montant);},0);
+  var totalImpaye=totalAttendu-totalEncaisse;
+  var totalDep=depenses.reduce(function(s,d){return s+Number(d.montant);},0);
+  var impayes=dossiers.filter(function(d){return getStatut(d)!=='Soldé';});
+  document.getElementById('ds-encaisse').textContent=fmt(totalEncaisse);
+  document.getElementById('ds-impaye').textContent=fmt(Math.max(0,totalImpaye));
+  document.getElementById('ds-depenses').textContent=fmt(totalDep);
+  document.getElementById('ds-dossiers').textContent=dossiers.length;
+  var countEl=document.getElementById('impaye-count');
+  if(countEl) countEl.textContent=impayes.length||'';
+  // Derniers versements
+  var rv=document.getElementById('recent-versements');
+  var last=versements.slice(-5).reverse();
+  rv.innerHTML=last.length?last.map(function(v){
+    var d=DB.get('dossiers').find(function(x){return x.id===v.dossierId;})||{eleve:'?',classe:''};
+    return '<div style="background:var(--white);border:0.5px solid var(--border);padding:9px 12px;display:flex;align-items:center;justify-content:space-between">'+
+      '<div><div style="font-size:12px;font-weight:500">'+d.eleve+'</div><div style="font-size:10px;color:var(--muted)">'+v.date+' · '+v.mode+'</div></div>'+
+      '<div style="font-size:13px;font-weight:700;color:var(--green)">+'+fmt(v.montant)+' HTG</div></div>';
+  }).join(''):'<div style="font-size:12px;color:var(--muted);text-align:center;padding:1rem">Aucun versement enregistré</div>';
+}
+
+// ─── DOSSIERS ──────────────────────────────────────────────
+function resetDossierForm(){
+  document.getElementById('dos-edit-id').value='';
+  document.getElementById('modal-dossier-title').textContent='Nouveau dossier de frais';
+  ['dos-eleve','dos-classe','dos-parent','dos-tel','dos-notes'].forEach(function(id){document.getElementById(id).value='';});
+  document.getElementById('dos-montant').value='';
+  document.getElementById('dos-annee').value='2025–2026';
+}
+
+function saveDossier(){
+  var eleve=document.getElementById('dos-eleve').value.trim();
+  var classe=document.getElementById('dos-classe').value.trim();
+  var montant=document.getElementById('dos-montant').value;
+  if(!eleve||!classe||!montant){showToast('Remplissez les champs obligatoires (*)');return;}
+  var dossiers=DB.get('dossiers');
+  var editId=document.getElementById('dos-edit-id').value;
+  var obj={id:editId||DB.id(),eleve:eleve,classe:classe,parent:document.getElementById('dos-parent').value.trim(),tel:document.getElementById('dos-tel').value.trim(),montant:Number(montant),annee:document.getElementById('dos-annee').value,notes:document.getElementById('dos-notes').value.trim(),dateCreation:new Date().toLocaleDateString('fr-FR')};
+  if(editId){var idx=dossiers.findIndex(function(x){return x.id===editId;});if(idx>-1)dossiers[idx]=obj;}
+  else dossiers.push(obj);
+  DB.set('dossiers',dossiers);
+  closeModal('modal-dossier');
+  renderAll();
+  showToast('Dossier de '+eleve+' '+(editId?'modifié':'créé'));
+}
+
+function editDossier(id){
+  var d=DB.get('dossiers').find(function(x){return x.id===id;});
+  if(!d) return;
+  document.getElementById('dos-edit-id').value=d.id;
+  document.getElementById('modal-dossier-title').textContent='Modifier le dossier';
+  document.getElementById('dos-eleve').value=d.eleve;
+  document.getElementById('dos-classe').value=d.classe;
+  document.getElementById('dos-parent').value=d.parent||'';
+  document.getElementById('dos-tel').value=d.tel||'';
+  document.getElementById('dos-montant').value=d.montant;
+  document.getElementById('dos-annee').value=d.annee||'2025–2026';
+  document.getElementById('dos-notes').value=d.notes||'';
+  openModal('modal-dossier');
+}
+
+function deleteDossier(id){
+  if(!confirm('Supprimer ce dossier et tous ses versements ?')) return;
+  DB.set('dossiers',DB.get('dossiers').filter(function(x){return x.id!==id;}));
+  DB.set('versements',DB.get('versements').filter(function(v){return v.dossierId!==id;}));
+  renderAll(); showToast('Dossier supprimé');
+}
+
+function renderDossiers(){
+  var dossiers=DB.get('dossiers');
+  var tb=document.getElementById('tbody-dossiers');
+  if(!dossiers.length){tb.innerHTML='<tr><td colspan="8"><div class="empty-state"><i class="ti ti-folder" aria-hidden="true"></i><p>Aucun dossier créé. Cliquez sur "Nouveau dossier".</p></div></td></tr>';return;}
+  tb.innerHTML=dossiers.map(function(d){
+    var verse=getTotalVerse(d.id);
+    var reste=Math.max(0,Number(d.montant)-verse);
+    var pct=d.montant>0?Math.min(100,Math.round(verse/d.montant*100)):0;
+    var statut=getStatut(d);
+    var cls=statut==='Soldé'?'badge-paid':statut==='Partiel'?'badge-partial':'badge-unpaid';
+    return '<tr data-search="'+(d.eleve+' '+d.classe+' '+statut).toLowerCase()+'">'+
+      '<td><strong>'+d.eleve+'</strong></td>'+
+      '<td>'+d.classe+'</td>'+
+      '<td>'+fmt(d.montant)+' HTG</td>'+
+      '<td style="color:var(--green);font-weight:600">'+fmt(verse)+' HTG</td>'+
+      '<td style="color:'+(reste>0?'var(--red)':'var(--green)')+'font-weight:600">'+fmt(reste)+' HTG</td>'+
+      '<td style="min-width:100px"><div style="margin-bottom:3px;font-size:10px;color:var(--muted)">'+pct+'%</div><div class="progress-wrap"><div class="progress-bar" style="width:'+pct+'%;background:'+(pct>=100?'var(--green)':pct>0?'var(--orange)':'var(--red)')+'"></div></div></td>'+
+      '<td><span class="badge '+cls+'">'+statut+'</span></td>'+
+      '<td><div style="display:flex;gap:5px;flex-wrap:wrap">'+
+        '<button class="btn btn-green" style="padding:5px 8px;font-size:10px" onclick="openVersement(\''+d.id+'\')"><i class="ti ti-coin" aria-hidden="true"></i>Versement</button>'+
+        '<button class="btn btn-purple" style="padding:5px 8px;font-size:10px" onclick="voirVersements(\''+d.id+'\')"><i class="ti ti-list" aria-hidden="true"></i>Voir</button>'+
+        '<button class="btn" style="background:var(--gray-light);color:var(--text);border:0.5px solid var(--border);padding:5px 8px;font-size:10px" onclick="editDossier(\''+d.id+'\')"><i class="ti ti-pencil" aria-hidden="true"></i></button>'+
+        '<button class="btn btn-danger" style="padding:5px 8px" onclick="deleteDossier(\''+d.id+'\')"><i class="ti ti-trash" aria-hidden="true"></i></button>'+
+      '</div></td></tr>';
+  }).join('');
+}
+
+// ─── IMPAYÉS ───────────────────────────────────────────────
+function renderImpayes(){
+  var dossiers=DB.get('dossiers').filter(function(d){return getStatut(d)!=='Soldé';});
+  var tb=document.getElementById('tbody-impayes');
+  if(!dossiers.length){tb.innerHTML='<tr><td colspan="7"><div class="empty-state"><i class="ti ti-check" aria-hidden="true"></i><p>Excellent ! Aucun impayé.</p></div></td></tr>';return;}
+  tb.innerHTML=dossiers.map(function(d){
+    var verse=getTotalVerse(d.id);
+    var reste=Math.max(0,Number(d.montant)-verse);
+    var cls=verse>0?'badge-partial':'badge-unpaid';
+    var lbl=verse>0?'Partiel':'Impayé';
+    return '<tr>'+
+      '<td><strong>'+d.eleve+'</strong></td>'+
+      '<td>'+d.classe+'</td>'+
+      '<td>'+(d.parent||'—')+' · '+(d.tel||'—')+'</td>'+
+      '<td>'+fmt(d.montant)+' HTG</td>'+
+      '<td style="color:var(--green);font-weight:600">'+fmt(verse)+' HTG</td>'+
+      '<td style="color:var(--red);font-weight:700">'+fmt(reste)+' HTG</td>'+
+      '<td><div style="display:flex;gap:5px">'+
+        '<button class="btn btn-green" style="padding:5px 8px;font-size:10px" onclick="openVersement(\''+d.id+'\')"><i class="ti ti-coin" aria-hidden="true"></i>Versement</button>'+
+        '<button class="btn" style="background:var(--orange-bg);color:var(--orange);border:none;padding:5px 8px;font-size:10px;cursor:pointer;font-family:Inter,sans-serif;display:inline-flex;align-items:center;gap:4px" onclick="showToast(\'Message de relance envoyé à \'+\''+d.parent.replace(/'/g,"\\'")+'\')"><i class="ti ti-send" aria-hidden="true"></i>Relancer</button>'+
+      '</div></td></tr>';
+  }).join('');
+}
+
+// ─── VERSEMENTS ────────────────────────────────────────────
+var versementDossierId=null;
+
+function openVersement(dossierId){
+  versementDossierId=dossierId;
+  var d=DB.get('dossiers').find(function(x){return x.id===dossierId;});
+  if(!d) return;
+  var verse=getTotalVerse(dossierId);
+  var reste=Math.max(0,Number(d.montant)-verse);
+  document.getElementById('vers-dossier-id').value=dossierId;
+  document.getElementById('vers-eleve-name').textContent=d.eleve+' ('+d.classe+')';
+  document.getElementById('vers-reste').textContent='Reste à payer : '+fmt(reste)+' HTG';
+  document.getElementById('vers-montant').value='';
+  document.getElementById('vers-date').value=new Date().toISOString().slice(0,10);
+  document.getElementById('vers-notes').value='';
+  // Numéro reçu auto
+  var nb=DB.get('versements').length+1;
+  document.getElementById('vers-recu').value='ILCH-2026-'+String(nb).padStart(3,'0');
+  openModal('modal-versement');
+}
+
+function saveVersement(){
+  var dosId=document.getElementById('vers-dossier-id').value;
+  var montant=Number(document.getElementById('vers-montant').value);
+  var date=document.getElementById('vers-date').value;
+  if(!montant||montant<=0||!date){showToast('Veuillez saisir un montant et une date');return;}
+  var d=DB.get('dossiers').find(function(x){return x.id===dosId;});
+  var verse=getTotalVerse(dosId);
+  var reste=Number(d.montant)-verse;
+  if(montant>reste){showToast('Le versement dépasse le montant restant ('+fmt(reste)+' HTG)');return;}
+  var recuNum=document.getElementById('vers-recu').value||('ILCH-2026-'+String(DB.get('versements').length+1).padStart(3,'0'));
+  var versements=DB.get('versements');
+  versements.push({id:DB.id(),dossierId:dosId,montant:montant,date:date,mode:document.getElementById('vers-mode').value,recu:recuNum,notes:document.getElementById('vers-notes').value.trim()});
+  DB.set('versements',versements);
+  closeModal('modal-versement');
+  renderAll();
+  // Afficher reçu
+  showRecuModal(dosId,versements[versements.length-1]);
+  showToast('Versement de '+fmt(montant)+' HTG enregistré — Reçu '+recuNum);
+}
+
+function showRecuModal(dosId,v){
+  var d=DB.get('dossiers').find(function(x){return x.id===dosId;})||{};
+  var verse=getTotalVerse(dosId);
+  var statut=getStatut(d);
+  var rows=document.getElementById('recu-rows');
+  rows.innerHTML=
+    '<div class="recu-row"><span>N° Reçu</span><strong>'+v.recu+'</strong></div>'+
+    '<div class="recu-row"><span>Date</span><span>'+v.date+'</span></div>'+
+    '<div class="recu-row"><span>Élève</span><strong>'+d.eleve+'</strong></div>'+
+    '<div class="recu-row"><span>Classe</span><span>'+d.classe+'</span></div>'+
+    '<div class="recu-row"><span>Parent</span><span>'+(d.parent||'—')+'</span></div>'+
+    '<div class="recu-row"><span>Mode de paiement</span><span>'+v.mode+'</span></div>'+
+    '<div class="recu-row"><span>Montant versé</span><strong style="color:var(--green)">'+fmt(v.montant)+' HTG</strong></div>'+
+    '<div class="recu-row"><span>Total versé</span><span>'+fmt(verse)+' HTG</span></div>'+
+    '<div class="recu-row"><span>Reste à payer</span><span style="color:'+(statut==='Soldé'?'var(--green)':'var(--red)')+'">'+fmt(Math.max(0,Number(d.montant)-verse))+' HTG</span></div>'+
+    '<div class="recu-total"><span>STATUT</span><span style="color:'+(statut==='Soldé'?'var(--green)':statut==='Partiel'?'var(--orange)':'var(--red)')+'">'+statut.toUpperCase()+'</span></div>';
+  openModal('modal-recu');
+}
+
+function voirVersements(dosId){
+  var d=DB.get('dossiers').find(function(x){return x.id===dosId;})||{};
+  var versements=DB.get('versements').filter(function(v){return v.dossierId===dosId;});
+  var verse=getTotalVerse(dosId);
+  var info='Dossier : '+d.eleve+' ('+d.classe+')\nTotal dû : '+fmt(d.montant)+' HTG\nTotal versé : '+fmt(verse)+' HTG\nReste : '+fmt(Math.max(0,Number(d.montant)-verse))+' HTG\n\nVersements :\n'+versements.map(function(v,i){return (i+1)+'. '+v.date+' — '+fmt(v.montant)+' HTG ('+v.mode+') — Reçu : '+v.recu;}).join('\n');
+  alert(info);
+}
+
+function renderVersements(){
+  var versements=DB.get('versements');
+  var dossiers=DB.get('dossiers');
+  var tb=document.getElementById('tbody-versements');
+  if(!versements.length){tb.innerHTML='<tr><td colspan="7"><div class="empty-state"><i class="ti ti-coin" aria-hidden="true"></i><p>Aucun versement enregistré.</p></div></td></tr>';return;}
+  var sorted=versements.slice().sort(function(a,b){return new Date(b.date)-new Date(a.date);});
+  tb.innerHTML=sorted.map(function(v){
+    var d=dossiers.find(function(x){return x.id===v.dossierId;})||{eleve:'?',classe:''};
+    return '<tr>'+
+      '<td>'+v.date+'</td>'+
+      '<td><strong>'+d.eleve+'</strong></td>'+
+      '<td>'+d.classe+'</td>'+
+      '<td style="color:var(--green);font-weight:700">+'+fmt(v.montant)+' HTG</td>'+
+      '<td>'+v.mode+'</td>'+
+      '<td><code style="background:var(--gray-light);padding:2px 6px;font-size:11px">'+v.recu+'</code></td>'+
+      '<td><div style="display:flex;gap:5px">'+
+        '<button class="btn" style="background:var(--purple-bg);color:var(--purple);border:none;padding:5px 8px;font-size:10px;cursor:pointer;font-family:Inter,sans-serif;display:inline-flex;align-items:center;gap:3px" onclick="showRecuModal(\''+v.dossierId+'\','+JSON.stringify(v)+')"><i class="ti ti-receipt" aria-hidden="true"></i>Reçu</button>'+
+        '<button class="btn btn-danger" style="padding:5px 8px" onclick="deleteVersement(\''+v.id+'\')"><i class="ti ti-trash" aria-hidden="true"></i></button>'+
+      '</div></td></tr>';
+  }).join('');
+}
+
+function deleteVersement(id){
+  if(!confirm('Supprimer ce versement ?')) return;
+  DB.set('versements',DB.get('versements').filter(function(x){return x.id!==id;}));
+  renderAll(); showToast('Versement supprimé');
+}
+
+function exportVersements(){
+  var versements=DB.get('versements');
+  var dossiers=DB.get('dossiers');
+  var csv='Date,Élève,Classe,Montant HTG,Mode,Reçu\n';
+  versements.forEach(function(v){
+    var d=dossiers.find(function(x){return x.id===v.dossierId;})||{};
+    csv+=v.date+','+d.eleve+','+d.classe+','+v.montant+','+v.mode+','+v.recu+'\n';
+  });
+  var blob=new Blob([csv],{type:'text/csv'});
+  var a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='versements_ilch.csv';a.click();
+  showToast('Export CSV téléchargé');
+}
+
+// ─── DÉPENSES ──────────────────────────────────────────────
+function resetDepenseForm(){
+  ['dep-desc','dep-notes'].forEach(function(id){document.getElementById(id).value='';});
+  document.getElementById('dep-montant').value='';
+  document.getElementById('dep-date').value=new Date().toISOString().slice(0,10);
+}
+
+function saveDepense(){
+  var desc=document.getElementById('dep-desc').value.trim();
+  var montant=Number(document.getElementById('dep-montant').value);
+  var date=document.getElementById('dep-date').value;
+  if(!desc||!montant||!date){showToast('Remplissez les champs obligatoires');return;}
+  var depenses=DB.get('depenses');
+  depenses.push({id:DB.id(),desc:desc,montant:montant,date:date,cat:document.getElementById('dep-cat').value,notes:document.getElementById('dep-notes').value.trim()});
+  DB.set('depenses',depenses);
+  closeModal('modal-depense');
+  renderAll();
+  showToast('Dépense de '+fmt(montant)+' HTG enregistrée');
+}
+
+function renderDepenses(){
+  var depenses=DB.get('depenses');
+  var tb=document.getElementById('tbody-depenses');
+  if(!depenses.length){tb.innerHTML='<tr><td colspan="6"><div class="empty-state"><i class="ti ti-receipt" aria-hidden="true"></i><p>Aucune dépense enregistrée.</p></div></td></tr>';return;}
+  var sorted=depenses.slice().sort(function(a,b){return new Date(b.date)-new Date(a.date);});
+  tb.innerHTML=sorted.map(function(d){
+    return '<tr>'+
+      '<td>'+d.date+'</td>'+
+      '<td><strong>'+d.desc+'</strong></td>'+
+      '<td>'+d.cat+'</td>'+
+      '<td style="color:var(--red);font-weight:700">-'+fmt(d.montant)+' HTG</td>'+
+      '<td>'+(d.notes||'—')+'</td>'+
+      '<td><button class="btn btn-danger" style="padding:5px 8px" onclick="deleteDepense(\''+d.id+'\')"><i class="ti ti-trash" aria-hidden="true"></i></button></td></tr>';
+  }).join('');
+}
+
+function deleteDepense(id){
+  if(!confirm('Supprimer cette dépense ?')) return;
+  DB.set('depenses',DB.get('depenses').filter(function(x){return x.id!==id;}));
+  renderAll(); showToast('Dépense supprimée');
+}
+
+// ─── RAPPORT ───────────────────────────────────────────────
+function renderRapport(){
+  var dossiers=DB.get('dossiers');
+  var versements=DB.get('versements');
+  var depenses=DB.get('depenses');
+  var totalAttendu=dossiers.reduce(function(s,d){return s+Number(d.montant);},0);
+  var totalEncaisse=versements.reduce(function(s,v){return s+Number(v.montant);},0);
+  var totalImpaye=Math.max(0,totalAttendu-totalEncaisse);
+  var totalDep=depenses.reduce(function(s,d){return s+Number(d.montant);},0);
+  var solde=totalEncaisse-totalDep;
+  var taux=totalAttendu>0?Math.round(totalEncaisse/totalAttendu*100):0;
+  document.getElementById('rp-attendu').textContent=fmt(totalAttendu)+' HTG';
+  document.getElementById('rp-encaisse').textContent=fmt(totalEncaisse)+' HTG';
+  document.getElementById('rp-impaye').textContent=fmt(totalImpaye)+' HTG';
+  document.getElementById('rp-depenses').textContent=fmt(totalDep)+' HTG';
+  document.getElementById('rp-solde').textContent=fmt(solde)+' HTG';
+  document.getElementById('rp-solde').style.color=solde>=0?'var(--green)':'var(--red)';
+  document.getElementById('rp-taux').textContent=taux+'%';
+  // Barres
+  var soldes=dossiers.filter(function(d){return getStatut(d)==='Soldé';}).length;
+  var partiels=dossiers.filter(function(d){return getStatut(d)==='Partiel';}).length;
+  var impayes=dossiers.filter(function(d){return getStatut(d)==='Impayé';}).length;
+  var total=dossiers.length||1;
+  document.getElementById('bar-solde').style.width=(soldes/total*100)+'%';
+  document.getElementById('bar-partial').style.width=(partiels/total*100)+'%';
+  document.getElementById('bar-unpaid').style.width=(impayes/total*100)+'%';
+  document.getElementById('nb-solde').textContent=soldes;
+  document.getElementById('nb-partial').textContent=partiels;
+  document.getElementById('nb-unpaid').textContent=impayes;
+  // Dépenses par catégorie
+  var cats={};
+  depenses.forEach(function(d){cats[d.cat]=(cats[d.cat]||0)+Number(d.montant);});
+  var catHtml=Object.keys(cats).map(function(k){
+    return '<div class="rapport-row"><span>'+k+'</span><span class="rapport-val" style="color:var(--red)">'+fmt(cats[k])+' HTG</span></div>';
+  }).join('');
+  document.getElementById('dep-categories').innerHTML=catHtml||'<div style="font-size:12px;color:var(--muted)">Aucune dépense enregistrée</div>';
+}
+
+// ─── MESSAGES ──────────────────────────────────────────────
+function switchMsg(name,sub,initials,bg,el){
+  document.querySelectorAll('.contact-item').forEach(function(i){i.classList.remove('active')});
+  el.classList.add('active');
+  var dot=el.querySelector('.unread-dot');if(dot)dot.remove();
+  document.getElementById('msg-name').textContent=name;
+  document.getElementById('msg-sub').textContent=sub;
+  document.getElementById('msg-avatar').textContent=initials;
+  document.getElementById('msg-thread').innerHTML='<div class="msg-bubble received">Bonjour, comment puis-je vous aider ?<div class="msg-time">Aujourd\'hui</div></div>';
+}
+
+function sendMsg(){
+  var inp=document.getElementById('msg-input');var txt=inp.value.trim();if(!txt)return;
+  var t=document.getElementById('msg-thread');var b=document.createElement('div');
+  b.className='msg-bubble sent';b.innerHTML=txt+'<div class="msg-time">À l\'instant</div>';
+  t.appendChild(b);t.scrollTop=t.scrollHeight;inp.value='';showToast('Message envoyé');
+}
+
+function printRecu(){window.print();}
+function printRapport(){window.print();}
+
+function filterTable(tblId,inputId){
+  var q=document.getElementById(inputId).value.toLowerCase();
+  var filterEl=document.getElementById(tblId==='tbl-dossiers'?'filter-statut':null);
+  var filterVal=filterEl?filterEl.value.toLowerCase():'';
+  document.querySelectorAll('#'+tblId+' tbody tr').forEach(function(r){
+    var s=(r.getAttribute('data-search')||'').toLowerCase();
+    r.style.display=(!q||s.indexOf(q)>-1)&&(!filterVal||s.indexOf(filterVal)>-1)?'':'none';
+  });
+}
+
+function showToast(msg){
+  var t=document.getElementById('toast');document.getElementById('toast-msg').textContent=msg;
+  t.classList.add('show');setTimeout(function(){t.classList.remove('show')},3500);
+}
+
+// Fermer modals en cliquant dehors
+document.querySelectorAll('.modal-overlay').forEach(function(m){
+  m.addEventListener('click',function(e){if(e.target===m)m.classList.remove('open');});
+});
+document.addEventListener('keydown',function(e){
+  if(e.key==='Enter'&&document.activeElement===document.getElementById('msg-input'))sendMsg();
+});
+
+// Init
+window.onload=function(){
+  document.getElementById('dep-date').value=new Date().toISOString().slice(0,10);
+  document.getElementById('vers-date').value=new Date().toISOString().slice(0,10);
+  renderAll();
+};
+</script>
+</body>
+</html>

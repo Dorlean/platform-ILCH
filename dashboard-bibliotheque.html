@@ -1,0 +1,862 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Bibliothèque — ILCH</title>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
+  <style>
+    *{margin:0;padding:0;box-sizing:border-box}
+    :root{
+      --navy:#0D2B4E;--navy2:#1A3D6B;--gold:#C9A96E;--gold-bg:#FAF3E8;--gold-light:#E8D5B0;
+      --cream:#FAFAF8;--white:#fff;--gray:#6B7280;--gray-light:#F3F4F6;
+      --border:#E5E7EB;--text:#1F2937;--muted:#9CA3AF;
+      --green:#16A34A;--green-bg:#F0FDF4;--blue:#2563EB;--blue-bg:#EFF6FF;
+      --red:#DC2626;--red-bg:#FEF2F2;--orange:#D97706;--orange-bg:#FFFBEB;
+      --brown:#92400E;--brown-bg:#FEF3C7;
+      --lib:#7C3AED;--lib-bg:#F5F3FF;--lib-light:#A78BFA;
+    }
+    body{font-family:'Inter',sans-serif;background:var(--cream);color:var(--text);display:flex;min-height:100vh}
+    a{text-decoration:none;color:inherit}
+
+    .sidebar{width:230px;background:var(--navy);flex-shrink:0;display:flex;flex-direction:column;min-height:100vh;position:fixed;top:0;left:0;bottom:0;z-index:50}
+    .sb-logo{padding:1.25rem 1rem;border-bottom:1px solid rgba(255,255,255,0.08)}
+    .sb-logo-mark{display:flex;align-items:center;gap:10px}
+    .sb-badge{width:32px;height:32px;background:var(--brown);display:flex;align-items:center;justify-content:center;font-size:16px;color:var(--white);flex-shrink:0}
+    .sb-name{font-size:12px;font-weight:600;color:var(--white);line-height:1.3}
+    .sb-name small{display:block;font-size:9px;color:rgba(255,255,255,0.4);font-weight:300}
+    .sb-nav{flex:1;padding:1rem 0;overflow-y:auto}
+    .sb-section{font-size:9px;color:rgba(255,255,255,0.3);letter-spacing:0.12em;text-transform:uppercase;padding:0.75rem 1rem 0.35rem}
+    .sb-item{display:flex;align-items:center;gap:10px;padding:10px 1rem;font-size:12px;color:rgba(255,255,255,0.6);cursor:pointer;border-left:3px solid transparent;transition:all 0.15s;user-select:none}
+    .sb-item:hover{background:rgba(255,255,255,0.06);color:var(--white)}
+    .sb-item.active{background:rgba(146,64,14,0.2);color:#FCD34D;border-left-color:var(--brown)}
+    .sb-item i{font-size:16px;width:18px;flex-shrink:0}
+    .sb-count{margin-left:auto;background:var(--red);color:var(--white);font-size:9px;font-weight:700;padding:2px 6px;border-radius:8px}
+    .sb-count.orange{background:var(--orange)}
+    .sb-user{padding:1rem;border-top:1px solid rgba(255,255,255,0.08)}
+    .sb-user-row{display:flex;align-items:center;gap:9px}
+    .sb-avatar{width:34px;height:34px;border-radius:50%;background:var(--brown);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:var(--white);flex-shrink:0}
+    .sb-user-name{font-size:12px;color:var(--white);font-weight:500}
+    .sb-user-role{font-size:9px;color:#FCD34D}
+    .logout-btn{display:inline-flex;align-items:center;gap:5px;font-size:11px;color:rgba(255,255,255,0.3);cursor:pointer;margin-top:8px;transition:color 0.15s;background:none;border:none;font-family:'Inter',sans-serif;padding:0}
+    .logout-btn:hover{color:#FCD34D}
+
+    .main{flex:1;margin-left:230px;display:flex;flex-direction:column;min-height:100vh}
+    .topbar{background:var(--white);border-bottom:1px solid var(--border);padding:0.75rem 1.75rem;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:40}
+    .topbar-title{font-family:'Playfair Display',serif;font-size:16px;font-weight:700;color:var(--navy)}
+    .lib-badge{background:var(--brown-bg);border:1px solid rgba(146,64,14,0.2);color:var(--brown);font-size:11px;font-weight:600;padding:5px 12px;display:flex;align-items:center;gap:5px}
+    .content{flex:1;padding:1.5rem;background:var(--cream)}
+    .panel{display:none}.panel.active{display:block}
+
+    /* STATS */
+    .stats-row{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:1.5rem}
+    .stat-card{background:var(--white);border:0.5px solid var(--border);padding:1.1rem 1.25rem;position:relative;overflow:hidden}
+    .stat-card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px}
+    .stat-card.brown::before{background:var(--brown)}
+    .stat-card.green::before{background:var(--green)}
+    .stat-card.red::before{background:var(--red)}
+    .stat-card.orange::before{background:var(--orange)}
+    .stat-label{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:0.07em;margin-bottom:4px;font-weight:500}
+    .stat-val{font-family:'Playfair Display',serif;font-size:1.9rem;color:var(--navy);font-weight:700;line-height:1}
+    .stat-sub{font-size:11px;color:var(--gray);margin-top:4px}
+    .stat-icon{position:absolute;top:1rem;right:1rem;font-size:20px;color:var(--gray-light)}
+
+    /* BOOKS GRID */
+    .books-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+    .book-card{background:var(--white);border:0.5px solid var(--border);overflow:hidden;transition:transform 0.2s,border-color 0.2s}
+    .book-card:hover{transform:translateY(-2px);border-color:var(--gold-light)}
+    .book-spine{height:8px;background:var(--brown)}
+    .book-body{padding:1rem}
+    .book-cover{width:100%;height:120px;display:flex;align-items:center;justify-content:center;margin-bottom:0.75rem;position:relative;border-radius:2px;overflow:hidden}
+    .book-cover-icon{font-size:48px}
+    .book-genre{position:absolute;top:6px;right:6px;font-size:9px;font-weight:700;padding:3px 7px;text-transform:uppercase;letter-spacing:0.05em}
+    .book-title{font-family:'Playfair Display',serif;font-size:13px;font-weight:700;color:var(--navy);margin-bottom:3px;line-height:1.3}
+    .book-author{font-size:11px;color:var(--gray);margin-bottom:6px}
+    .book-meta{display:flex;align-items:center;justify-content:space-between;margin-top:8px}
+    .book-stock{font-size:11px;font-weight:600}
+    .stock-ok{color:var(--green)}
+    .stock-low{color:var(--orange)}
+    .stock-empty{color:var(--red)}
+    .book-actions{display:flex;gap:5px;margin-top:8px}
+
+    /* TABLE */
+    .data-table{width:100%;border-collapse:collapse;background:var(--white);border:0.5px solid var(--border)}
+    .data-table th{background:var(--navy);color:var(--white);font-size:10px;font-weight:600;letter-spacing:0.06em;text-transform:uppercase;padding:10px 14px;text-align:left}
+    .data-table td{padding:10px 14px;font-size:12px;border-bottom:0.5px solid var(--border);color:var(--text);vertical-align:middle}
+    .data-table tr:last-child td{border-bottom:none}
+    .data-table tr:hover td{background:var(--gray-light)}
+
+    /* BADGES */
+    .badge{font-size:10px;font-weight:600;padding:3px 8px}
+    .badge-roman{background:#FEF3C7;color:#92400E}
+    .badge-sf{background:#EDE9FE;color:#5B21B6}
+    .badge-policier{background:#FEE2E2;color:#B91C1C}
+    .badge-hist{background:#D1FAE5;color:#065F46}
+    .badge-bio{background:#DBEAFE;color:#1E40AF}
+    .badge-jeunesse{background:#FCE7F3;color:#9D174D}
+    .badge-emprunte{background:var(--orange-bg);color:var(--orange)}
+    .badge-retard{background:var(--red-bg);color:var(--red)}
+    .badge-rendu{background:var(--green-bg);color:var(--green)}
+    .badge-place{background:var(--blue-bg);color:var(--blue)}
+
+    /* BUTTONS */
+    .btn{border:none;cursor:pointer;font-family:'Inter',sans-serif;display:inline-flex;align-items:center;gap:5px;font-weight:600;transition:all 0.15s;padding:7px 12px;font-size:11px}
+    .btn-brown{background:var(--brown);color:var(--white)}.btn-brown:hover{background:#78350F}
+    .btn-gold{background:var(--gold);color:var(--navy)}.btn-gold:hover{background:#d4b57c}
+    .btn-green{background:var(--green);color:var(--white)}.btn-green:hover{background:#15803D}
+    .btn-danger{background:var(--red);color:var(--white);padding:5px 9px}.btn-danger:hover{background:#b91c1c}
+    .btn-sm{background:var(--gray-light);color:var(--text);border:0.5px solid var(--border)}
+    .btn-edit{background:var(--gray-light);color:var(--text);border:0.5px solid var(--border);padding:5px 8px;font-size:10px}
+
+    /* SECTION HDR */
+    .section-hdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem;flex-wrap:wrap;gap:8px}
+    .section-hdr-title{font-size:13px;font-weight:600;color:var(--navy)}
+    .search-bar{display:flex;gap:8px;margin-bottom:1rem;flex-wrap:wrap}
+    .search-bar input,.search-bar select{border:1px solid var(--border);padding:7px 12px;font-size:12px;background:var(--white);outline:none;font-family:'Inter',sans-serif}
+    .search-bar input{width:220px}.search-bar input:focus,.search-bar select:focus{border-color:var(--brown)}
+
+    /* MODAL */
+    .modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.45);z-index:200;align-items:center;justify-content:center;padding:1rem}
+    .modal-overlay.open{display:flex}
+    .modal{background:var(--white);width:100%;max-width:520px;max-height:90vh;overflow-y:auto}
+    .modal-header{padding:1.25rem 1.5rem;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;background:var(--white);z-index:1}
+    .modal-title{font-family:'Playfair Display',serif;font-size:1.1rem;color:var(--navy);font-weight:700}
+    .modal-close{background:none;border:none;cursor:pointer;font-size:20px;color:var(--gray)}
+    .modal-body{padding:1.5rem}
+    .modal-footer{padding:1rem 1.5rem;border-top:1px solid var(--border);display:flex;gap:8px;justify-content:flex-end}
+    .form-group{margin-bottom:1rem}
+    .form-group label{display:block;font-size:11px;font-weight:600;color:var(--navy);text-transform:uppercase;letter-spacing:0.05em;margin-bottom:5px}
+    .form-group input,.form-group select,.form-group textarea{width:100%;border:1px solid var(--border);padding:9px 12px;font-size:13px;background:var(--cream);outline:none;font-family:'Inter',sans-serif;color:var(--text)}
+    .form-group input:focus,.form-group select:focus,.form-group textarea:focus{border-color:var(--brown)}
+    .form-row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+    .form-hint{font-size:11px;color:var(--muted);margin-top:4px}
+
+    /* RAPPORT */
+    .rapport-card{background:var(--white);border:0.5px solid var(--border);padding:1.25rem;margin-bottom:12px}
+    .rapport-card h4{font-size:11px;font-weight:600;color:var(--navy);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:0.75rem;padding-bottom:0.5rem;border-bottom:1px solid var(--border)}
+    .rapport-row{display:flex;justify-content:space-between;font-size:12px;padding:6px 0;border-bottom:0.5px solid var(--gray-light)}
+    .rapport-row:last-child{border-bottom:none}
+    .rapport-val{font-weight:700;color:var(--navy)}
+
+    /* EMPTY */
+    .empty-state{text-align:center;padding:2.5rem;color:var(--muted)}
+    .empty-state i{font-size:40px;display:block;margin-bottom:0.75rem;color:var(--border)}
+    .empty-state p{font-size:13px}
+
+    /* TOAST */
+    .toast{position:fixed;bottom:1.5rem;right:1.5rem;background:var(--navy);color:var(--white);padding:11px 20px;font-size:13px;font-weight:500;z-index:999;display:none;align-items:center;gap:8px;border-left:3px solid var(--brown)}
+    .toast.show{display:flex}
+    .toast i{color:#FCD34D;font-size:17px}
+  </style>
+</head>
+<body>
+
+<div class="toast" id="toast"><i class="ti ti-check" aria-hidden="true"></i><span id="toast-msg"></span></div>
+
+<!-- MODAL LIVRE -->
+<div class="modal-overlay" id="modal-livre">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title" id="modal-livre-title">Ajouter un livre</div>
+      <button class="modal-close" onclick="closeModal('modal-livre')"><i class="ti ti-x" aria-hidden="true"></i></button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="liv-edit-id">
+      <div class="form-group"><label>Titre du livre *</label><input type="text" id="liv-titre" placeholder="Titre complet du livre"></div>
+      <div class="form-row">
+        <div class="form-group"><label>Auteur *</label><input type="text" id="liv-auteur" placeholder="Prénom Nom"></div>
+        <div class="form-group"><label>Genre *</label>
+          <select id="liv-genre">
+            <option value="Roman">Roman</option>
+            <option value="Science-Fiction">Science-Fiction</option>
+            <option value="Policier">Policier</option>
+            <option value="Histoire">Histoire</option>
+            <option value="Biographie">Biographie</option>
+            <option value="Jeunesse">Jeunesse</option>
+            <option value="Poésie">Poésie</option>
+            <option value="Philosophie">Philosophie</option>
+            <option value="Autre">Autre</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label>Nombre d'exemplaires *</label><input type="number" id="liv-stock" placeholder="Ex: 3" min="1"></div>
+        <div class="form-group"><label>Année d'édition</label><input type="text" id="liv-annee" placeholder="Ex: 2020"></div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label>ISBN (optionnel)</label><input type="text" id="liv-isbn" placeholder="Ex: 978-..."></div>
+        <div class="form-group"><label>Langue</label>
+          <select id="liv-langue">
+            <option>Français</option>
+            <option>Créole haïtien</option>
+            <option>Anglais</option>
+            <option>Espagnol</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-group"><label>Description / Résumé</label><textarea id="liv-desc" rows="2" placeholder="Bref résumé du livre..." style="resize:vertical"></textarea></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-brown" onclick="saveLivre()"><i class="ti ti-check" aria-hidden="true"></i>Enregistrer</button>
+      <button class="btn btn-sm" onclick="closeModal('modal-livre')">Annuler</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL EMPRUNT -->
+<div class="modal-overlay" id="modal-emprunt">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title">Enregistrer un emprunt</div>
+      <button class="modal-close" onclick="closeModal('modal-emprunt')"><i class="ti ti-x" aria-hidden="true"></i></button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="emp-livre-id">
+      <!-- Info livre -->
+      <div style="background:var(--brown-bg);border:1px solid rgba(146,64,14,0.25);padding:12px 14px;margin-bottom:1.25rem;display:flex;align-items:center;gap:10px">
+        <div style="font-size:24px" id="emp-livre-emoji">📗</div>
+        <div>
+          <div style="font-size:13px;font-weight:700;color:var(--navy)" id="emp-livre-titre">Titre</div>
+          <div style="font-size:11px;color:var(--brown)" id="emp-livre-auteur">Auteur</div>
+          <div style="font-size:11px;color:var(--green);font-weight:600;margin-top:2px" id="emp-livre-dispo"></div>
+        </div>
+      </div>
+      <!-- Élève -->
+      <div style="font-size:11px;font-weight:700;color:var(--navy);text-transform:uppercase;letter-spacing:0.08em;margin-bottom:10px;padding-bottom:6px;border-bottom:1px solid var(--border)">Informations de l'élève</div>
+      <div class="form-row">
+        <div class="form-group"><label>Prénom *</label><input type="text" id="emp-prenom" placeholder="Prénom de l'élève"></div>
+        <div class="form-group"><label>Nom *</label><input type="text" id="emp-nom" placeholder="Nom de famille"></div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label>Classe *</label>
+          <select id="emp-classe">
+            <option value="">-- Choisir la classe --</option>
+            <option>Préscolaire</option>
+            <option>1ère Fondamentale</option><option>2ème Fondamentale</option><option>3ème Fondamentale</option>
+            <option>4ème Fondamentale</option><option>5ème Fondamentale</option><option>6ème Fondamentale</option>
+            <option>7ème Fondamentale</option><option>8ème Fondamentale</option><option>9ème Fondamentale</option>
+            <option>Nouveau Secondaire</option><option>Rhétorique</option>
+            <option>Terminale A</option><option>Terminale B</option>
+          </select>
+        </div>
+        <div class="form-group"><label>Téléphone parent</label><input type="text" id="emp-tel" placeholder="+509 XX XX XX XX"></div>
+      </div>
+      <!-- Dates -->
+      <div style="font-size:11px;font-weight:700;color:var(--navy);text-transform:uppercase;letter-spacing:0.08em;margin-bottom:10px;padding-bottom:6px;border-bottom:1px solid var(--border);margin-top:4px">Dates</div>
+      <div class="form-row">
+        <div class="form-group"><label>Date d'emprunt *</label><input type="date" id="emp-date"></div>
+        <div class="form-group"><label>Date de remise prévue *</label><input type="date" id="emp-retour"></div>
+      </div>
+      <!-- Durée rapide -->
+      <div style="display:flex;gap:6px;margin-top:-6px;margin-bottom:12px;flex-wrap:wrap">
+        <span style="font-size:10px;color:var(--muted);align-self:center">Durée rapide :</span>
+        <button type="button" onclick="setDuree(7)" style="background:var(--gray-light);border:0.5px solid var(--border);padding:4px 10px;font-size:11px;cursor:pointer;font-family:Inter,sans-serif">7 jours</button>
+        <button type="button" onclick="setDuree(14)" style="background:var(--navy);color:var(--white);border:none;padding:4px 10px;font-size:11px;cursor:pointer;font-family:Inter,sans-serif">14 jours</button>
+        <button type="button" onclick="setDuree(30)" style="background:var(--gray-light);border:0.5px solid var(--border);padding:4px 10px;font-size:11px;cursor:pointer;font-family:Inter,sans-serif">30 jours</button>
+      </div>
+      <!-- Type -->
+      <div class="form-group"><label>Type d'emprunt</label>
+        <select id="emp-type">
+          <option value="emprunt">📦 Emprunt (à ramener)</option>
+          <option value="place">🪑 Consultation sur place</option>
+        </select>
+      </div>
+      <!-- Alerte -->
+      <div style="background:var(--blue-bg);border:1px solid rgba(37,99,235,0.2);padding:10px 14px;font-size:12px;color:var(--blue);display:flex;align-items:flex-start;gap:8px;margin-top:4px">
+        <i class="ti ti-bell" style="font-size:16px;flex-shrink:0;margin-top:1px" aria-hidden="true"></i>
+        <div>Une alerte automatique sera générée si le livre n'est pas rendu à la date prévue. Le bibliothécaire sera notifié dès le lendemain de la date de remise.</div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-brown" onclick="saveEmprunt()"><i class="ti ti-book" aria-hidden="true"></i>Confirmer l'emprunt</button>
+      <button class="btn btn-sm" onclick="closeModal('modal-emprunt')">Annuler</button>
+    </div>
+  </div>
+</div>
+
+<!-- SIDEBAR -->
+<aside class="sidebar">
+  <div class="sb-logo">
+    <div class="sb-logo-mark">
+      <div class="sb-badge">📚</div>
+      <div class="sb-name">Bibliothèque ILCH<small>Institution Louis Chauvet</small></div>
+    </div>
+  </div>
+  <nav class="sb-nav">
+    <div class="sb-section">Vue d'ensemble</div>
+    <div class="sb-item active" onclick="showPanel('dash',this)"><i class="ti ti-home" aria-hidden="true"></i>Tableau de bord</div>
+    <div class="sb-section">Catalogue</div>
+    <div class="sb-item" onclick="showPanel('catalogue',this)"><i class="ti ti-books" aria-hidden="true"></i>Catalogue des livres</div>
+    <div class="sb-item" onclick="showPanel('ajouter',this)"><i class="ti ti-plus" aria-hidden="true"></i>Ajouter un livre</div>
+    <div class="sb-section">Emprunts</div>
+    <div class="sb-item" onclick="showPanel('emprunts',this)"><i class="ti ti-book" aria-hidden="true"></i>Emprunts en cours<span class="sb-count orange" id="emp-count">0</span></div>
+    <div class="sb-item" onclick="showPanel('retards',this)"><i class="ti ti-alert-circle" aria-hidden="true"></i>Retards<span class="sb-count" id="ret-count">0</span></div>
+    <div class="sb-item" onclick="showPanel('historique',this)"><i class="ti ti-history" aria-hidden="true"></i>Historique</div>
+    <div class="sb-section">Rapports</div>
+    <div class="sb-item" onclick="showPanel('rapport',this)"><i class="ti ti-file-analytics" aria-hidden="true"></i>Rapport</div>
+  </nav>
+  <div class="sb-user">
+    <div class="sb-user-row">
+      <div class="sb-avatar">BIB</div>
+      <div><div class="sb-user-name">Bibliothécaire</div><div class="sb-user-role">ILCH · Service lecture</div></div>
+    </div>
+    <button class="logout-btn" onclick="window.location.href='login.html'"><i class="ti ti-logout" style="font-size:13px" aria-hidden="true"></i> Déconnexion</button>
+  </div>
+</aside>
+
+<div class="main">
+  <div class="topbar">
+    <div class="topbar-title" id="topbar-title">Tableau de bord</div>
+    <div class="lib-badge"><i class="ti ti-books" aria-hidden="true"></i>Bibliothèque ILCH</div>
+  </div>
+  <div class="content">
+
+    <!-- DASHBOARD -->
+    <div class="panel active" id="panel-dash">
+      <div class="stats-row">
+        <div class="stat-card brown"><i class="ti ti-books stat-icon" aria-hidden="true"></i><div class="stat-label">Total livres</div><div class="stat-val" id="ds-livres">0</div><div class="stat-sub">Dans le catalogue</div></div>
+        <div class="stat-card orange"><i class="ti ti-book stat-icon" aria-hidden="true"></i><div class="stat-label">Emprunts en cours</div><div class="stat-val" id="ds-emprunts">0</div><div class="stat-sub">Non rendus</div></div>
+        <div class="stat-card red"><i class="ti ti-alert-circle stat-icon" aria-hidden="true"></i><div class="stat-label">Retards</div><div class="stat-val" id="ds-retards">0</div><div class="stat-sub">Date dépassée</div></div>
+        <div class="stat-card green"><i class="ti ti-check stat-icon" aria-hidden="true"></i><div class="stat-label">Rendus ce mois</div><div class="stat-val" id="ds-rendus">0</div><div class="stat-sub">Emprunts clôturés</div></div>
+      </div>
+
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">
+        <div>
+          <div style="font-size:13px;font-weight:600;color:var(--navy);margin-bottom:10px">Actions rapides</div>
+          <div style="display:flex;flex-direction:column;gap:8px">
+            <button class="btn btn-brown" style="width:100%;justify-content:center" onclick="showPanel('ajouter',document.querySelector('.sb-item:nth-child(5)'))"><i class="ti ti-book-plus" aria-hidden="true"></i>Ajouter un livre au catalogue</button>
+            <button class="btn btn-gold" style="width:100%;justify-content:center" onclick="showPanel('catalogue',document.querySelector('.sb-item:nth-child(4)'))"><i class="ti ti-book" aria-hidden="true"></i>Enregistrer un emprunt</button>
+            <button class="btn btn-green" style="width:100%;justify-content:center" onclick="showPanel('emprunts',document.querySelector('.sb-item:nth-child(7)'))"><i class="ti ti-check" aria-hidden="true"></i>Marquer un retour</button>
+            <button class="btn" style="background:var(--red);color:var(--white);width:100%;justify-content:center" onclick="showPanel('retards',document.querySelector('.sb-item:nth-child(8)'))"><i class="ti ti-alert-circle" aria-hidden="true"></i>Voir les retards</button>
+          </div>
+        </div>
+        <div>
+          <div style="font-size:13px;font-weight:600;color:var(--navy);margin-bottom:10px">Emprunts récents</div>
+          <div id="recent-emprunts" style="display:flex;flex-direction:column;gap:8px"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- CATALOGUE -->
+    <div class="panel" id="panel-catalogue">
+      <div class="section-hdr">
+        <div class="section-hdr-title">Catalogue des livres</div>
+        <button class="btn btn-brown" onclick="showPanel('ajouter',document.querySelector('.sb-item:nth-child(5)'))"><i class="ti ti-plus" aria-hidden="true"></i>Ajouter un livre</button>
+      </div>
+      <div class="search-bar">
+        <input type="text" id="search-cat" placeholder="Rechercher titre, auteur..." oninput="filterCatalogue()">
+        <select id="filter-genre" onchange="filterCatalogue()">
+          <option value="">Tous les genres</option>
+          <option>Roman</option><option>Science-Fiction</option><option>Policier</option>
+          <option>Histoire</option><option>Biographie</option><option>Jeunesse</option>
+          <option>Poésie</option><option>Philosophie</option><option>Autre</option>
+        </select>
+        <select id="filter-dispo" onchange="filterCatalogue()">
+          <option value="">Toute disponibilité</option>
+          <option value="dispo">Disponibles</option>
+          <option value="epuise">Épuisés</option>
+        </select>
+      </div>
+      <div class="books-grid" id="books-grid"></div>
+    </div>
+
+    <!-- AJOUTER UN LIVRE -->
+    <div class="panel" id="panel-ajouter">
+      <div class="section-hdr"><div class="section-hdr-title">Ajouter un livre au catalogue</div></div>
+      <div style="background:var(--white);border:0.5px solid var(--border);padding:1.5rem;max-width:600px">
+        <div class="form-group"><label>Titre du livre *</label><input type="text" id="add-titre" placeholder="Titre complet du livre"></div>
+        <div class="form-row">
+          <div class="form-group"><label>Auteur *</label><input type="text" id="add-auteur" placeholder="Prénom Nom"></div>
+          <div class="form-group"><label>Genre *</label>
+            <select id="add-genre">
+              <option>Roman</option><option>Science-Fiction</option><option>Policier</option>
+              <option>Histoire</option><option>Biographie</option><option>Jeunesse</option>
+              <option>Poésie</option><option>Philosophie</option><option>Autre</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group"><label>Nombre d'exemplaires *</label><input type="number" id="add-stock" placeholder="Ex: 3" min="1"></div>
+          <div class="form-group"><label>Année d'édition</label><input type="text" id="add-annee" placeholder="Ex: 2020"></div>
+        </div>
+        <div class="form-row">
+          <div class="form-group"><label>ISBN (optionnel)</label><input type="text" id="add-isbn" placeholder="Ex: 978-..."></div>
+          <div class="form-group"><label>Langue</label>
+            <select id="add-langue"><option>Français</option><option>Créole haïtien</option><option>Anglais</option><option>Espagnol</option></select>
+          </div>
+        </div>
+        <div class="form-group"><label>Description / Résumé</label><textarea id="add-desc" rows="3" placeholder="Bref résumé du livre..." style="resize:vertical;width:100%;border:1px solid var(--border);padding:9px 12px;font-size:13px;background:var(--cream);outline:none;font-family:'Inter',sans-serif"></textarea></div>
+        <div style="display:flex;gap:8px;margin-top:8px">
+          <button class="btn btn-brown" onclick="addLivreFromPanel()"><i class="ti ti-check" aria-hidden="true"></i>Ajouter au catalogue</button>
+          <button class="btn btn-sm" onclick="clearAddForm()">Effacer</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- EMPRUNTS EN COURS -->
+    <div class="panel" id="panel-emprunts">
+      <div class="section-hdr">
+        <div class="section-hdr-title">Emprunts en cours</div>
+      </div>
+      <div class="search-bar">
+        <input type="text" id="search-emp" placeholder="Rechercher un emprunteur..." oninput="filterTable('tbl-emprunts','search-emp')">
+      </div>
+      <table class="data-table" id="tbl-emprunts">
+        <thead><tr><th>Livre</th><th>Emprunteur</th><th>Classe</th><th>Date emprunt</th><th>Retour prévu</th><th>Statut</th><th>Actions</th></tr></thead>
+        <tbody id="tbody-emprunts"></tbody>
+      </table>
+    </div>
+
+    <!-- RETARDS -->
+    <div class="panel" id="panel-retards">
+      <div class="section-hdr"><div class="section-hdr-title">Livres en retard de retour</div></div>
+      <table class="data-table" id="tbl-retards">
+        <thead><tr><th>Livre</th><th>Emprunteur</th><th>Classe</th><th>Téléphone</th><th>Retour prévu</th><th>Jours de retard</th><th>Actions</th></tr></thead>
+        <tbody id="tbody-retards"></tbody>
+      </table>
+    </div>
+
+    <!-- HISTORIQUE -->
+    <div class="panel" id="panel-historique">
+      <div class="section-hdr">
+        <div class="section-hdr-title">Historique des emprunts</div>
+        <button class="btn btn-gold" onclick="exportHistorique()"><i class="ti ti-download" aria-hidden="true"></i>Exporter</button>
+      </div>
+      <table class="data-table" id="tbl-historique">
+        <thead><tr><th>Livre</th><th>Emprunteur</th><th>Classe</th><th>Emprunté le</th><th>Retour prévu</th><th>Rendu le</th><th>Statut</th></tr></thead>
+        <tbody id="tbody-historique"></tbody>
+      </table>
+    </div>
+
+    <!-- ALERTES -->
+    <div class="panel" id="panel-alertes">
+      <div class="section-hdr"><div class="section-hdr-title">Alertes — Livres à récupérer</div></div>
+      <div id="alertes-list"></div>
+    </div>
+      <div class="section-hdr">
+        <div class="section-hdr-title">Rapport de la bibliothèque</div>
+        <button class="btn btn-brown" onclick="window.print()"><i class="ti ti-printer" aria-hidden="true"></i>Imprimer</button>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">
+        <div class="rapport-card">
+          <h4>Résumé général</h4>
+          <div class="rapport-row"><span>Total livres catalogue</span><span class="rapport-val" id="rp-livres">0</span></div>
+          <div class="rapport-row"><span>Total exemplaires</span><span class="rapport-val" id="rp-exemplaires">0</span></div>
+          <div class="rapport-row"><span>Emprunts en cours</span><span class="rapport-val" id="rp-emprunts">0</span></div>
+          <div class="rapport-row"><span>Retards</span><span class="rapport-val" style="color:var(--red)" id="rp-retards">0</span></div>
+          <div class="rapport-row"><span>Total emprunts historique</span><span class="rapport-val" id="rp-total">0</span></div>
+        </div>
+        <div class="rapport-card">
+          <h4>Livres les plus empruntés</h4>
+          <div id="rp-top-livres"><div style="font-size:12px;color:var(--muted)">Aucun emprunt enregistré</div></div>
+        </div>
+        <div class="rapport-card">
+          <h4>Répartition par genre</h4>
+          <div id="rp-genres"><div style="font-size:12px;color:var(--muted)">Aucun livre dans le catalogue</div></div>
+        </div>
+        <div class="rapport-card">
+          <h4>Emprunteurs actifs</h4>
+          <div id="rp-emprunteurs"><div style="font-size:12px;color:var(--muted)">Aucun emprunt enregistré</div></div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+// ─── STORAGE ───────────────────────────────────────────────
+var DB={
+  get:function(k){try{return JSON.parse(localStorage.getItem('ilch_bib_'+k))||[];}catch(e){return [];}},
+  set:function(k,v){localStorage.setItem('ilch_bib_'+k,JSON.stringify(v));},
+  id:function(){return 'bib_'+Date.now()+'_'+Math.random().toString(36).substr(2,4);}
+};
+
+// ─── GENRE COLORS ──────────────────────────────────────────
+var genreColors={
+  'Roman':'#FEF3C7;color:#92400E',
+  'Science-Fiction':'#EDE9FE;color:#5B21B6',
+  'Policier':'#FEE2E2;color:#B91C1C',
+  'Histoire':'#D1FAE5;color:#065F46',
+  'Biographie':'#DBEAFE;color:#1E40AF',
+  'Jeunesse':'#FCE7F3;color:#9D174D',
+  'Poésie':'#FEF3C7;color:#B45309',
+  'Philosophie':'#F0FDF4;color:#166534',
+  'Autre':'#F3F4F6;color:#374151'
+};
+
+var genreEmojis={
+  'Roman':'📖','Science-Fiction':'🚀','Policier':'🔍',
+  'Histoire':'🏛️','Biographie':'👤','Jeunesse':'🌟',
+  'Poésie':'✍️','Philosophie':'🤔','Autre':'📗'
+};
+
+var genreBg={
+  'Roman':'#FEF9C3','Science-Fiction':'#EDE9FE','Policier':'#FEE2E2',
+  'Histoire':'#D1FAE5','Biographie':'#DBEAFE','Jeunesse':'#FCE7F3',
+  'Poésie':'#FEF9C3','Philosophie':'#F0FDF4','Autre':'#F3F4F6'
+};
+
+// ─── UTILS ─────────────────────────────────────────────────
+function today(){ return new Date().toISOString().slice(0,10); }
+
+function getDispoCount(livreId){
+  var livre=DB.get('livres').find(function(x){return x.id===livreId;})||{};
+  var empruntes=DB.get('emprunts').filter(function(e){return e.livreId===livreId&&e.statut==='emprunte';}).length;
+  return Math.max(0,(livre.stock||0)-empruntes);
+}
+
+function isRetard(e){
+  return e.statut==='emprunte'&&e.retour<today()&&e.type!=='place';
+}
+
+function joursRetard(date){
+  var diff=new Date(today())-new Date(date);
+  return Math.floor(diff/(1000*60*60*24));
+}
+
+function openModal(id){document.getElementById(id).classList.add('open');}
+function closeModal(id){document.getElementById(id).classList.remove('open');}
+
+function showPanel(id,el){
+  document.querySelectorAll('.panel').forEach(function(p){p.classList.remove('active')});
+  document.getElementById('panel-'+id).classList.add('active');
+  document.querySelectorAll('.sb-item').forEach(function(i){i.classList.remove('active')});
+  if(el)el.classList.add('active');
+  var titles={dash:'Tableau de bord',catalogue:'Catalogue des livres',ajouter:'Ajouter un livre',emprunts:'Emprunts en cours',retards:'Retards',historique:'Historique des emprunts',rapport:'Rapport bibliothèque'};
+  document.getElementById('topbar-title').textContent=titles[id]||id;
+  renderAll();
+}
+
+// ─── RENDER ────────────────────────────────────────────────
+function renderAll(){
+  renderDash(); renderCatalogue(); renderEmprunts();
+  renderRetards(); renderHistorique(); renderRapport();
+}
+
+function renderDash(){
+  var livres=DB.get('livres');
+  var emprunts=DB.get('emprunts');
+  var retards=emprunts.filter(function(e){return isRetard(e);});
+  var rendus=emprunts.filter(function(e){return e.statut==='rendu';});
+  var enCours=emprunts.filter(function(e){return e.statut==='emprunte';});
+  document.getElementById('ds-livres').textContent=livres.length;
+  document.getElementById('ds-emprunts').textContent=enCours.length;
+  document.getElementById('ds-retards').textContent=retards.length;
+  document.getElementById('ds-rendus').textContent=rendus.length;
+  var ec=document.getElementById('emp-count');if(ec)ec.textContent=enCours.length||'';
+  var rc=document.getElementById('ret-count');if(rc)rc.textContent=retards.length||'';
+  // Emprunts récents
+  var re=document.getElementById('recent-emprunts');
+  var last=emprunts.filter(function(e){return e.statut==='emprunte';}).slice(-4).reverse();
+  re.innerHTML=last.length?last.map(function(e){
+    var l=livres.find(function(x){return x.id===e.livreId;})||{titre:'?'};
+    var retard=isRetard(e);
+    return '<div style="background:var(--white);border:0.5px solid var(--border);padding:9px 12px;display:flex;align-items:center;gap:10px">'+
+      '<div style="font-size:20px;flex-shrink:0">'+(genreEmojis[l.genre]||'📗')+'</div>'+
+      '<div style="min-width:0;flex:1"><div style="font-size:12px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">'+l.titre+'</div>'+
+      '<div style="font-size:10px;color:var(--muted)">'+e.nom+' · '+e.date+'</div></div>'+
+      (retard?'<span style="background:var(--red-bg);color:var(--red);font-size:9px;font-weight:700;padding:2px 6px;flex-shrink:0">Retard</span>':'')+'</div>';
+  }).join(''):'<div style="font-size:12px;color:var(--muted);text-align:center;padding:1rem">Aucun emprunt en cours</div>';
+}
+
+function renderCatalogue(){
+  var livres=DB.get('livres');
+  var grid=document.getElementById('books-grid');
+  var q=(document.getElementById('search-cat')||{value:''}).value.toLowerCase();
+  var g=(document.getElementById('filter-genre')||{value:''}).value;
+  var d=(document.getElementById('filter-dispo')||{value:''}).value;
+  var filtered=livres.filter(function(l){
+    var matchQ=!q||(l.titre+l.auteur).toLowerCase().indexOf(q)>-1;
+    var matchG=!g||l.genre===g;
+    var dispo=getDispoCount(l.id);
+    var matchD=!d||(d==='dispo'&&dispo>0)||(d==='epuise'&&dispo===0);
+    return matchQ&&matchG&&matchD;
+  });
+  if(!filtered.length){
+    grid.innerHTML='<div style="grid-column:1/-1"><div class="empty-state"><i class="ti ti-books" aria-hidden="true"></i><p>'+(!livres.length?'Aucun livre dans le catalogue. Cliquez sur "Ajouter un livre".':'Aucun résultat pour cette recherche.')+'</p></div></div>';
+    return;
+  }
+  grid.innerHTML=filtered.map(function(l){
+    var dispo=getDispoCount(l.id);
+    var stockCls=dispo===0?'stock-empty':dispo<=1?'stock-low':'stock-ok';
+    var stockLabel=dispo===0?'Aucun exemplaire disponible':dispo+' exemplaire'+(dispo>1?'s':'')+' disponible'+(dispo>1?'s':'');
+    var gc=genreColors[l.genre]||'#F3F4F6;color:#374151';
+    var bg=genreBg[l.genre]||'#F3F4F6';
+    return '<div class="book-card">'+
+      '<div class="book-spine" style="background:'+(l.genre==='Science-Fiction'?'#7C3AED':l.genre==='Policier'?'#DC2626':l.genre==='Histoire'?'#16A34A':l.genre==='Biographie'?'#2563EB':l.genre==='Jeunesse'?'#DB2777':'#92400E')+'"></div>'+
+      '<div class="book-body">'+
+        '<div class="book-cover" style="background:'+bg+'">'+
+          '<div class="book-cover-icon">'+(genreEmojis[l.genre]||'📗')+'</div>'+
+          '<span class="book-genre" style="background:'+gc.split(';')[0]+';'+gc.split(';')[1]+'">'+l.genre+'</span>'+
+        '</div>'+
+        '<div class="book-title">'+l.titre+'</div>'+
+        '<div class="book-author">'+l.auteur+(l.annee?' · '+l.annee:'')+'</div>'+
+        (l.desc?'<div style="font-size:11px;color:var(--gray);line-height:1.5;margin-bottom:6px;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical">'+l.desc+'</div>':'')+
+        '<div class="book-meta">'+
+          '<span class="book-stock '+stockCls+'">'+stockLabel+'</span>'+
+          '<span style="font-size:10px;color:var(--muted)">'+l.langue+'</span>'+
+        '</div>'+
+        '<div class="book-actions">'+
+          (dispo>0?'<button class="btn btn-brown" style="flex:1;justify-content:center;padding:6px 8px;font-size:10px" onclick="openEmpruntModal(\''+l.id+'\')"><i class="ti ti-book" aria-hidden="true"></i>Emprunter</button>':
+            '<button class="btn btn-sm" style="flex:1;justify-content:center;padding:6px 8px;font-size:10px" disabled>Indisponible</button>')+
+          '<button class="btn btn-edit" onclick="editLivre(\''+l.id+'\')"><i class="ti ti-pencil" aria-hidden="true"></i></button>'+
+          '<button class="btn btn-danger" onclick="deleteLivre(\''+l.id+'\')"><i class="ti ti-trash" aria-hidden="true"></i></button>'+
+        '</div>'+
+      '</div>'+
+    '</div>';
+  }).join('');
+}
+
+function filterCatalogue(){renderCatalogue();}
+
+function renderEmprunts(){
+  var livres=DB.get('livres');
+  var emprunts=DB.get('emprunts').filter(function(e){return e.statut==='emprunte';});
+  var tb=document.getElementById('tbody-emprunts');
+  if(!emprunts.length){tb.innerHTML='<tr><td colspan="7"><div class="empty-state"><i class="ti ti-book" aria-hidden="true"></i><p>Aucun emprunt en cours.</p></div></td></tr>';return;}
+  tb.innerHTML=emprunts.map(function(e){
+    var l=livres.find(function(x){return x.id===e.livreId;})||{titre:'?',genre:''};
+    var retard=isRetard(e);
+    var statCls=retard?'badge-retard':e.type==='place'?'badge-place':'badge-emprunte';
+    var statLbl=retard?'Retard':e.type==='place'?'Sur place':'En cours';
+    return '<tr data-search="'+(e.nom+' '+l.titre).toLowerCase()+'">'+
+      '<td><strong>'+l.titre+'</strong><div style="font-size:10px;color:var(--muted)">'+l.auteur+'</div></td>'+
+      '<td>'+e.nom+'</td>'+
+      '<td>'+(e.classe||'—')+'</td>'+
+      '<td>'+e.date+'</td>'+
+      '<td style="color:'+(retard?'var(--red)':'var(--text)')+'font-weight:'+(retard?'600':'400')+'">'+e.retour+'</td>'+
+      '<td><span class="badge '+statCls+'">'+statLbl+'</span></td>'+
+      '<td><div style="display:flex;gap:5px">'+
+        '<button class="btn btn-green" style="padding:5px 8px;font-size:10px" onclick="marquerRendu(\''+e.id+'\')"><i class="ti ti-check" aria-hidden="true"></i>Rendu</button>'+
+        '<button class="btn btn-danger" style="padding:5px 8px" onclick="deleteEmprunt(\''+e.id+'\')"><i class="ti ti-trash" aria-hidden="true"></i></button>'+
+      '</div></td></tr>';
+  }).join('');
+}
+
+function renderRetards(){
+  var livres=DB.get('livres');
+  var retards=DB.get('emprunts').filter(function(e){return isRetard(e);});
+  var tb=document.getElementById('tbody-retards');
+  if(!retards.length){tb.innerHTML='<tr><td colspan="7"><div class="empty-state"><i class="ti ti-check" aria-hidden="true"></i><p>Aucun retard ! Tous les emprunts sont dans les délais.</p></div></td></tr>';return;}
+  tb.innerHTML=retards.map(function(e){
+    var l=livres.find(function(x){return x.id===e.livreId;})||{titre:'?'};
+    var jours=joursRetard(e.retour);
+    return '<tr>'+
+      '<td><strong>'+l.titre+'</strong></td>'+
+      '<td>'+e.nom+'</td>'+
+      '<td>'+(e.classe||'—')+'</td>'+
+      '<td>'+(e.tel||'—')+'</td>'+
+      '<td style="color:var(--red)">'+e.retour+'</td>'+
+      '<td><span style="background:var(--red-bg);color:var(--red);font-size:11px;font-weight:700;padding:3px 8px">'+jours+' jour'+(jours>1?'s':'')+' de retard</span></td>'+
+      '<td><div style="display:flex;gap:5px">'+
+        '<button class="btn btn-green" style="padding:5px 8px;font-size:10px" onclick="marquerRendu(\''+e.id+'\')"><i class="ti ti-check" aria-hidden="true"></i>Rendu</button>'+
+        '<button class="btn" style="background:var(--orange-bg);color:var(--orange);border:none;padding:5px 8px;font-size:10px;cursor:pointer;font-family:Inter,sans-serif;display:inline-flex;align-items:center;gap:3px" onclick="showToast(\'Rappel envoyé à '+e.nom.replace(/'/g,"\\'")+'\')"><i class="ti ti-send" aria-hidden="true"></i>Rappel</button>'+
+      '</div></td></tr>';
+  }).join('');
+}
+
+function renderHistorique(){
+  var livres=DB.get('livres');
+  var emprunts=DB.get('emprunts');
+  var tb=document.getElementById('tbody-historique');
+  if(!emprunts.length){tb.innerHTML='<tr><td colspan="7"><div class="empty-state"><i class="ti ti-history" aria-hidden="true"></i><p>Aucun emprunt dans l\'historique.</p></div></td></tr>';return;}
+  var sorted=emprunts.slice().sort(function(a,b){return new Date(b.date)-new Date(a.date);});
+  tb.innerHTML=sorted.map(function(e){
+    var l=livres.find(function(x){return x.id===e.livreId;})||{titre:'?'};
+    var cls=e.statut==='rendu'?'badge-rendu':isRetard(e)?'badge-retard':'badge-emprunte';
+    var lbl=e.statut==='rendu'?'Rendu':isRetard(e)?'Retard':'En cours';
+    return '<tr>'+
+      '<td><strong>'+l.titre+'</strong></td>'+
+      '<td>'+e.nom+'</td>'+
+      '<td>'+(e.classe||'—')+'</td>'+
+      '<td>'+e.date+'</td>'+
+      '<td>'+e.retour+'</td>'+
+      '<td>'+(e.dateRendu||'—')+'</td>'+
+      '<td><span class="badge '+cls+'">'+lbl+'</span></td></tr>';
+  }).join('');
+}
+
+function renderRapport(){
+  var livres=DB.get('livres');
+  var emprunts=DB.get('emprunts');
+  var enCours=emprunts.filter(function(e){return e.statut==='emprunte';});
+  var retards=emprunts.filter(function(e){return isRetard(e);});
+  var totalEx=livres.reduce(function(s,l){return s+Number(l.stock||0);},0);
+  document.getElementById('rp-livres').textContent=livres.length;
+  document.getElementById('rp-exemplaires').textContent=totalEx;
+  document.getElementById('rp-emprunts').textContent=enCours.length;
+  document.getElementById('rp-retards').textContent=retards.length;
+  document.getElementById('rp-total').textContent=emprunts.length;
+  // Top livres
+  var countByLivre={};
+  emprunts.forEach(function(e){countByLivre[e.livreId]=(countByLivre[e.livreId]||0)+1;});
+  var top=Object.keys(countByLivre).sort(function(a,b){return countByLivre[b]-countByLivre[a];}).slice(0,5);
+  document.getElementById('rp-top-livres').innerHTML=top.length?top.map(function(id){
+    var l=livres.find(function(x){return x.id===id;})||{titre:'?'};
+    return '<div class="rapport-row"><span>'+l.titre+'</span><span class="rapport-val">'+countByLivre[id]+' emprunt'+(countByLivre[id]>1?'s':'')+'</span></div>';
+  }).join(''):'<div style="font-size:12px;color:var(--muted)">Aucun emprunt</div>';
+  // Genres
+  var genres={};
+  livres.forEach(function(l){genres[l.genre]=(genres[l.genre]||0)+1;});
+  document.getElementById('rp-genres').innerHTML=Object.keys(genres).length?Object.keys(genres).map(function(g){
+    return '<div class="rapport-row"><span>'+g+'</span><span class="rapport-val">'+genres[g]+' livre'+(genres[g]>1?'s':'')+'</span></div>';
+  }).join(''):'<div style="font-size:12px;color:var(--muted)">Aucun livre</div>';
+  // Emprunteurs
+  var emps={};
+  emprunts.forEach(function(e){emps[e.nom]=(emps[e.nom]||0)+1;});
+  var topEmps=Object.keys(emps).sort(function(a,b){return emps[b]-emps[a];}).slice(0,5);
+  document.getElementById('rp-emprunteurs').innerHTML=topEmps.length?topEmps.map(function(n){
+    return '<div class="rapport-row"><span>'+n+'</span><span class="rapport-val">'+emps[n]+' emprunt'+(emps[n]>1?'s':'')+'</span></div>';
+  }).join(''):'<div style="font-size:12px;color:var(--muted)">Aucun emprunt</div>';
+}
+
+// ─── LIVRES ────────────────────────────────────────────────
+function saveLivreData(titre,auteur,genre,stock,annee,isbn,langue,desc,editId){
+  if(!titre||!auteur||!genre||!stock){showToast('Remplissez les champs obligatoires (*)');return false;}
+  var livres=DB.get('livres');
+  var obj={id:editId||DB.id(),titre:titre,auteur:auteur,genre:genre,stock:Number(stock),annee:annee,isbn:isbn,langue:langue,desc:desc,dateAjout:new Date().toLocaleDateString('fr-FR')};
+  if(editId){var idx=livres.findIndex(function(x){return x.id===editId;});if(idx>-1)livres[idx]=obj;}
+  else livres.push(obj);
+  DB.set('livres',livres);
+  return true;
+}
+
+function addLivreFromPanel(){
+  var ok=saveLivreData(
+    document.getElementById('add-titre').value.trim(),
+    document.getElementById('add-auteur').value.trim(),
+    document.getElementById('add-genre').value,
+    document.getElementById('add-stock').value,
+    document.getElementById('add-annee').value.trim(),
+    document.getElementById('add-isbn').value.trim(),
+    document.getElementById('add-langue').value,
+    document.getElementById('add-desc').value.trim(),
+    null
+  );
+  if(ok){clearAddForm();renderAll();showToast('Livre ajouté au catalogue !');}
+}
+
+function clearAddForm(){
+  ['add-titre','add-auteur','add-annee','add-isbn','add-desc'].forEach(function(id){document.getElementById(id).value='';});
+  document.getElementById('add-stock').value='';
+}
+
+function editLivre(id){
+  var l=DB.get('livres').find(function(x){return x.id===id;});
+  if(!l) return;
+  document.getElementById('modal-livre-title').textContent='Modifier le livre';
+  document.getElementById('liv-edit-id').value=l.id;
+  document.getElementById('liv-titre').value=l.titre;
+  document.getElementById('liv-auteur').value=l.auteur;
+  document.getElementById('liv-genre').value=l.genre;
+  document.getElementById('liv-stock').value=l.stock;
+  document.getElementById('liv-annee').value=l.annee||'';
+  document.getElementById('liv-isbn').value=l.isbn||'';
+  document.getElementById('liv-langue').value=l.langue||'Français';
+  document.getElementById('liv-desc').value=l.desc||'';
+  openModal('modal-livre');
+}
+
+function saveLivre(){
+  var ok=saveLivreData(
+    document.getElementById('liv-titre').value.trim(),
+    document.getElementById('liv-auteur').value.trim(),
+    document.getElementById('liv-genre').value,
+    document.getElementById('liv-stock').value,
+    document.getElementById('liv-annee').value.trim(),
+    document.getElementById('liv-isbn').value.trim(),
+    document.getElementById('liv-langue').value,
+    document.getElementById('liv-desc').value.trim(),
+    document.getElementById('liv-edit-id').value||null
+  );
+  if(ok){closeModal('modal-livre');renderAll();showToast('Livre enregistré !');}
+}
+
+function deleteLivre(id){
+  if(!confirm('Supprimer ce livre du catalogue ?')) return;
+  DB.set('livres',DB.get('livres').filter(function(x){return x.id!==id;}));
+  DB.set('emprunts',DB.get('emprunts').filter(function(e){return e.livreId!==id;}));
+  renderAll(); showToast('Livre supprimé');
+}
+
+// ─── EMPRUNTS ──────────────────────────────────────────────
+function openEmpruntModal(livreId){
+  var l=DB.get('livres').find(function(x){return x.id===livreId;})||{};
+  document.getElementById('emp-livre-id').value=livreId;
+  document.getElementById('emp-livre-info').textContent='📗 '+l.titre+' — '+l.auteur+' ('+getDispoCount(livreId)+' exemplaire(s) disponible(s))';
+  document.getElementById('emp-nom').value='';
+  document.getElementById('emp-classe').value='';
+  document.getElementById('emp-tel').value='';
+  document.getElementById('emp-notes').value='';
+  document.getElementById('emp-date').value=today();
+  // Retour prévu dans 14 jours
+  var ret=new Date(); ret.setDate(ret.getDate()+14);
+  document.getElementById('emp-retour').value=ret.toISOString().slice(0,10);
+  openModal('modal-emprunt');
+}
+
+function saveEmprunt(){
+  var livreId=document.getElementById('emp-livre-id').value;
+  var nom=document.getElementById('emp-nom').value.trim();
+  var date=document.getElementById('emp-date').value;
+  var retour=document.getElementById('emp-retour').value;
+  if(!nom||!date||!retour){showToast('Remplissez tous les champs obligatoires');return;}
+  if(getDispoCount(livreId)<=0){showToast('Aucun exemplaire disponible !');return;}
+  var emprunts=DB.get('emprunts');
+  emprunts.push({id:DB.id(),livreId:livreId,nom:nom,classe:document.getElementById('emp-classe').value.trim(),tel:document.getElementById('emp-tel').value.trim(),date:date,retour:retour,type:document.getElementById('emp-type').value,notes:document.getElementById('emp-notes').value.trim(),statut:'emprunte'});
+  DB.set('emprunts',emprunts);
+  closeModal('modal-emprunt');
+  renderAll();
+  showToast('Emprunt enregistré pour '+nom);
+}
+
+function marquerRendu(id){
+  var emprunts=DB.get('emprunts');
+  var idx=emprunts.findIndex(function(x){return x.id===id;});
+  if(idx>-1){emprunts[idx].statut='rendu';emprunts[idx].dateRendu=today();}
+  DB.set('emprunts',emprunts);
+  renderAll();
+  showToast('Retour enregistré — Livre remis en stock');
+}
+
+function deleteEmprunt(id){
+  if(!confirm('Supprimer cet emprunt ?')) return;
+  DB.set('emprunts',DB.get('emprunts').filter(function(x){return x.id!==id;}));
+  renderAll(); showToast('Emprunt supprimé');
+}
+
+function exportHistorique(){
+  var livres=DB.get('livres');
+  var emprunts=DB.get('emprunts');
+  var csv='Titre,Auteur,Emprunteur,Classe,Date emprunt,Retour prévu,Rendu le,Statut\n';
+  emprunts.forEach(function(e){
+    var l=livres.find(function(x){return x.id===e.livreId;})||{};
+    csv+='"'+l.titre+'","'+l.auteur+'","'+e.nom+'","'+(e.classe||'')+'","'+e.date+'","'+e.retour+'","'+(e.dateRendu||'—')+'","'+e.statut+'"\n';
+  });
+  var blob=new Blob([csv],{type:'text/csv;charset=utf-8'});
+  var a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='historique_bibliotheque_ilch.csv';a.click();
+  showToast('Export CSV téléchargé');
+}
+
+function filterTable(tblId,inputId){
+  var q=document.getElementById(inputId).value.toLowerCase();
+  document.querySelectorAll('#'+tblId+' tbody tr').forEach(function(r){
+    r.style.display=!q||(r.getAttribute('data-search')||'').indexOf(q)>-1?'':'none';
+  });
+}
+
+function showToast(msg){
+  var t=document.getElementById('toast');document.getElementById('toast-msg').textContent=msg;
+  t.classList.add('show');setTimeout(function(){t.classList.remove('show')},3000);
+}
+
+document.querySelectorAll('.modal-overlay').forEach(function(m){
+  m.addEventListener('click',function(e){if(e.target===m)m.classList.remove('open');});
+});
+
+window.onload=function(){renderAll();};
+</script>
+</body>
+</html>
