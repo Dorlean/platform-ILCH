@@ -1,0 +1,587 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Générateur de comptes — ILCH</title>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
+  <style>
+    *{margin:0;padding:0;box-sizing:border-box}
+    :root{
+      --navy:#0D2B4E;--navy2:#1A3D6B;--gold:#C9A96E;--gold-bg:#FAF3E8;
+      --cream:#FAFAF8;--white:#fff;--gray:#6B7280;--gray-light:#F3F4F6;
+      --border:#E5E7EB;--text:#1F2937;--muted:#9CA3AF;
+      --green:#16A34A;--green-bg:#F0FDF4;--red:#DC2626;--red-bg:#FEF2F2;
+      --blue:#2563EB;--blue-bg:#EFF6FF;--orange:#D97706;--orange-bg:#FFFBEB;
+    }
+    body{font-family:'Inter',sans-serif;background:var(--cream);color:var(--text);min-height:100vh}
+    .header{background:var(--navy);padding:1.25rem 2rem;display:flex;align-items:center;justify-content:space-between}
+    .header-title{font-family:'Playfair Display',serif;font-size:1.3rem;color:var(--white);font-weight:700}
+    .header-badge{background:var(--gold);color:var(--navy);font-size:10px;font-weight:700;padding:4px 10px;letter-spacing:0.06em}
+    .content{max-width:1100px;margin:0 auto;padding:2rem}
+
+    /* TABS */
+    .tabs{display:flex;gap:0;margin-bottom:1.5rem;border-bottom:2px solid var(--border)}
+    .tab{padding:10px 20px;font-size:13px;font-weight:500;cursor:pointer;color:var(--muted);border-bottom:2px solid transparent;margin-bottom:-2px;transition:all 0.2s}
+    .tab.active{color:var(--navy);border-bottom-color:var(--navy);font-weight:600}
+    .tab-content{display:none}.tab-content.active{display:block}
+
+    /* CARDS */
+    .card{background:var(--white);border:0.5px solid var(--border);padding:1.5rem;margin-bottom:1rem}
+    .card-title{font-size:13px;font-weight:600;color:var(--navy);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:1rem;padding-bottom:0.75rem;border-bottom:1px solid var(--border)}
+
+    /* FORM */
+    .form-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:10px;align-items:end}
+    .form-group label{display:block;font-size:10px;font-weight:600;color:var(--navy);text-transform:uppercase;letter-spacing:0.05em;margin-bottom:4px}
+    .form-group input,.form-group select{width:100%;border:1px solid var(--border);padding:9px 12px;font-size:13px;background:var(--cream);outline:none;font-family:'Inter',sans-serif;color:var(--text)}
+    .form-group input:focus,.form-group select:focus{border-color:var(--gold)}
+
+    /* BUTTONS */
+    .btn{border:none;cursor:pointer;font-family:'Inter',sans-serif;display:inline-flex;align-items:center;gap:6px;font-weight:600;padding:9px 16px;font-size:12px;transition:all 0.15s}
+    .btn-gold{background:var(--gold);color:var(--navy)}.btn-gold:hover{background:#d4b57c}
+    .btn-navy{background:var(--navy);color:var(--white)}.btn-navy:hover{background:var(--navy2)}
+    .btn-green{background:var(--green);color:var(--white)}.btn-green:hover{background:#15803D}
+    .btn-red{background:var(--red);color:var(--white)}.btn-red:hover{background:#b91c1c}
+    .btn-sm{background:var(--gray-light);color:var(--text);border:0.5px solid var(--border);padding:6px 10px;font-size:11px}
+    .btn-blue{background:var(--blue);color:var(--white)}.btn-blue:hover{background:#1D4ED8}
+
+    /* TABLE */
+    .data-table{width:100%;border-collapse:collapse;background:var(--white);border:0.5px solid var(--border)}
+    .data-table th{background:var(--navy);color:var(--white);font-size:10px;font-weight:600;letter-spacing:0.06em;text-transform:uppercase;padding:10px 12px;text-align:left}
+    .data-table td{padding:9px 12px;font-size:12px;border-bottom:0.5px solid var(--border);color:var(--text)}
+    .data-table tr:last-child td{border-bottom:none}
+    .data-table tr:hover td{background:var(--gray-light)}
+
+    /* BADGE */
+    .badge{font-size:10px;font-weight:600;padding:2px 7px}
+    .badge-ok{background:var(--green-bg);color:var(--green)}
+    .badge-wait{background:var(--orange-bg);color:var(--orange)}
+    .badge-err{background:var(--red-bg);color:var(--red)}
+
+    /* STATS */
+    .stats-mini{display:flex;gap:12px;margin-bottom:1rem;flex-wrap:wrap}
+    .stat-mini{background:var(--white);border:0.5px solid var(--border);padding:10px 16px;text-align:center;flex:1;min-width:100px}
+    .stat-mini-val{font-family:'Playfair Display',serif;font-size:1.5rem;font-weight:700;color:var(--navy)}
+    .stat-mini-label{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:0.06em}
+
+    /* PROGRESS */
+    .progress-wrap{height:6px;background:var(--gray-light);margin:10px 0}
+    .progress-bar{height:100%;background:var(--green);width:0%;transition:width 0.3s}
+
+    /* ALERT */
+    .alert{padding:10px 14px;margin-bottom:10px;display:flex;align-items:flex-start;gap:8px;font-size:12px}
+    .alert.info{background:var(--blue-bg);border:1px solid #BFDBFE;color:var(--blue)}
+    .alert.success{background:var(--green-bg);border:1px solid #BBF7D0;color:var(--green)}
+    .alert.warning{background:var(--orange-bg);border:1px solid #FDE68A;color:var(--orange)}
+
+    /* TOAST */
+    .toast{position:fixed;bottom:1.5rem;right:1.5rem;background:var(--navy);color:var(--white);padding:11px 20px;font-size:13px;font-weight:500;z-index:999;display:none;align-items:center;gap:8px;border-left:3px solid var(--gold)}
+    .toast.show{display:flex}
+
+    /* PRINT */
+    @media print{
+      .no-print{display:none!important}
+      .header{background:#0D2B4E!important;-webkit-print-color-adjust:exact}
+      body{background:white}
+    }
+
+    @media(max-width:768px){
+      .form-grid{grid-template-columns:1fr 1fr}
+      .content{padding:1rem}
+    }
+  </style>
+</head>
+<body>
+
+<div class="toast" id="toast"><i class="ti ti-check"></i><span id="toast-msg"></span></div>
+
+<div class="header no-print">
+  <div>
+    <a href="login.html" style="color:rgba(255,255,255,0.5);font-size:12px;text-decoration:none;display:flex;align-items:center;gap:4px;margin-bottom:4px"><i class="ti ti-arrow-left" style="font-size:12px"></i> Retour</a>
+    <div class="header-title">👥 Générateur de comptes ILCH</div>
+  </div>
+  <span class="header-badge">ADMINISTRATION</span>
+</div>
+
+<div class="content">
+
+  <!-- TABS -->
+  <div class="tabs no-print">
+    <div class="tab active" onclick="showTab('generer')">✨ Générer comptes</div>
+    <div class="tab" onclick="showTab('importer')">📋 Saisie rapide</div>
+    <div class="tab" onclick="showTab('liste')">📄 Liste des comptes</div>
+    <div class="tab" onclick="showTab('firebase')">🔥 Envoyer à Firebase</div>
+  </div>
+
+  <!-- TAB 1 — GÉNÉRER -->
+  <div class="tab-content active" id="tab-generer">
+    <div class="alert info"><i class="ti ti-info-circle"></i><div>Le mot de passe est généré automatiquement à partir du prénom + nom + classe de l'élève. Exemple : <strong>Jean Pierre → Terminale A → jea.pie.TA2026</strong></div></div>
+
+    <div class="card">
+      <div class="card-title">Ajouter un élève</div>
+      <div class="form-grid">
+        <div class="form-group"><label>Prénom *</label><input type="text" id="inp-prenom" placeholder="Ex: Jean" onkeyup="previewPW()"></div>
+        <div class="form-group"><label>Nom *</label><input type="text" id="inp-nom" placeholder="Ex: Pierre" onkeyup="previewPW()"></div>
+        <div class="form-group"><label>Classe *</label>
+          <select id="inp-classe" onchange="previewPW()">
+            <option value="">-- Choisir --</option>
+            <option>Préscolaire</option>
+            <option>1ère Fondamentale</option><option>2ème Fondamentale</option><option>3ème Fondamentale</option>
+            <option>4ème Fondamentale</option><option>5ème Fondamentale</option><option>6ème Fondamentale</option>
+            <option>7ème Fondamentale</option><option>8ème Fondamentale</option><option>9ème Fondamentale</option>
+            <option>NSI</option>
+            <option>NSII</option>
+            <option>NSIII</option>
+            <option>NSIV</option><option>Rhétorique</option>
+            <option>Terminale A</option><option>Terminale B</option>
+          </select>
+        </div>
+        <div class="form-group"><label>Téléphone parent</label><input type="text" id="inp-tel" placeholder="+509 XX XX XX XX"></div>
+      </div>
+
+      <!-- Preview -->
+      <div id="pw-preview" style="background:var(--gold-bg);border:1px solid var(--gold-light);padding:12px;margin-bottom:12px;display:none">
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;font-size:12px">
+          <div><div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:0.05em;margin-bottom:3px">Identifiant</div><strong id="preview-id" style="color:var(--navy);font-size:14px"></strong></div>
+          <div><div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:0.05em;margin-bottom:3px">Mot de passe</div><strong id="preview-pw" style="color:var(--navy);font-size:14px;font-family:monospace"></strong></div>
+          <div><div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:0.05em;margin-bottom:3px">Rôle</div><strong style="color:var(--navy)">Élève</strong></div>
+        </div>
+      </div>
+
+      <div style="display:flex;gap:8px;flex-wrap:wrap">
+        <button class="btn btn-gold" onclick="ajouterEleve()"><i class="ti ti-plus"></i>Ajouter l'élève</button>
+        <button class="btn btn-sm" onclick="clearForm()">Effacer</button>
+      </div>
+    </div>
+
+    <!-- Stats -->
+    <div class="stats-mini">
+      <div class="stat-mini"><div class="stat-mini-val" id="cnt-eleves">0</div><div class="stat-mini-label">Élèves</div></div>
+      <div class="stat-mini"><div class="stat-mini-val" id="cnt-profs">0</div><div class="stat-mini-label">Professeurs</div></div>
+      <div class="stat-mini"><div class="stat-mini-val" id="cnt-parents">0</div><div class="stat-mini-label">Parents</div></div>
+      <div class="stat-mini"><div class="stat-mini-val" id="cnt-total">0</div><div class="stat-mini-label">Total comptes</div></div>
+    </div>
+
+    <!-- Actions -->
+    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:1rem" class="no-print">
+      <button class="btn btn-navy" onclick="showTab('liste');document.querySelector('.tab:nth-child(3)').classList.add('active');document.querySelector('.tab:nth-child(1)').classList.remove('active')"><i class="ti ti-list"></i>Voir la liste</button>
+      <button class="btn btn-green" onclick="exportPDF()"><i class="ti ti-printer"></i>Imprimer / PDF</button>
+      <button class="btn btn-blue" onclick="exportCSV()"><i class="ti ti-download"></i>Exporter CSV</button>
+      <button class="btn btn-red" onclick="viderListe()"><i class="ti ti-trash"></i>Vider la liste</button>
+    </div>
+  </div>
+
+  <!-- TAB 2 — SAISIE RAPIDE -->
+  <div class="tab-content" id="tab-importer">
+    <div class="card">
+      <div class="card-title">Saisie rapide — Plusieurs élèves à la fois</div>
+      <div class="alert warning"><i class="ti ti-alert-circle"></i>Format : <strong>Prénom,Nom,Classe</strong> — Un élève par ligne</div>
+
+      <div class="form-group" style="margin-bottom:10px">
+        <label>Classe par défaut (pour tous)</label>
+        <select id="batch-classe" style="width:300px;border:1px solid var(--border);padding:9px 12px;font-size:13px;background:var(--cream);outline:none;font-family:'Inter',sans-serif">
+          <option value="">-- Choisir classe par défaut --</option>
+          <option>Préscolaire</option>
+          <option>1ère Fondamentale</option><option>2ème Fondamentale</option><option>3ème Fondamentale</option>
+          <option>4ème Fondamentale</option><option>5ème Fondamentale</option><option>6ème Fondamentale</option>
+          <option>7ème Fondamentale</option><option>8ème Fondamentale</option><option>9ème Fondamentale</option>
+          <option>NSI</option>
+            <option>NSII</option>
+            <option>NSIII</option>
+            <option>NSIV</option><option>Rhétorique</option>
+          <option>Terminale A</option><option>Terminale B</option>
+        </select>
+      </div>
+
+      <textarea id="batch-text" rows="12" placeholder="Exemples :&#10;Jean,Pierre,Terminale A&#10;Sophie,Marc,Terminale B&#10;Marie,Antoine,Rhétorique&#10;&#10;Ou avec classe par défaut :&#10;Jean,Pierre&#10;Sophie,Marc&#10;Marie,Antoine" style="width:100%;border:1px solid var(--border);padding:12px;font-size:13px;background:var(--cream);outline:none;font-family:'Inter',sans-serif;resize:vertical;line-height:1.8"></textarea>
+
+      <div style="display:flex;gap:8px;margin-top:10px">
+        <button class="btn btn-gold" onclick="importerBatch()"><i class="ti ti-bolt"></i>Générer tous les comptes</button>
+        <button class="btn btn-sm" onclick="document.getElementById('batch-text').value=''">Effacer</button>
+      </div>
+
+      <div id="batch-result" style="margin-top:1rem"></div>
+    </div>
+
+    <!-- Exemple prérempli -->
+    <div class="card">
+      <div class="card-title">Exemple — Cliquez pour charger</div>
+      <button class="btn btn-sm" onclick="chargerExemple()"><i class="ti ti-download"></i>Charger 10 élèves d'exemple</button>
+    </div>
+  </div>
+
+  <!-- TAB 3 — LISTE -->
+  <div class="tab-content" id="tab-liste">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem" class="no-print">
+      <div style="font-size:13px;font-weight:600;color:var(--navy)">Liste des comptes générés</div>
+      <div style="display:flex;gap:8px">
+        <button class="btn btn-green" onclick="exportPDF()"><i class="ti ti-printer"></i>Imprimer</button>
+        <button class="btn btn-blue" onclick="exportCSV()"><i class="ti ti-download"></i>CSV</button>
+      </div>
+    </div>
+
+    <!-- En-tête impression -->
+    <div style="text-align:center;margin-bottom:1rem;display:none" id="print-header">
+      <div style="font-family:'Playfair Display',serif;font-size:1.3rem;font-weight:700;color:#0D2B4E">Institution Louis Chauvet</div>
+      <div style="font-size:12px;color:#6B7280">Liste des identifiants — Année scolaire 2025–2026</div>
+      <div style="font-size:11px;color:#9CA3AF;margin-top:4px">Confidentiel — Ne pas diffuser</div>
+    </div>
+
+    <table class="data-table" id="liste-table">
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>Nom complet</th>
+          <th>Classe</th>
+          <th>Rôle</th>
+          <th>Identifiant</th>
+          <th>Mot de passe</th>
+          <th class="no-print">Actions</th>
+        </tr>
+      </thead>
+      <tbody id="liste-tbody">
+        <tr><td colspan="7" style="text-align:center;padding:2rem;color:var(--muted)">Aucun compte généré. Allez dans "Générer comptes" pour commencer.</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- TAB 4 — FIREBASE -->
+  <div class="tab-content" id="tab-firebase">
+    <div class="alert info no-print"><i class="ti ti-info-circle"></i>Cette section envoie tous les comptes générés directement dans Firebase. Les élèves pourront se connecter immédiatement après !</div>
+
+    <div class="card">
+      <div class="card-title">Envoyer les comptes à Firebase</div>
+
+      <div class="stats-mini" style="margin-bottom:1.5rem">
+        <div class="stat-mini"><div class="stat-mini-val" id="fb-cnt-eleves">0</div><div class="stat-mini-label">Élèves à créer</div></div>
+        <div class="stat-mini"><div class="stat-mini-val" id="fb-cnt-profs">0</div><div class="stat-mini-label">Professeurs</div></div>
+        <div class="stat-mini"><div class="stat-mini-val" id="fb-cnt-parents">0</div><div class="stat-mini-label">Parents</div></div>
+        <div class="stat-mini"><div class="stat-mini-val" id="fb-cnt-ok">0</div><div class="stat-mini-label">✓ Créés</div></div>
+      </div>
+
+      <div class="progress-wrap"><div class="progress-bar" id="fb-progress"></div></div>
+
+      <div style="display:flex;gap:8px;margin-bottom:1rem">
+        <button class="btn btn-green" id="fb-btn" onclick="envoyerFirebase()"><i class="ti ti-send"></i>Envoyer tous les comptes à Firebase</button>
+        <button class="btn btn-sm" onclick="showTab('generer');document.querySelector('.tab:nth-child(1)').classList.add('active');document.querySelector('.tab:nth-child(4)').classList.remove('active')">← Retour</button>
+      </div>
+
+      <div id="fb-log" style="background:var(--navy);color:#C9A96E;padding:1rem;font-family:monospace;font-size:12px;height:250px;overflow-y:auto;display:none"></div>
+    </div>
+  </div>
+
+</div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import { getFirestore, collection, addDoc, getDocs, query, where } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyDjrBnsTu7CNWnqeqSm29-arbs8MPoTBJ0",
+  authDomain: "ilch-plateforme.firebaseapp.com",
+  projectId: "ilch-plateforme",
+  storageBucket: "ilch-plateforme.firebasestorage.app",
+  messagingSenderId: "978336467476",
+  appId: "1:978336467476:web:1f716ca406469a0c62b501"
+};
+const app = initializeApp(firebaseConfig);
+const db  = getFirestore(app);
+
+window.envoyerFirebase = async function() {
+  var comptes = JSON.parse(localStorage.getItem('ilch_gen_comptes') || '[]');
+  if (!comptes.length) { showToast('Aucun compte à envoyer !'); return; }
+
+  var btn = document.getElementById('fb-btn');
+  btn.disabled = true;
+  btn.textContent = '⏳ Envoi en cours...';
+
+  var log = document.getElementById('fb-log');
+  log.style.display = 'block';
+  log.innerHTML = '';
+
+  var ok = 0;
+  var errors = 0;
+
+  function addLog(msg, color) {
+    var line = document.createElement('div');
+    line.style.color = color || '#C9A96E';
+    line.textContent = new Date().toLocaleTimeString('fr-FR') + ' — ' + msg;
+    log.appendChild(line);
+    log.scrollTop = log.scrollHeight;
+  }
+
+  addLog('🚀 Démarrage de l\'envoi de ' + comptes.length + ' comptes...');
+
+  for (var i = 0; i < comptes.length; i++) {
+    var c = comptes[i];
+    var pct = Math.round((i+1)/comptes.length*100);
+    document.getElementById('fb-progress').style.width = pct + '%';
+
+    try {
+      // Vérifier si le compte existe déjà
+      var col = c.role === 'eleve' ? 'eleves' : c.role === 'professeur' ? 'professeurs' : 'parents';
+      var existing = await getDocs(query(collection(db, col), where('identifiant', '==', c.identifiant)));
+
+      if (!existing.empty) {
+        addLog('⚠️ Déjà existant : ' + c.prenom + ' ' + c.nom, '#FCD34D');
+      } else {
+        await addDoc(collection(db, col), {
+          prenom: c.prenom,
+          nom: c.nom,
+          classe: c.classe || '',
+          tel: c.tel || '',
+          identifiant: c.identifiant,
+          motDePasse: c.motDePasse,
+          role: c.role,
+          createdAt: new Date().toISOString()
+        });
+        ok++;
+        document.getElementById('fb-cnt-ok').textContent = ok;
+        addLog('✅ Compte créé : ' + c.prenom + ' ' + c.nom + ' (' + c.identifiant + ')', '#4ADE80');
+      }
+    } catch(e) {
+      errors++;
+      addLog('❌ Erreur : ' + c.prenom + ' ' + c.nom + ' — ' + e.message, '#F87171');
+    }
+  }
+
+  addLog('');
+  addLog('════════════════════════════════════════');
+  addLog('🎉 TERMINÉ ! ' + ok + ' comptes créés, ' + errors + ' erreurs', '#4ADE80');
+  addLog('Les élèves peuvent maintenant se connecter !', '#4ADE80');
+
+  btn.disabled = false;
+  btn.textContent = '✅ Terminé !';
+  showToast(ok + ' comptes créés dans Firebase !');
+};
+</script>
+
+<script>
+// ── Données ────────────────────────────────────────────────
+var comptes = JSON.parse(localStorage.getItem('ilch_gen_comptes') || '[]');
+
+// ── Génération du mot de passe ─────────────────────────────
+function genId(prenom, nom) {
+  var p = nettoyerTexte(prenom).toLowerCase().replace(/\s+/g,'');
+  var n = nettoyerTexte(nom).toLowerCase().replace(/\s+/g,'');
+  return p + '.' + n;
+}
+
+function genPW(prenom, nom, classe) {
+  var p = nettoyerTexte(prenom).toLowerCase().slice(0,3);
+  var n = nettoyerTexte(nom).toLowerCase().slice(0,3);
+  var cls = classe ? classe.replace(/[^a-zA-Z0-9]/g,'').slice(0,2).toUpperCase() : 'XX';
+  return p + '.' + n + '.' + cls + '2026';
+}
+
+function nettoyerTexte(str) {
+  return (str||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-zA-Z]/g,'');
+}
+
+function getAbrClasse(classe) {
+  var abr = {
+    'Préscolaire':'PS','1ère Fondamentale':'1F','2ème Fondamentale':'2F',
+    '3ème Fondamentale':'3F','4ème Fondamentale':'4F','5ème Fondamentale':'5F',
+    '6ème Fondamentale':'6F','7ème Fondamentale':'7F','8ème Fondamentale':'8F',
+    '9ème Fondamentale':'9F','NSI','NSII','NSIII','NSIV':'NS','Rhétorique':'RH',
+    'Terminale A':'TA','Terminale B':'TB'
+  };
+  return abr[classe] || 'XX';
+}
+
+function genPWFull(prenom, nom, classe) {
+  var p = nettoyerTexte(prenom).toLowerCase().slice(0,3);
+  var n = nettoyerTexte(nom).toLowerCase().slice(0,3);
+  var cls = getAbrClasse(classe);
+  return p + '.' + n + '.' + cls + '2026';
+}
+
+// ── Preview ────────────────────────────────────────────────
+function previewPW() {
+  var prenom = document.getElementById('inp-prenom').value.trim();
+  var nom = document.getElementById('inp-nom').value.trim();
+  var classe = document.getElementById('inp-classe').value;
+  if (!prenom || !nom) { document.getElementById('pw-preview').style.display='none'; return; }
+  document.getElementById('pw-preview').style.display = 'block';
+  document.getElementById('preview-id').textContent = genId(prenom, nom);
+  document.getElementById('preview-pw').textContent = genPWFull(prenom, nom, classe);
+}
+
+// ── Ajouter élève ──────────────────────────────────────────
+function ajouterEleve() {
+  var prenom = document.getElementById('inp-prenom').value.trim();
+  var nom = document.getElementById('inp-nom').value.trim();
+  var classe = document.getElementById('inp-classe').value;
+  var tel = document.getElementById('inp-tel').value.trim();
+  if (!prenom || !nom || !classe) { showToast('Remplissez prénom, nom et classe'); return; }
+  var compte = {
+    prenom: prenom, nom: nom, classe: classe, tel: tel,
+    identifiant: genId(prenom, nom),
+    motDePasse: genPWFull(prenom, nom, classe),
+    role: 'eleve'
+  };
+  comptes.push(compte);
+  sauvegarder();
+  clearForm();
+  renderListe();
+  updateStats();
+  showToast('✓ ' + prenom + ' ' + nom + ' ajouté(e) !');
+}
+
+// ── Saisie rapide ──────────────────────────────────────────
+function importerBatch() {
+  var text = document.getElementById('batch-text').value.trim();
+  var defClasse = document.getElementById('batch-classe').value;
+  if (!text) { showToast('Entrez des noms dans la zone de texte'); return; }
+
+  var lines = text.split('\n').filter(function(l) { return l.trim(); });
+  var added = 0;
+  var errors = [];
+
+  lines.forEach(function(line, i) {
+    var parts = line.split(',').map(function(p) { return p.trim(); });
+    var prenom = parts[0];
+    var nom = parts[1];
+    var classe = parts[2] || defClasse;
+
+    if (!prenom || !nom) { errors.push('Ligne ' + (i+1) + ' invalide : ' + line); return; }
+    if (!classe) { errors.push('Ligne ' + (i+1) + ' : classe manquante pour ' + prenom + ' ' + nom); return; }
+
+    comptes.push({
+      prenom: prenom, nom: nom, classe: classe, tel: '',
+      identifiant: genId(prenom, nom),
+      motDePasse: genPWFull(prenom, nom, classe),
+      role: 'eleve'
+    });
+    added++;
+  });
+
+  sauvegarder();
+  renderListe();
+  updateStats();
+
+  var result = document.getElementById('batch-result');
+  result.innerHTML = '<div style="background:var(--green-bg);border:1px solid #BBF7D0;padding:10px;font-size:12px;color:var(--green);margin-bottom:8px">✅ ' + added + ' comptes générés avec succès !</div>';
+  if (errors.length) {
+    result.innerHTML += '<div style="background:var(--red-bg);border:1px solid #FECACA;padding:10px;font-size:12px;color:var(--red)">' + errors.join('<br>') + '</div>';
+  }
+  showToast(added + ' comptes générés !');
+}
+
+function chargerExemple() {
+  document.getElementById('batch-text').value =
+    'Jean,Pierre,Terminale A\nSophie,Marc,Terminale A\nMarc,Antoine,Terminale B\nClaire,Dupont,Terminale B\nPaul,Étienne,Rhétorique\nNadège,François,Rhétorique\nRobert,Michel,9ème Fondamentale\nAnne,Moreau,8ème Fondamentale\nLouis,Charles,7ème Fondamentale\nGrâce,Bien-Aimé,6ème Fondamentale';
+  document.getElementById('batch-classe').value = '';
+}
+
+// ── Render liste ───────────────────────────────────────────
+function renderListe() {
+  var tbody = document.getElementById('liste-tbody');
+  if (!comptes.length) {
+    tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;padding:2rem;color:var(--muted)">Aucun compte généré.</td></tr>';
+    return;
+  }
+  tbody.innerHTML = comptes.map(function(c, i) {
+    return '<tr>' +
+      '<td>' + (i+1) + '</td>' +
+      '<td><strong>' + c.prenom + ' ' + c.nom + '</strong></td>' +
+      '<td>' + (c.classe||'—') + '</td>' +
+      '<td><span class="badge badge-ok">' + c.role + '</span></td>' +
+      '<td><code style="background:var(--gray-light);padding:2px 6px;font-size:11px">' + c.identifiant + '</code></td>' +
+      '<td><code style="background:var(--navy);color:var(--gold);padding:2px 8px;font-size:11px;font-weight:700">' + c.motDePasse + '</code></td>' +
+      '<td class="no-print"><button class="btn btn-sm" style="padding:4px 8px;font-size:10px" onclick="supprimerCompte(' + i + ')"><i class="ti ti-trash"></i></button></td>' +
+    '</tr>';
+  }).join('');
+
+  // Mettre à jour Firebase tab
+  document.getElementById('fb-cnt-eleves').textContent = comptes.filter(function(c){return c.role==='eleve';}).length;
+  document.getElementById('fb-cnt-profs').textContent = comptes.filter(function(c){return c.role==='professeur';}).length;
+  document.getElementById('fb-cnt-parents').textContent = comptes.filter(function(c){return c.role==='parent';}).length;
+}
+
+function supprimerCompte(i) {
+  comptes.splice(i, 1);
+  sauvegarder();
+  renderListe();
+  updateStats();
+  showToast('Compte supprimé');
+}
+
+function updateStats() {
+  var eleves = comptes.filter(function(c){return c.role==='eleve';}).length;
+  var profs = comptes.filter(function(c){return c.role==='professeur';}).length;
+  var parents = comptes.filter(function(c){return c.role==='parent';}).length;
+  document.getElementById('cnt-eleves').textContent = eleves;
+  document.getElementById('cnt-profs').textContent = profs;
+  document.getElementById('cnt-parents').textContent = parents;
+  document.getElementById('cnt-total').textContent = comptes.length;
+}
+
+function sauvegarder() {
+  localStorage.setItem('ilch_gen_comptes', JSON.stringify(comptes));
+}
+
+function clearForm() {
+  document.getElementById('inp-prenom').value = '';
+  document.getElementById('inp-nom').value = '';
+  document.getElementById('inp-classe').value = '';
+  document.getElementById('inp-tel').value = '';
+  document.getElementById('pw-preview').style.display = 'none';
+}
+
+function viderListe() {
+  if (!confirm('Vider toute la liste ? Cette action est irréversible.')) return;
+  comptes = [];
+  sauvegarder();
+  renderListe();
+  updateStats();
+  showToast('Liste vidée');
+}
+
+// ── Export ─────────────────────────────────────────────────
+function exportPDF() {
+  document.getElementById('print-header').style.display = 'block';
+  window.print();
+  setTimeout(function() {
+    document.getElementById('print-header').style.display = 'none';
+  }, 1000);
+}
+
+function exportCSV() {
+  if (!comptes.length) { showToast('Aucun compte à exporter'); return; }
+  var csv = 'Prénom,Nom,Classe,Rôle,Identifiant,Mot de passe\n';
+  comptes.forEach(function(c) {
+    csv += c.prenom + ',' + c.nom + ',' + (c.classe||'') + ',' + c.role + ',' + c.identifiant + ',' + c.motDePasse + '\n';
+  });
+  var blob = new Blob([csv], {type:'text/csv;charset=utf-8'});
+  var a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'comptes_ILCH_' + new Date().toISOString().slice(0,10) + '.csv';
+  a.click();
+  showToast('Export CSV téléchargé !');
+}
+
+// ── Navigation ─────────────────────────────────────────────
+function showTab(id) {
+  document.querySelectorAll('.tab').forEach(function(t) { t.classList.remove('active'); });
+  document.querySelectorAll('.tab-content').forEach(function(t) { t.classList.remove('active'); });
+  event.target.classList.add('active');
+  document.getElementById('tab-' + id).classList.add('active');
+  renderListe();
+  updateStats();
+}
+
+function showToast(msg) {
+  var t = document.getElementById('toast');
+  document.getElementById('toast-msg').textContent = msg;
+  t.classList.add('show');
+  setTimeout(function() { t.classList.remove('show'); }, 3500);
+}
+
+// Init
+renderListe();
+updateStats();
+</script>
+</body>
+</html>

@@ -1,0 +1,603 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Espace Propriétaire — ILCH</title>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
+  <link rel="stylesheet" href="mobile.css">
+  <style>
+    *{margin:0;padding:0;box-sizing:border-box}
+    :root{
+      --navy:#0D2B4E;--navy2:#1A3D6B;--gold:#C9A96E;--gold-bg:#FAF3E8;--gold-light:#E8D5B0;
+      --cream:#FAFAF8;--white:#fff;--gray:#6B7280;--gray-light:#F3F4F6;
+      --border:#E5E7EB;--text:#1F2937;--muted:#9CA3AF;
+      --green:#16A34A;--green-bg:#F0FDF4;--blue:#2563EB;--blue-bg:#EFF6FF;
+      --red:#DC2626;--red-bg:#FEF2F2;--orange:#D97706;--orange-bg:#FFFBEB;
+      --purple:#7C3AED;--purple-bg:#F5F3FF;
+      --owner:#0A1628;
+    }
+    body{font-family:'Inter',sans-serif;background:var(--cream);color:var(--text);display:flex;min-height:100vh}
+    a{text-decoration:none;color:inherit}
+
+    /* SIDEBAR */
+    .sidebar{width:240px;background:var(--owner);flex-shrink:0;display:flex;flex-direction:column;min-height:100vh;position:fixed;top:0;left:0;bottom:0;z-index:50;border-right:1px solid rgba(201,169,110,0.15)}
+    .sb-logo{padding:1.25rem 1rem;border-bottom:1px solid rgba(201,169,110,0.15)}
+    .sb-logo-mark{display:flex;align-items:center;gap:10px}
+    .sb-badge{width:36px;height:36px;background:linear-gradient(135deg,var(--gold),#d4a855);display:flex;align-items:center;justify-content:center;font-family:'Playfair Display',serif;font-weight:700;font-size:13px;color:var(--owner);flex-shrink:0}
+    .sb-name{font-size:12px;font-weight:600;color:var(--white);line-height:1.3}
+    .sb-name small{display:block;font-size:9px;color:var(--gold);font-weight:500;letter-spacing:0.1em;text-transform:uppercase;margin-top:1px}
+    .owner-tag{margin:0.75rem 1rem;background:rgba(201,169,110,0.1);border:1px solid rgba(201,169,110,0.25);padding:6px 10px;display:flex;align-items:center;gap:6px}
+    .owner-tag i{color:var(--gold);font-size:13px}
+    .owner-tag span{font-size:10px;color:var(--gold);font-weight:600;letter-spacing:0.08em;text-transform:uppercase}
+    .sb-nav{flex:1;padding:0.75rem 0;overflow-y:auto}
+    .sb-section{font-size:9px;color:rgba(255,255,255,0.25);letter-spacing:0.12em;text-transform:uppercase;padding:0.75rem 1rem 0.35rem}
+    .sb-item{display:flex;align-items:center;gap:10px;padding:9px 1rem;font-size:12px;color:rgba(255,255,255,0.55);cursor:pointer;border-left:3px solid transparent;transition:all 0.15s;user-select:none}
+    .sb-item:hover{background:rgba(201,169,110,0.08);color:var(--white)}
+    .sb-item.active{background:rgba(201,169,110,0.12);color:var(--gold);border-left-color:var(--gold)}
+    .sb-item i{font-size:16px;width:18px;flex-shrink:0}
+    .sb-count{margin-left:auto;background:var(--red);color:var(--white);font-size:9px;font-weight:700;padding:2px 6px;border-radius:8px}
+    .sb-count.gold{background:var(--gold);color:var(--owner)}
+    .sb-user{padding:1rem;border-top:1px solid rgba(201,169,110,0.15)}
+    .sb-user-row{display:flex;align-items:center;gap:9px}
+    .sb-avatar{width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,var(--gold),#d4a855);display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;color:var(--owner);flex-shrink:0}
+    .sb-user-name{font-size:12px;color:var(--white);font-weight:600}
+    .sb-user-role{font-size:9px;color:var(--gold);letter-spacing:0.06em;text-transform:uppercase}
+    .logout-btn{display:inline-flex;align-items:center;gap:5px;font-size:11px;color:rgba(255,255,255,0.25);cursor:pointer;margin-top:8px;transition:color 0.15s;background:none;border:none;font-family:'Inter',sans-serif;padding:0}
+    .logout-btn:hover{color:var(--gold)}
+
+    /* MAIN */
+    .main{flex:1;margin-left:240px;display:flex;flex-direction:column;min-height:100vh}
+    .topbar{background:var(--white);border-bottom:1px solid var(--border);padding:0.75rem 1.75rem;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:40}
+    .topbar-title{font-family:'Playfair Display',serif;font-size:16px;font-weight:700;color:var(--navy)}
+    .topbar-right{display:flex;align-items:center;gap:10px}
+    .owner-pill{background:linear-gradient(135deg,var(--owner),var(--navy2));color:var(--gold);font-size:10px;font-weight:700;padding:5px 12px;letter-spacing:0.08em;text-transform:uppercase;display:flex;align-items:center;gap:5px}
+    .live-dot{width:6px;height:6px;background:#22C55E;border-radius:50%;animation:pulse 2s infinite}
+    @keyframes pulse{0%,100%{opacity:1}50%{opacity:0.4}}
+    .content{flex:1;padding:1.5rem;background:var(--cream)}
+    .panel{display:none}
+    .panel.active{display:block}
+
+    /* STATS GRANDES */
+    .stats-row{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:1.5rem}
+    .stat-card{background:var(--white);border:0.5px solid var(--border);padding:1.1rem 1.25rem;position:relative;overflow:hidden}
+    .stat-card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px}
+    .stat-card.blue::before{background:var(--blue)}
+    .stat-card.green::before{background:var(--green)}
+    .stat-card.gold::before{background:var(--gold)}
+    .stat-card.red::before{background:var(--red)}
+    .stat-card.purple::before{background:var(--purple)}
+    .stat-card.orange::before{background:var(--orange)}
+    .stat-label{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:0.08em;margin-bottom:4px;font-weight:500}
+    .stat-val{font-family:'Playfair Display',serif;font-size:1.9rem;color:var(--navy);font-weight:700;line-height:1}
+    .stat-sub{font-size:11px;color:var(--gray);margin-top:4px}
+    .stat-icon{position:absolute;top:1rem;right:1rem;font-size:20px;color:var(--gray-light)}
+    .stat-trend{font-size:10px;font-weight:600;display:inline-flex;align-items:center;gap:3px;margin-top:5px}
+    .trend-up{color:var(--green)}
+    .trend-down{color:var(--red)}
+
+    /* TABLES */
+    .data-table{width:100%;border-collapse:collapse;background:var(--white);border:0.5px solid var(--border)}
+    .data-table th{background:var(--owner);color:var(--gold);font-size:10px;font-weight:600;letter-spacing:0.07em;text-transform:uppercase;padding:10px 14px;text-align:left}
+    .data-table td{padding:10px 14px;font-size:12px;border-bottom:0.5px solid var(--border);color:var(--text)}
+    .data-table tr:last-child td{border-bottom:none}
+    .data-table tr:hover td{background:var(--gray-light)}
+
+    /* BADGES */
+    .badge{font-size:10px;font-weight:600;padding:3px 8px}
+    .badge-eleve{background:var(--blue-bg);color:var(--blue)}
+    .badge-prof{background:var(--gold-bg);color:#92660A}
+    .badge-parent{background:var(--green-bg);color:var(--green)}
+    .badge-admin{background:var(--red-bg);color:var(--red)}
+    .badge-active{background:var(--green-bg);color:var(--green)}
+    .badge-inactive{background:var(--red-bg);color:var(--red)}
+    .badge-paid{background:var(--green-bg);color:var(--green)}
+    .badge-unpaid{background:var(--red-bg);color:var(--red)}
+    .badge-partial{background:var(--orange-bg);color:var(--orange)}
+    .badge-new{background:var(--blue-bg);color:var(--blue)}
+
+    /* SECTION HEADER */
+    .section-hdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem}
+    .section-hdr-title{font-size:13px;font-weight:600;color:var(--navy)}
+    .btn-primary{background:var(--owner);color:var(--white);border:none;padding:8px 14px;font-size:11px;font-weight:600;cursor:pointer;font-family:'Inter',sans-serif;display:inline-flex;align-items:center;gap:6px;transition:background 0.15s}
+    .btn-primary:hover{background:var(--navy2)}
+    .btn-gold{background:var(--gold);color:var(--owner);border:none;padding:8px 14px;font-size:11px;font-weight:700;cursor:pointer;font-family:'Inter',sans-serif;display:inline-flex;align-items:center;gap:6px;transition:background 0.15s}
+    .btn-gold:hover{background:#d4a855}
+    .btn-danger{background:var(--red);color:var(--white);border:none;padding:6px 10px;font-size:11px;font-weight:600;cursor:pointer;font-family:'Inter',sans-serif}
+    .btn-sm{background:var(--gray-light);color:var(--text);border:none;padding:5px 10px;font-size:11px;cursor:pointer;font-family:'Inter',sans-serif;border:0.5px solid var(--border)}
+
+    /* CHARTS */
+    .charts-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:1.25rem}
+    .chart-card{background:var(--white);border:0.5px solid var(--border);padding:1.25rem}
+    .chart-title{font-size:11px;font-weight:600;color:var(--navy);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:1rem}
+    .bar-row{display:flex;align-items:center;gap:10px;margin-bottom:8px}
+    .bar-label{font-size:11px;color:var(--gray);width:110px;flex-shrink:0;text-align:right}
+    .bar-track{flex:1;height:16px;background:var(--gray-light)}
+    .bar-fill{height:100%;transition:width 1s}
+    .bar-val{font-size:11px;font-weight:600;color:var(--navy);width:35px;flex-shrink:0}
+
+    /* FINANCES */
+    .finance-summary{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:1.25rem}
+    .fin-card{background:var(--white);border:0.5px solid var(--border);padding:1.1rem 1.25rem;text-align:center}
+    .fin-label{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:0.08em;margin-bottom:6px}
+    .fin-val{font-family:'Playfair Display',serif;font-size:1.6rem;font-weight:700}
+    .fin-val.green{color:var(--green)}
+    .fin-val.red{color:var(--red)}
+    .fin-val.orange{color:var(--orange)}
+    .fin-sub{font-size:11px;color:var(--gray);margin-top:4px}
+
+    /* MESSAGES */
+    .msg-layout{display:grid;grid-template-columns:200px 1fr;background:var(--white);border:0.5px solid var(--border);height:460px}
+    .msg-contacts{border-right:0.5px solid var(--border);overflow-y:auto}
+    .msg-contact-header{padding:10px 12px;border-bottom:0.5px solid var(--border);font-size:10px;font-weight:600;color:var(--navy);text-transform:uppercase;letter-spacing:0.07em}
+    .contact-item{padding:9px 12px;cursor:pointer;display:flex;align-items:center;gap:8px;border-bottom:0.5px solid var(--border);transition:background 0.15s;border-left:3px solid transparent}
+    .contact-item:hover{background:var(--gold-bg)}
+    .contact-item.active{background:var(--gold-bg);border-left-color:var(--gold)}
+    .contact-avatar{width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:700;color:var(--white);flex-shrink:0}
+    .contact-name{font-size:11px;font-weight:500;color:var(--text)}
+    .contact-role{font-size:9px;color:var(--muted)}
+    .msg-thread{display:flex;flex-direction:column}
+    .thread-header{padding:10px 14px;border-bottom:0.5px solid var(--border);display:flex;align-items:center;gap:8px}
+    .thread-messages{flex:1;padding:12px 14px;overflow-y:auto;display:flex;flex-direction:column;gap:8px;background:var(--cream);height:340px}
+    .msg-bubble{max-width:70%;padding:8px 12px;font-size:12px;line-height:1.5}
+    .msg-bubble.received{background:var(--white);border:0.5px solid var(--border);align-self:flex-start}
+    .msg-bubble.sent{background:var(--owner);color:rgba(255,255,255,0.9);align-self:flex-end}
+    .msg-time{font-size:10px;margin-top:3px;opacity:0.45}
+    .thread-input{padding:10px 14px;border-top:0.5px solid var(--border);display:flex;gap:8px;background:var(--white)}
+    .thread-input input{flex:1;border:1px solid var(--border);padding:8px 12px;font-size:12px;outline:none;background:var(--cream);font-family:'Inter',sans-serif}
+    .thread-input input:focus{border-color:var(--gold)}
+    .send-btn{background:var(--owner);border:none;padding:8px 14px;cursor:pointer;color:var(--gold)}
+
+    /* RAPPORT */
+    .rapport-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-bottom:1.25rem}
+    .rapport-card{background:var(--white);border:0.5px solid var(--border);padding:1.1rem}
+    .rapport-card h4{font-size:11px;font-weight:600;color:var(--navy);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:0.75rem;padding-bottom:0.5rem;border-bottom:1px solid var(--border)}
+    .rapport-row{display:flex;justify-content:space-between;align-items:center;padding:5px 0;font-size:12px;border-bottom:0.5px solid var(--gray-light)}
+    .rapport-row:last-child{border-bottom:none}
+    .rapport-val{font-weight:600;color:var(--navy)}
+
+    /* ANNONCE FORM */
+    .annonce-form{background:var(--white);border:0.5px solid var(--border);padding:1.5rem;margin-bottom:1.25rem;display:none}
+    .annonce-form.open{display:block}
+    .form-group{display:flex;flex-direction:column;gap:4px;margin-bottom:10px}
+    .form-group label{font-size:10px;font-weight:600;color:var(--navy);text-transform:uppercase;letter-spacing:0.06em}
+    .form-group input,.form-group select,.form-group textarea{border:1px solid var(--border);padding:8px 12px;font-size:13px;background:var(--cream);outline:none;font-family:'Inter',sans-serif;color:var(--text)}
+    .form-group input:focus,.form-group select:focus,.form-group textarea:focus{border-color:var(--gold)}
+    .form-row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+
+    /* ACTIVITE */
+    .activity-list{display:flex;flex-direction:column;gap:8px}
+    .activity-item{background:var(--white);border:0.5px solid var(--border);padding:10px 14px;display:flex;align-items:center;gap:10px}
+    .activity-icon{width:32px;height:32px;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:15px}
+    .activity-icon.blue{background:var(--blue-bg);color:var(--blue)}
+    .activity-icon.green{background:var(--green-bg);color:var(--green)}
+    .activity-icon.gold{background:var(--gold-bg);color:#92660A}
+    .activity-icon.red{background:var(--red-bg);color:var(--red)}
+    .activity-icon.purple{background:var(--purple-bg);color:var(--purple)}
+    .activity-info p{font-size:12px;font-weight:500;color:var(--text)}
+    .activity-info span{font-size:10px;color:var(--muted)}
+    .activity-badge{margin-left:auto;font-size:10px;padding:3px 8px;font-weight:600;flex-shrink:0}
+
+    /* TOAST */
+    .toast{position:fixed;bottom:1.5rem;right:1.5rem;background:var(--owner);color:var(--white);padding:11px 20px;font-size:13px;font-weight:500;z-index:999;display:none;align-items:center;gap:8px;border-left:3px solid var(--gold)}
+    .toast.show{display:flex}
+    .toast i{color:var(--gold);font-size:17px}
+  </style>
+</head>
+<body>
+
+<div class="toast" id="toast"><i class="ti ti-crown" aria-hidden="true"></i><span id="toast-msg"></span></div>
+
+<aside class="sidebar">
+  <div class="sb-logo">
+    <div class="sb-logo-mark">
+      <div class="sb-badge">ILCH</div>
+      <div class="sb-name">Institution Louis Chauvet<small>Accès Propriétaire</small></div>
+    </div>
+  </div>
+  <div class="owner-tag"><i class="ti ti-crown" aria-hidden="true"></i><span>Accès total</span></div>
+  <nav class="sb-nav">
+    <div class="sb-section">Vue générale</div>
+    <div class="sb-item active" onclick="showPanel('dash',this)"><i class="ti ti-home" aria-hidden="true"></i>Tableau de bord</div>
+    <div class="sb-item" onclick="showPanel('stats',this)"><i class="ti ti-chart-pie" aria-hidden="true"></i>Statistiques globales</div>
+    <div class="sb-item" onclick="showPanel('activite',this)"><i class="ti ti-activity" aria-hidden="true"></i>Activité en temps réel</div>
+    <div class="sb-section">Gestion complète</div>
+    <div class="sb-item" onclick="showPanel('comptes',this)"><i class="ti ti-users" aria-hidden="true"></i>Tous les comptes</div>
+    <div class="sb-item" onclick="showPanel('notes',this)"><i class="ti ti-chart-bar" aria-hidden="true"></i>Notes de tous les élèves</div>
+    <div class="sb-item" onclick="showPanel('cours',this)"><i class="ti ti-video" aria-hidden="true"></i>Tous les cours vidéo</div>
+    <div class="sb-section">Finances</div>
+    <div class="sb-item" onclick="showPanel('finances',this)"><i class="ti ti-coin" aria-hidden="true"></i>Frais scolaires<span class="sb-count">8</span></div>
+    <div class="sb-section">Communication</div>
+    <div class="sb-item" onclick="showPanel('messages',this)"><i class="ti ti-messages" aria-hidden="true"></i>Tous les messages<span class="sb-count gold">12</span></div>
+    <div class="sb-item" onclick="showPanel('annonces',this)"><i class="ti ti-speakerphone" aria-hidden="true"></i>Annonces prioritaires</div>
+    <div class="sb-section">Rapports</div>
+    <div class="sb-item" onclick="showPanel('rapports',this)"><i class="ti ti-file-analytics" aria-hidden="true"></i>Rapports & exports</div>
+  </nav>
+  <div class="sb-user">
+    <div class="sb-user-row">
+      <div class="sb-avatar">DG</div>
+      <div><div class="sb-user-name">Directrice Générale</div><div class="sb-user-role">Propriétaire · ILCH</div></div>
+    </div>
+    <button class="logout-btn" onclick="window.location.href='login.html'"><i class="ti ti-logout" style="font-size:13px" aria-hidden="true"></i> Déconnexion</button>
+  </div>
+</aside>
+
+<div class="sidebar-overlay" id="sidebar-overlay" onclick="closeSidebar()"></div>
+<div class="main">
+  <div class="topbar">
+    <button class="hamburger" id="hamburger" onclick="toggleSidebar()" aria-label="Menu"><span></span><span></span><span></span></button><div class="topbar-title" id="topbar-title">Tableau de bord — Vue propriétaire</div>
+    <div class="topbar-right">
+      <div class="owner-pill"><div class="live-dot"></div>En ligne · Accès total</div>
+    </div>
+  </div>
+
+  <div class="content">
+
+    <!-- DASHBOARD -->
+    <div class="panel active" id="panel-dash">
+      <div class="stats-row">
+        <div class="stat-card blue"><i class="ti ti-users stat-icon" aria-hidden="true"></i><div class="stat-label">Total élèves</div><div class="stat-val">187</div><div class="stat-sub">Inscrits · 2025–2026</div><div class="stat-trend trend-up"><i class="ti ti-trending-up" aria-hidden="true"></i>+12 vs année dernière</div></div>
+        <div class="stat-card gold"><i class="ti ti-school stat-icon" aria-hidden="true"></i><div class="stat-label">Professeurs actifs</div><div class="stat-val">14</div><div class="stat-sub">Sur 14 postes</div><div class="stat-trend trend-up"><i class="ti ti-check" aria-hidden="true"></i>Tous actifs</div></div>
+        <div class="stat-card green"><i class="ti ti-coin stat-icon" aria-hidden="true"></i><div class="stat-label">Frais perçus (HTG)</div><div class="stat-val">842K</div><div class="stat-sub">Sur 1.2M attendus</div><div class="stat-trend trend-down"><i class="ti ti-alert-triangle" aria-hidden="true"></i>358K impayés</div></div>
+        <div class="stat-card red"><i class="ti ti-calendar-x stat-icon" aria-hidden="true"></i><div class="stat-label">Absences aujourd'hui</div><div class="stat-val">12</div><div class="stat-sub">6.4% des élèves</div><div class="stat-trend trend-down"><i class="ti ti-trending-up" aria-hidden="true"></i>+3 vs hier</div></div>
+      </div>
+      <div class="stats-row" style="grid-template-columns:repeat(3,1fr)">
+        <div class="stat-card purple"><i class="ti ti-video stat-icon" aria-hidden="true"></i><div class="stat-label">Cours vidéo publiés</div><div class="stat-val">24</div><div class="stat-sub">Par 8 professeurs</div></div>
+        <div class="stat-card orange"><i class="ti ti-clipboard-list stat-icon" aria-hidden="true"></i><div class="stat-label">Inscriptions en attente</div><div class="stat-val">4</div><div class="stat-sub">À traiter</div></div>
+        <div class="stat-card blue" style="--blue:#0891B2"><i class="ti ti-message stat-icon" aria-hidden="true"></i><div class="stat-label">Messages échangés</div><div class="stat-val">156</div><div class="stat-sub">Ce mois</div></div>
+      </div>
+
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">
+        <div>
+          <div class="section-hdr"><div class="section-hdr-title">Activité récente</div></div>
+          <div class="activity-list">
+            <div class="activity-item"><div class="activity-icon blue"><i class="ti ti-user-plus" aria-hidden="true"></i></div><div class="activity-info"><p>Nouvelle inscription — Paul Étienne Jr.</p><span>Terminale A · il y a 1 heure</span></div><span class="activity-badge badge-new">Nouveau</span></div>
+            <div class="activity-item"><div class="activity-icon gold"><i class="ti ti-video" aria-hidden="true"></i></div><div class="activity-info"><p>Cours publié par Prof. Marie Céleste</p><span>Mathématiques · il y a 2 heures</span></div><span class="activity-badge badge-active">Publié</span></div>
+            <div class="activity-item"><div class="activity-icon red"><i class="ti ti-coin-off" aria-hidden="true"></i></div><div class="activity-info"><p>Frais impayés — 3 familles relancées</p><span>Administration · il y a 3 heures</span></div><span class="activity-badge badge-unpaid">Urgent</span></div>
+            <div class="activity-item"><div class="activity-icon green"><i class="ti ti-coin" aria-hidden="true"></i></div><div class="activity-info"><p>Paiement reçu — Famille Marc</p><span>25,000 HTG · ce matin</span></div><span class="activity-badge badge-paid">Reçu</span></div>
+            <div class="activity-item"><div class="activity-icon purple"><i class="ti ti-message" aria-hidden="true"></i></div><div class="activity-info"><p>12 nouveaux messages entre élèves et profs</p><span>Aujourd'hui</span></div><span class="activity-badge badge-new">Voir</span></div>
+          </div>
+        </div>
+        <div>
+          <div class="section-hdr"><div class="section-hdr-title">Répartition des élèves</div></div>
+          <div class="chart-card" style="padding:1rem">
+            <div class="bar-row"><div class="bar-label">Préscolaire</div><div class="bar-track"><div class="bar-fill" style="width:35%;background:var(--gold)"></div></div><div class="bar-val">32</div></div>
+            <div class="bar-row"><div class="bar-label">Fond. 1–3</div><div class="bar-track"><div class="bar-fill" style="width:50%;background:var(--blue)"></div></div><div class="bar-val">48</div></div>
+            <div class="bar-row"><div class="bar-label">Fond. 4–6</div><div class="bar-track"><div class="bar-fill" style="width:45%;background:var(--blue)"></div></div><div class="bar-val">42</div></div>
+            <div class="bar-row"><div class="bar-label">Fond. 7–9</div><div class="bar-track"><div class="bar-fill" style="width:30%;background:var(--navy2)"></div></div><div class="bar-val">28</div></div>
+            <div class="bar-row"><div class="bar-label">Secondaire</div><div class="bar-track"><div class="bar-fill" style="width:25%;background:var(--purple)"></div></div><div class="bar-val">25</div></div>
+            <div class="bar-row"><div class="bar-label">Terminale</div><div class="bar-track"><div class="bar-fill" style="width:13%;background:var(--green)"></div></div><div class="bar-val">12</div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- STATISTIQUES -->
+    <div class="panel" id="panel-stats">
+      <div class="charts-grid">
+        <div class="chart-card"><div class="chart-title">Moyennes par matière</div>
+          <div class="bar-row"><div class="bar-label">Mathématiques</div><div class="bar-track"><div class="bar-fill" style="width:72%;background:var(--green)"></div></div><div class="bar-val">14.4</div></div>
+          <div class="bar-row"><div class="bar-label">Français</div><div class="bar-track"><div class="bar-fill" style="width:65%;background:var(--blue)"></div></div><div class="bar-val">13.0</div></div>
+          <div class="bar-row"><div class="bar-label">Sciences</div><div class="bar-track"><div class="bar-fill" style="width:78%;background:var(--green)"></div></div><div class="bar-val">15.6</div></div>
+          <div class="bar-row"><div class="bar-label">Histoire-Géo</div><div class="bar-track"><div class="bar-fill" style="width:60%;background:var(--orange)"></div></div><div class="bar-val">12.0</div></div>
+          <div class="bar-row"><div class="bar-label">Anglais</div><div class="bar-track"><div class="bar-fill" style="width:67%;background:var(--blue)"></div></div><div class="bar-val">13.4</div></div>
+          <div class="bar-row"><div class="bar-label">Philosophie</div><div class="bar-track"><div class="bar-fill" style="width:52%;background:var(--orange)"></div></div><div class="bar-val">10.4</div></div>
+        </div>
+        <div class="chart-card"><div class="chart-title">Performance des professeurs</div>
+          <div class="bar-row"><div class="bar-label">Prof. Céleste</div><div class="bar-track"><div class="bar-fill" style="width:80%;background:var(--green)"></div></div><div class="bar-val">14.4</div></div>
+          <div class="bar-row"><div class="bar-label">Prof. Blanc</div><div class="bar-track"><div class="bar-fill" style="width:85%;background:var(--green)"></div></div><div class="bar-val">15.6</div></div>
+          <div class="bar-row"><div class="bar-label">Prof. Moreau</div><div class="bar-track"><div class="bar-fill" style="width:70%;background:var(--blue)"></div></div><div class="bar-val">13.4</div></div>
+          <div class="bar-row"><div class="bar-label">Prof. Joseph</div><div class="bar-track"><div class="bar-fill" style="width:65%;background:var(--blue)"></div></div><div class="bar-val">13.0</div></div>
+          <div class="bar-row"><div class="bar-label">Prof. Luc</div><div class="bar-track"><div class="bar-fill" style="width:60%;background:var(--orange)"></div></div><div class="bar-val">12.0</div></div>
+          <div class="bar-row"><div class="bar-label">Prof. Henry</div><div class="bar-track"><div class="bar-fill" style="width:52%;background:var(--red)"></div></div><div class="bar-val">10.4</div></div>
+        </div>
+        <div class="chart-card"><div class="chart-title">Taux de présence par classe</div>
+          <div class="bar-row"><div class="bar-label">Préscolaire</div><div class="bar-track"><div class="bar-fill" style="width:95%;background:var(--green)"></div></div><div class="bar-val">95%</div></div>
+          <div class="bar-row"><div class="bar-label">Fond. 1–3</div><div class="bar-track"><div class="bar-fill" style="width:92%;background:var(--green)"></div></div><div class="bar-val">92%</div></div>
+          <div class="bar-row"><div class="bar-label">Fond. 4–6</div><div class="bar-track"><div class="bar-fill" style="width:88%;background:var(--blue)"></div></div><div class="bar-val">88%</div></div>
+          <div class="bar-row"><div class="bar-label">Fond. 7–9</div><div class="bar-track"><div class="bar-fill" style="width:85%;background:var(--orange)"></div></div><div class="bar-val">85%</div></div>
+          <div class="bar-row"><div class="bar-label">Secondaire</div><div class="bar-track"><div class="bar-fill" style="width:80%;background:var(--orange)"></div></div><div class="bar-val">80%</div></div>
+          <div class="bar-row"><div class="bar-label">Terminale</div><div class="bar-track"><div class="bar-fill" style="width:90%;background:var(--green)"></div></div><div class="bar-val">90%</div></div>
+        </div>
+        <div class="chart-card"><div class="chart-title">Cours publiés par professeur</div>
+          <div class="bar-row"><div class="bar-label">Prof. Céleste</div><div class="bar-track"><div class="bar-fill" style="width:50%;background:var(--gold)"></div></div><div class="bar-val">5</div></div>
+          <div class="bar-row"><div class="bar-label">Prof. Joseph</div><div class="bar-track"><div class="bar-fill" style="width:40%;background:var(--gold)"></div></div><div class="bar-val">4</div></div>
+          <div class="bar-row"><div class="bar-label">Prof. Blanc</div><div class="bar-track"><div class="bar-fill" style="width:40%;background:var(--gold)"></div></div><div class="bar-val">4</div></div>
+          <div class="bar-row"><div class="bar-label">Prof. Luc</div><div class="bar-track"><div class="bar-fill" style="width:30%;background:var(--navy2)"></div></div><div class="bar-val">3</div></div>
+          <div class="bar-row"><div class="bar-label">Prof. Moreau</div><div class="bar-track"><div class="bar-fill" style="width:30%;background:var(--navy2)"></div></div><div class="bar-val">3</div></div>
+          <div class="bar-row"><div class="bar-label">Prof. Henry</div><div class="bar-track"><div class="bar-fill" style="width:10%;background:var(--red)"></div></div><div class="bar-val">1</div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ACTIVITÉ EN TEMPS RÉEL -->
+    <div class="panel" id="panel-activite">
+      <div class="section-hdr"><div class="section-hdr-title">Activité en temps réel — Aujourd'hui 2 juillet 2026</div><div class="live-dot" style="width:8px;height:8px;background:#22C55E;border-radius:50%;animation:pulse 2s infinite"></div></div>
+      <div class="activity-list">
+        <div class="activity-item"><div class="activity-icon blue"><i class="ti ti-login" aria-hidden="true"></i></div><div class="activity-info"><p>Jean Pierre (Élève) s'est connecté</p><span>Terminale A · 14h32</span></div><span class="activity-badge badge-active">En ligne</span></div>
+        <div class="activity-item"><div class="activity-icon gold"><i class="ti ti-video" aria-hidden="true"></i></div><div class="activity-info"><p>Prof. Marie Céleste a publié un cours vidéo</p><span>Mathématiques · Terminale A et B · 13h15</span></div><span class="activity-badge badge-new">Nouveau</span></div>
+        <div class="activity-item"><div class="activity-icon purple"><i class="ti ti-message" aria-hidden="true"></i></div><div class="activity-info"><p>Message envoyé : Jean Pierre → Prof. Marie Céleste</p><span>« J'ai du mal avec l'exercice 3 » · 10h12</span></div><span class="activity-badge badge-new">Message</span></div>
+        <div class="activity-item"><div class="activity-icon green"><i class="ti ti-coin" aria-hidden="true"></i></div><div class="activity-info"><p>Paiement frais scolaires — Famille Marc</p><span>25,000 HTG · 9h45</span></div><span class="activity-badge badge-paid">Payé</span></div>
+        <div class="activity-item"><div class="activity-icon blue"><i class="ti ti-login" aria-hidden="true"></i></div><div class="activity-info"><p>Prof. René Joseph s'est connecté</p><span>Français · 9h00</span></div><span class="activity-badge badge-active">En ligne</span></div>
+        <div class="activity-item"><div class="activity-icon red"><i class="ti ti-calendar-x" aria-hidden="true"></i></div><div class="activity-info"><p>Absence enregistrée — Jean Pierre</p><span>Cours de Philosophie · 8h00</span></div><span class="activity-badge badge-unpaid">Absent</span></div>
+        <div class="activity-item"><div class="activity-icon gold"><i class="ti ti-chart-bar" aria-hidden="true"></i></div><div class="activity-info"><p>Notes saisies par Prof. Marie Céleste</p><span>Mathématiques · Terminale A · hier soir</span></div><span class="activity-badge badge-active">Enregistré</span></div>
+      </div>
+    </div>
+
+    <!-- TOUS LES COMPTES -->
+    <div class="panel" id="panel-comptes">
+      <div class="section-hdr">
+        <div class="section-hdr-title">Tous les comptes utilisateurs</div>
+        <button class="btn-gold" onclick="showToast('Nouveau compte créé')"><i class="ti ti-plus" aria-hidden="true"></i>Nouveau compte</button>
+      </div>
+      <table class="data-table">
+        <thead><tr><th>Nom</th><th>Identifiant</th><th>Rôle</th><th>Classe / Matière</th><th>Dernière connexion</th><th>Statut</th><th>Actions</th></tr></thead>
+        <tbody>
+          <tr><td><strong>Jean Baptiste</strong></td><td>directeur</td><td><span class="badge badge-admin">Admin</span></td><td>Direction</td><td>Aujourd'hui 9h00</td><td><span class="badge badge-active">Actif</span></td><td><button class="btn-sm" onclick="showToast('Compte modifié')">Modifier</button></td></tr>
+          <tr><td>Marie Céleste</td><td>marie.celeste</td><td><span class="badge badge-prof">Professeur</span></td><td>Mathématiques</td><td>Aujourd'hui 8h30</td><td><span class="badge badge-active">Actif</span></td><td><button class="btn-sm" onclick="showToast('Compte modifié')">Modifier</button></td></tr>
+          <tr><td>René Joseph</td><td>rene.joseph</td><td><span class="badge badge-prof">Professeur</span></td><td>Français</td><td>Aujourd'hui 9h00</td><td><span class="badge badge-active">Actif</span></td><td><button class="btn-sm" onclick="showToast('Compte modifié')">Modifier</button></td></tr>
+          <tr><td>Jean Pierre</td><td>jean.pierre</td><td><span class="badge badge-eleve">Élève</span></td><td>Terminale A</td><td>Aujourd'hui 14h32</td><td><span class="badge badge-active">Actif</span></td><td><button class="btn-sm" onclick="showToast('Compte modifié')">Modifier</button></td></tr>
+          <tr><td>Sophie Marc</td><td>sophie.marc</td><td><span class="badge badge-eleve">Élève</span></td><td>Terminale B</td><td>Hier 16h00</td><td><span class="badge badge-active">Actif</span></td><td><button class="btn-sm" onclick="showToast('Compte modifié')">Modifier</button></td></tr>
+          <tr><td>Marie Pierre</td><td>marie.pierre</td><td><span class="badge badge-parent">Parent</span></td><td>Parent de Jean Pierre</td><td>Hier 18h00</td><td><span class="badge badge-active">Actif</span></td><td><button class="btn-sm" onclick="showToast('Compte modifié')">Modifier</button></td></tr>
+          <tr><td>Paul Henry</td><td>paul.henry</td><td><span class="badge badge-prof">Professeur</span></td><td>Philosophie</td><td>Il y a 3 jours</td><td><span class="badge badge-inactive">Inactif</span></td><td><button class="btn-danger" onclick="showToast('Compte activé')">Activer</button></td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- NOTES DE TOUS LES ÉLÈVES -->
+    <div class="panel" id="panel-notes">
+      <div class="section-hdr">
+        <div class="section-hdr-title">Notes de tous les élèves — Trimestre 2</div>
+        <select style="border:1px solid var(--border);padding:7px 12px;font-size:12px;background:var(--white);font-family:'Inter',sans-serif;outline:none" onchange="showToast('Classe changée')">
+          <option>Terminale A</option><option>Terminale B</option><option>Rhétorique</option><option>Secondaire</option>
+        </select>
+      </div>
+      <table class="data-table">
+        <thead><tr><th>Élève</th><th>Maths</th><th>Français</th><th>Sciences</th><th>Histoire</th><th>Anglais</th><th>Philo</th><th>Moyenne</th></tr></thead>
+        <tbody>
+          <tr><td><strong>Jean Pierre</strong></td><td style="color:var(--green);font-weight:700">16</td><td style="color:var(--orange);font-weight:700">13</td><td style="color:var(--green);font-weight:700">17</td><td style="color:var(--orange);font-weight:700">12</td><td style="color:var(--green);font-weight:700">15</td><td style="color:var(--red);font-weight:700">9</td><td style="font-weight:700;color:var(--orange)">13.7</td></tr>
+          <tr><td><strong>Sophie Marc</strong></td><td style="color:var(--green);font-weight:700">18</td><td style="color:var(--green);font-weight:700">15</td><td style="color:var(--green);font-weight:700">16</td><td style="color:var(--green);font-weight:700">14</td><td style="color:var(--green);font-weight:700">17</td><td style="color:var(--orange);font-weight:700">12</td><td style="font-weight:700;color:var(--green)">15.3</td></tr>
+          <tr><td><strong>Marc Antoine</strong></td><td style="color:var(--orange);font-weight:700">11</td><td style="color:var(--orange);font-weight:700">10</td><td style="color:var(--orange);font-weight:700">13</td><td style="color:var(--red);font-weight:700">8</td><td style="color:var(--orange);font-weight:700">11</td><td style="color:var(--red);font-weight:700">7</td><td style="font-weight:700;color:var(--red)">10.0</td></tr>
+          <tr><td><strong>Claire Dupont</strong></td><td style="color:var(--green);font-weight:700">19</td><td style="color:var(--green);font-weight:700">17</td><td style="color:var(--green);font-weight:700">18</td><td style="color:var(--green);font-weight:700">16</td><td style="color:var(--green);font-weight:700">18</td><td style="color:var(--green);font-weight:700">14</td><td style="font-weight:700;color:var(--green)">17.0</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- TOUS LES COURS -->
+    <div class="panel" id="panel-cours">
+      <div class="section-hdr"><div class="section-hdr-title">Tous les cours vidéo publiés</div></div>
+      <table class="data-table">
+        <thead><tr><th>Titre</th><th>Professeur</th><th>Matière</th><th>Classe</th><th>Date</th><th>Vues</th><th>Actions</th></tr></thead>
+        <tbody>
+          <tr><td>Les équations du 2e degré</td><td>Prof. Marie Céleste</td><td>Mathématiques</td><td>Terminale A+B</td><td>Aujourd'hui</td><td>38</td><td><button class="btn-sm">Voir</button><button class="btn-danger" style="margin-left:4px" onclick="showToast('Cours supprimé')">Supprimer</button></td></tr>
+          <tr><td>L'analyse grammaticale avancée</td><td>Prof. René Joseph</td><td>Français</td><td>Terminale A+B</td><td>Hier</td><td>42</td><td><button class="btn-sm">Voir</button><button class="btn-danger" style="margin-left:4px" onclick="showToast('Cours supprimé')">Supprimer</button></td></tr>
+          <tr><td>La photosynthèse expliquée</td><td>Prof. Claire Blanc</td><td>Sciences</td><td>Terminale A</td><td>28 juin</td><td>29</td><td><button class="btn-sm">Voir</button><button class="btn-danger" style="margin-left:4px" onclick="showToast('Cours supprimé')">Supprimer</button></td></tr>
+          <tr><td>La révolution haïtienne 1804</td><td>Prof. Jean Luc</td><td>Histoire</td><td>Toutes</td><td>25 juin</td><td>61</td><td><button class="btn-sm">Voir</button><button class="btn-danger" style="margin-left:4px" onclick="showToast('Cours supprimé')">Supprimer</button></td></tr>
+          <tr><td>Present perfect vs simple past</td><td>Prof. Sandra Moreau</td><td>Anglais</td><td>Terminale A+B</td><td>20 juin</td><td>35</td><td><button class="btn-sm">Voir</button><button class="btn-danger" style="margin-left:4px" onclick="showToast('Cours supprimé')">Supprimer</button></td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- FINANCES -->
+    <div class="panel" id="panel-finances">
+      <div class="finance-summary">
+        <div class="fin-card"><div class="fin-label">Total attendu (HTG)</div><div class="fin-val orange">1,200,000</div><div class="fin-sub">187 élèves · année 2025–2026</div></div>
+        <div class="fin-card"><div class="fin-label">Total perçu (HTG)</div><div class="fin-val green">842,000</div><div class="fin-sub">70.2% collecté</div></div>
+        <div class="fin-card"><div class="fin-label">Impayés (HTG)</div><div class="fin-val red">358,000</div><div class="fin-sub">8 familles concernées</div></div>
+      </div>
+      <table class="data-table">
+        <thead><tr><th>Élève</th><th>Classe</th><th>Parent</th><th>Montant dû</th><th>Montant payé</th><th>Reste</th><th>Statut</th><th>Actions</th></tr></thead>
+        <tbody>
+          <tr><td>Jean Pierre</td><td>Terminale A</td><td>Marie Pierre</td><td>65,000</td><td>65,000</td><td>0</td><td><span class="badge badge-paid">Payé</span></td><td><button class="btn-sm">Reçu</button></td></tr>
+          <tr><td>Sophie Marc</td><td>Terminale B</td><td>Robert Marc</td><td>65,000</td><td>45,000</td><td>20,000</td><td><span class="badge badge-partial">Partiel</span></td><td><button class="btn-sm" onclick="showToast('Rappel envoyé')">Relancer</button></td></tr>
+          <tr><td>Marc Antoine</td><td>Terminale A</td><td>Louise Antoine</td><td>65,000</td><td>0</td><td>65,000</td><td><span class="badge badge-unpaid">Impayé</span></td><td><button class="btn-danger" onclick="showToast('Rappel urgent envoyé')">Urgent</button></td></tr>
+          <tr><td>Claire Dupont</td><td>Terminale A</td><td>Henri Dupont</td><td>65,000</td><td>65,000</td><td>0</td><td><span class="badge badge-paid">Payé</span></td><td><button class="btn-sm">Reçu</button></td></tr>
+          <tr><td>Paul Étienne</td><td>Terminale A</td><td>Paul Étienne Sr.</td><td>65,000</td><td>30,000</td><td>35,000</td><td><span class="badge badge-partial">Partiel</span></td><td><button class="btn-sm" onclick="showToast('Rappel envoyé')">Relancer</button></td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- MESSAGES -->
+    <div class="panel" id="panel-messages">
+      <div style="font-size:12px;color:var(--gray);background:var(--gold-bg);border:1px solid var(--gold-light);padding:10px 14px;margin-bottom:1rem;display:flex;align-items:center;gap:6px"><i class="ti ti-eye" style="color:var(--gold)" aria-hidden="true"></i>Mode propriétaire — Vous avez accès à toutes les conversations</div>
+      <div class="msg-layout">
+        <div class="msg-contacts">
+          <div class="msg-contact-header">Toutes les conversations</div>
+          <div class="contact-item active" onclick="switchMsg('Jean Pierre → Prof. Céleste','Terminale A · Maths','JP',this)">
+            <div class="contact-avatar" style="background:var(--blue)">JP</div>
+            <div><div class="contact-name">Jean Pierre</div><div class="contact-role">→ Prof. Céleste</div></div>
+          </div>
+          <div class="contact-item" onclick="switchMsg('Sophie Marc → Prof. Joseph','Terminale B · Français','SM',this)">
+            <div class="contact-avatar" style="background:var(--green)">SM</div>
+            <div><div class="contact-name">Sophie Marc</div><div class="contact-role">→ Prof. Joseph</div></div>
+          </div>
+          <div class="contact-item" onclick="switchMsg('Marie Pierre → Administration','Parent · Jean Pierre','MP',this)">
+            <div class="contact-avatar" style="background:var(--orange)">MP</div>
+            <div><div class="contact-name">Marie Pierre</div><div class="contact-role">→ Administration</div></div>
+          </div>
+          <div class="contact-item" onclick="switchMsg('Marc Antoine → Prof. Céleste','Terminale A · Maths','MA',this)">
+            <div class="contact-avatar" style="background:var(--purple)">MA</div>
+            <div><div class="contact-name">Marc Antoine</div><div class="contact-role">→ Prof. Céleste</div></div>
+          </div>
+        </div>
+        <div class="msg-thread" style="display:flex;flex-direction:column">
+          <div class="thread-header"><div class="contact-avatar" id="msg-avatar" style="background:var(--blue)">JP</div><div><strong id="msg-name">Jean Pierre → Prof. Céleste</strong><br><span id="msg-sub" style="font-size:11px;color:var(--muted)">Terminale A · Maths</span></div></div>
+          <div class="thread-messages" id="msg-thread">
+            <div class="msg-bubble received">Bonjour professeure, j'ai du mal avec l'exercice 3 sur les équations.<div class="msg-time">Aujourd'hui, 10h12</div></div>
+            <div class="msg-bubble sent">Bonjour Jean, quel point précisément te pose problème ?<div class="msg-time">Aujourd'hui, 10h40</div></div>
+            <div class="msg-bubble received">C'est le discriminant, je ne comprends pas comment le calculer.<div class="msg-time">Aujourd'hui, 10h45</div></div>
+          </div>
+          <div class="thread-input">
+            <input type="text" id="owner-msg-input" placeholder="Intervenir dans la conversation (en tant que propriétaire)...">
+            <button class="send-btn" onclick="sendOwnerMsg()" aria-label="Envoyer"><i class="ti ti-send" aria-hidden="true"></i></button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ANNONCES -->
+    <div class="panel" id="panel-annonces">
+      <div class="section-hdr">
+        <div class="section-hdr-title">Annonces prioritaires — Visibles par tous</div>
+        <button class="btn-gold" onclick="toggleAnnForm()"><i class="ti ti-plus" aria-hidden="true"></i>Nouvelle annonce</button>
+      </div>
+      <div class="annonce-form" id="ann-form">
+        <div class="form-row">
+          <div class="form-group"><label>Titre</label><input type="text" id="ann-title" placeholder="Titre de l'annonce"></div>
+          <div class="form-group"><label>Priorité</label><select id="ann-type"><option value="urgent">🔴 Urgente</option><option value="info">🔵 Information</option><option value="event">🟡 Événement</option></select></div>
+        </div>
+        <div class="form-group"><label>Destinataires</label><select><option>Tout le monde (élèves, profs, parents, admins)</option><option>Professeurs seulement</option><option>Parents seulement</option><option>Élèves seulement</option></select></div>
+        <div class="form-group"><label>Message</label><textarea rows="3" id="ann-body" placeholder="Rédigez votre annonce ici..." style="width:100%;resize:vertical"></textarea></div>
+        <div style="display:flex;gap:8px;margin-top:8px">
+          <button class="btn-gold" onclick="publishAnn()"><i class="ti ti-speakerphone" aria-hidden="true"></i>Publier immédiatement</button>
+          <button class="btn-sm" onclick="toggleAnnForm()">Annuler</button>
+        </div>
+      </div>
+      <div id="ann-list" style="display:flex;flex-direction:column;gap:10px">
+        <div style="background:var(--white);border:0.5px solid var(--border);border-left:3px solid var(--red);padding:1rem 1.25rem;display:flex;justify-content:space-between;align-items:start">
+          <div><div style="font-size:13px;font-weight:600;color:var(--navy);margin-bottom:4px">Réunion de parents — 10 juillet 2026</div><div style="font-size:12px;color:var(--gray)">Vendredi 10 juillet à 17h00 dans la salle principale.</div><div style="font-size:10px;color:var(--muted);margin-top:4px">Publié par la Propriétaire · 2 juillet 2026 · Tous</div></div>
+          <button class="btn-danger" onclick="this.closest('div').remove();showToast('Annonce supprimée')">Supprimer</button>
+        </div>
+        <div style="background:var(--white);border:0.5px solid var(--border);border-left:3px solid var(--gold);padding:1rem 1.25rem;display:flex;justify-content:space-between;align-items:start">
+          <div><div style="font-size:13px;font-weight:600;color:var(--navy);margin-bottom:4px">Journée culturelle — 15 juillet 2026</div><div style="font-size:12px;color:var(--gray)">Grande journée culturelle annuelle. Parents bienvenus.</div><div style="font-size:10px;color:var(--muted);margin-top:4px">Publié par la Propriétaire · 28 juin 2026 · Tous</div></div>
+          <button class="btn-danger" onclick="this.closest('div').remove();showToast('Annonce supprimée')">Supprimer</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- RAPPORTS -->
+    <div class="panel" id="panel-rapports">
+      <div class="rapport-grid">
+        <div class="rapport-card">
+          <h4>Résumé académique</h4>
+          <div class="rapport-row"><span>Moyenne générale école</span><span class="rapport-val">13.4 / 20</span></div>
+          <div class="rapport-row"><span>Meilleure classe</span><span class="rapport-val">Terminale B</span></div>
+          <div class="rapport-row"><span>Élèves en difficulté</span><span class="rapport-val" style="color:var(--red)">18</span></div>
+          <div class="rapport-row"><span>Élèves excellents</span><span class="rapport-val" style="color:var(--green)">34</span></div>
+          <div class="rapport-row"><span>Taux de réussite</span><span class="rapport-val">90.4%</span></div>
+        </div>
+        <div class="rapport-card">
+          <h4>Résumé présence</h4>
+          <div class="rapport-row"><span>Taux présence moyen</span><span class="rapport-val">93%</span></div>
+          <div class="rapport-row"><span>Total absences juin</span><span class="rapport-val">90</span></div>
+          <div class="rapport-row"><span>Absences justifiées</span><span class="rapport-val" style="color:var(--green)">72</span></div>
+          <div class="rapport-row"><span>Absences non justifiées</span><span class="rapport-val" style="color:var(--red)">18</span></div>
+          <div class="rapport-row"><span>Classe la plus absente</span><span class="rapport-val">Secondaire</span></div>
+        </div>
+        <div class="rapport-card">
+          <h4>Résumé financier</h4>
+          <div class="rapport-row"><span>Total attendu</span><span class="rapport-val">1,200,000 HTG</span></div>
+          <div class="rapport-row"><span>Total perçu</span><span class="rapport-val" style="color:var(--green)">842,000 HTG</span></div>
+          <div class="rapport-row"><span>Taux de recouvrement</span><span class="rapport-val">70.2%</span></div>
+          <div class="rapport-row"><span>Familles en impayé</span><span class="rapport-val" style="color:var(--red)">8</span></div>
+          <div class="rapport-row"><span>Impayés restants</span><span class="rapport-val" style="color:var(--red)">358,000 HTG</span></div>
+        </div>
+      </div>
+      <div style="display:flex;gap:10px;margin-top:1rem">
+        <button class="btn-gold" onclick="showToast('Rapport PDF généré et téléchargé')"><i class="ti ti-file-download" aria-hidden="true"></i>Exporter rapport complet PDF</button>
+        <button class="btn-primary" onclick="showToast('Export Excel téléchargé')"><i class="ti ti-table-export" aria-hidden="true"></i>Exporter notes Excel</button>
+        <button class="btn-primary" onclick="showToast('Export finances téléchargé')"><i class="ti ti-coin" aria-hidden="true"></i>Exporter finances Excel</button>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+  var titles={dash:'Tableau de bord — Vue propriétaire',stats:'Statistiques globales',activite:'Activité en temps réel',comptes:'Tous les comptes',notes:'Notes de tous les élèves',cours:'Tous les cours vidéo',finances:'Frais scolaires',messages:'Tous les messages',annonces:'Annonces prioritaires',rapports:'Rapports & exports'};
+
+  function showPanel(id,el){
+    document.querySelectorAll('.panel').forEach(function(p){p.classList.remove('active')});
+    document.getElementById('panel-'+id).classList.add('active');
+    document.querySelectorAll('.sb-item').forEach(function(i){i.classList.remove('active')});
+    el.classList.add('active');
+    document.getElementById('topbar-title').textContent=titles[id]||id;
+  }
+
+  function switchMsg(name,sub,initials,el){
+    document.querySelectorAll('.contact-item').forEach(function(i){i.classList.remove('active')});
+    el.classList.add('active');
+    document.getElementById('msg-name').textContent=name;
+    document.getElementById('msg-sub').textContent=sub;
+    document.getElementById('msg-avatar').textContent=initials;
+    document.getElementById('msg-thread').innerHTML='<div class="msg-bubble received">Bonjour, j\'ai une question.<div class="msg-time">Aujourd\'hui</div></div><div class="msg-bubble sent">Bonjour, je vous réponds.<div class="msg-time">Aujourd\'hui</div></div>';
+  }
+
+  function sendOwnerMsg(){
+    var inp=document.getElementById('owner-msg-input');
+    var txt=inp.value.trim();
+    if(!txt)return;
+    var t=document.getElementById('msg-thread');
+    var b=document.createElement('div');
+    b.className='msg-bubble sent';
+    b.style.background='var(--gold)';
+    b.style.color='var(--owner)';
+    b.innerHTML=txt+' <small style="font-size:9px;opacity:0.6">[Propriétaire]</small><div class="msg-time">À l\'instant</div>';
+    t.appendChild(b);
+    t.scrollTop=t.scrollHeight;
+    inp.value='';
+    showToast('Message envoyé');
+  }
+
+  function toggleAnnForm(){
+    document.getElementById('ann-form').classList.toggle('open');
+  }
+
+  function publishAnn(){
+    var t=document.getElementById('ann-title').value.trim()||'Nouvelle annonce';
+    var b=document.getElementById('ann-body').value.trim()||'Message de la direction.';
+    var type=document.getElementById('ann-type').value;
+    var color=type==='urgent'?'var(--red)':type==='event'?'var(--gold)':'var(--blue)';
+    var card=document.createElement('div');
+    card.style.cssText='background:var(--white);border:0.5px solid var(--border);border-left:3px solid '+color+';padding:1rem 1.25rem;display:flex;justify-content:space-between;align-items:start';
+    var today=new Date().toLocaleDateString('fr-FR');
+    card.innerHTML='<div><div style="font-size:13px;font-weight:600;color:var(--navy);margin-bottom:4px">'+t+'</div><div style="font-size:12px;color:var(--gray)">'+b+'</div><div style="font-size:10px;color:var(--muted);margin-top:4px">Publié par la Propriétaire · '+today+' · Tous</div></div><button class="btn-danger" onclick="this.closest(\'div\').remove();showToast(\'Annonce supprimée\')">Supprimer</button>';
+    document.getElementById('ann-list').prepend(card);
+    document.getElementById('ann-title').value='';
+    document.getElementById('ann-body').value='';
+    document.getElementById('ann-form').classList.remove('open');
+    showToast('Annonce publiée pour tous');
+  }
+
+  function showToast(msg){
+    var t=document.getElementById('toast');
+    document.getElementById('toast-msg').textContent=msg;
+    t.classList.add('show');
+    setTimeout(function(){t.classList.remove('show')},3000);
+  }
+
+  document.addEventListener('keydown',function(e){
+    if(e.key==='Enter'&&document.activeElement===document.getElementById('owner-msg-input'))sendOwnerMsg();
+  });
+</script>
+</body>
+</html>
+<script>
+function toggleSidebar(){
+  var sb=document.querySelector(".sidebar");
+  var ov=document.getElementById("sidebar-overlay");
+  var hb=document.getElementById("hamburger");
+  if(!sb||!ov) return;
+  sb.classList.toggle("open");
+  ov.classList.toggle("show");
+  if(hb) hb.classList.toggle("open");
+}
+function closeSidebar(){
+  var sb=document.querySelector(".sidebar");
+  var ov=document.getElementById("sidebar-overlay");
+  var hb=document.getElementById("hamburger");
+  if(!sb||!ov) return;
+  sb.classList.remove("open");
+  ov.classList.remove("show");
+  if(hb) hb.classList.remove("open");
+}
+document.addEventListener("DOMContentLoaded",function(){
+  document.querySelectorAll(".sb-item").forEach(function(item){
+    item.addEventListener("click",function(){
+      if(window.innerWidth<=768) closeSidebar();
+    });
+  });
+  document.addEventListener("keydown",function(e){if(e.key==="Escape") closeSidebar();});
+});
+</script>

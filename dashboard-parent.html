@@ -1,0 +1,608 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#0D2B4E">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="ILCH">
+  <link rel="apple-touch-icon" href="icon-192.png">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Espace Parents — ILCH</title>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
+  <link rel="stylesheet" href="mobile.css">
+  <style>
+    *{margin:0;padding:0;box-sizing:border-box}
+    :root{
+      --navy:#0D2B4E;--navy2:#1A3D6B;--gold:#C9A96E;--gold-bg:#FAF3E8;--gold-light:#E8D5B0;
+      --cream:#FAFAF8;--white:#fff;--gray:#6B7280;--gray-light:#F3F4F6;
+      --border:#E5E7EB;--text:#1F2937;--muted:#9CA3AF;
+      --green:#16A34A;--green-bg:#F0FDF4;--blue:#2563EB;--blue-bg:#EFF6FF;--red:#DC2626;--red-bg:#FEF2F2;
+      --orange:#D97706;--orange-bg:#FFFBEB;
+    }
+    body{font-family:'Inter',sans-serif;background:var(--cream);color:var(--text);display:flex;min-height:100vh}
+    a{text-decoration:none;color:inherit}
+
+    .sidebar{width:230px;background:var(--navy);flex-shrink:0;display:flex;flex-direction:column;min-height:100vh;position:fixed;top:0;left:0;bottom:0;z-index:50}
+    .sb-logo{padding:1.25rem 1rem;border-bottom:1px solid rgba(255,255,255,0.08)}
+    .sb-logo-mark{display:flex;align-items:center;gap:10px}
+    .sb-badge{width:32px;height:32px;background:var(--gold);display:flex;align-items:center;justify-content:center;font-family:'Playfair Display',serif;font-weight:700;font-size:12px;color:var(--navy);flex-shrink:0}
+    .sb-name{font-size:13px;font-weight:600;color:var(--white);line-height:1.2}
+    .sb-name small{display:block;font-size:10px;color:rgba(255,255,255,0.4);font-weight:300}
+    .sb-nav{flex:1;padding:1.25rem 0}
+    .sb-section{font-size:9px;color:rgba(255,255,255,0.3);letter-spacing:0.12em;text-transform:uppercase;padding:0.75rem 1rem 0.35rem}
+    .sb-item{display:flex;align-items:center;gap:10px;padding:10px 1rem;font-size:13px;color:rgba(255,255,255,0.6);cursor:pointer;border-left:3px solid transparent;transition:background 0.15s,color 0.15s;user-select:none}
+    .sb-item:hover{background:rgba(255,255,255,0.06);color:var(--white)}
+    .sb-item.active{background:rgba(201,169,110,0.12);color:var(--gold);border-left-color:var(--gold)}
+    .sb-item i{font-size:17px;width:20px;flex-shrink:0}
+    .sb-badge-count{margin-left:auto;background:var(--gold);color:var(--navy);font-size:10px;font-weight:700;padding:2px 7px;border-radius:10px}
+    .sb-user{padding:1rem;border-top:1px solid rgba(255,255,255,0.08)}
+    .sb-user-row{display:flex;align-items:center;gap:9px}
+    .sb-avatar{width:34px;height:34px;border-radius:50%;background:var(--gold-bg);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:var(--navy);flex-shrink:0}
+    .sb-user-name{font-size:12px;color:var(--white);font-weight:500}
+    .sb-user-role{font-size:10px;color:rgba(255,255,255,0.4)}
+    .logout-btn{display:inline-flex;align-items:center;gap:5px;font-size:11px;color:rgba(255,255,255,0.3);cursor:pointer;margin-top:8px;transition:color 0.15s;background:none;border:none;font-family:'Inter',sans-serif;padding:0}
+    .logout-btn:hover{color:var(--gold)}
+
+    .main{flex:1;margin-left:230px;display:flex;flex-direction:column;min-height:100vh}
+    .topbar{background:var(--white);border-bottom:1px solid var(--border);padding:0.875rem 1.75rem;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:40}
+    .topbar-title{font-family:'Playfair Display',serif;font-size:17px;font-weight:600;color:var(--navy)}
+    .notif-pill{display:flex;align-items:center;gap:6px;background:var(--gold-bg);border:1px solid var(--gold-light);padding:5px 12px}
+    .notif-dot{width:7px;height:7px;background:var(--gold);border-radius:50%}
+    .notif-text{font-size:12px;color:var(--navy);font-weight:500}
+    .content{flex:1;padding:1.75rem;background:var(--cream)}
+
+    .panel{display:none}
+    .panel.active{display:block}
+
+    /* CHILD SELECTOR */
+    .child-selector{display:flex;align-items:center;gap:10px;background:var(--white);border:0.5px solid var(--border);padding:1rem 1.25rem;margin-bottom:1.5rem}
+    .child-selector label{font-size:12px;font-weight:600;color:var(--navy);text-transform:uppercase;letter-spacing:0.05em;flex-shrink:0}
+    .child-selector select{border:1px solid var(--border);padding:7px 12px;font-size:13px;background:var(--cream);font-family:'Inter',sans-serif;outline:none;flex:1;max-width:300px}
+    .child-selector select:focus{border-color:var(--gold)}
+
+    /* STATS */
+    .stats-row{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:1.5rem}
+    .stat-card{background:var(--white);border:0.5px solid var(--border);padding:1.1rem 1.25rem}
+    .stat-label{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:0.07em;margin-bottom:4px;font-weight:500}
+    .stat-val{font-family:'Playfair Display',serif;font-size:1.8rem;color:var(--navy);font-weight:700;line-height:1}
+    .stat-sub{font-size:11px;color:var(--gray);margin-top:4px}
+    .stat-card.alert{border-left:3px solid var(--red)}
+    .stat-card.good{border-left:3px solid var(--green)}
+
+    /* RECENT */
+    .block-title{font-size:13px;font-weight:600;color:var(--navy);margin-bottom:10px;display:flex;align-items:center;gap:6px}
+    .recent-list{display:flex;flex-direction:column;gap:8px}
+    .recent-item{background:var(--white);border:0.5px solid var(--border);padding:12px 16px;display:flex;align-items:center;gap:12px}
+    .recent-icon{width:34px;height:34px;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:16px}
+    .recent-icon.gold{background:var(--gold-bg);color:var(--navy)}
+    .recent-icon.red{background:var(--red-bg);color:var(--red)}
+    .recent-icon.green{background:var(--green-bg);color:var(--green)}
+    .recent-info p{font-size:13px;font-weight:500;color:var(--text);line-height:1.3}
+    .recent-info span{font-size:11px;color:var(--muted)}
+    .badge{margin-left:auto;font-size:10px;padding:3px 9px;font-weight:600;flex-shrink:0}
+    .badge-new{background:var(--blue-bg);color:var(--blue)}
+    .badge-done{background:var(--green-bg);color:var(--green)}
+    .badge-alert{background:var(--red-bg);color:var(--red)}
+    .badge-warn{background:var(--orange-bg);color:var(--orange)}
+
+    /* NOTES */
+    .notes-table{width:100%;border-collapse:collapse;background:var(--white);border:0.5px solid var(--border)}
+    .notes-table th{background:var(--navy);color:var(--white);font-size:11px;font-weight:600;letter-spacing:0.05em;text-transform:uppercase;padding:12px 16px;text-align:left}
+    .notes-table td{padding:12px 16px;font-size:13px;border-bottom:0.5px solid var(--border);color:var(--text)}
+    .notes-table tr:last-child td{border-bottom:none}
+    .notes-table tr:hover td{background:var(--gray-light)}
+    .grade-good{color:var(--green);font-weight:700}
+    .grade-mid{color:var(--orange);font-weight:700}
+    .grade-low{color:var(--red);font-weight:700}
+    .avg-bar-wrap{width:80px;height:6px;background:var(--gray-light);border-radius:3px;display:inline-block;vertical-align:middle;margin-left:8px}
+    .avg-bar{height:100%;border-radius:3px}
+    .bulletin-btn{background:var(--navy);color:var(--white);border:none;padding:8px 16px;font-size:12px;font-weight:600;cursor:pointer;font-family:'Inter',sans-serif;display:flex;align-items:center;gap:6px;transition:background 0.15s}
+    .bulletin-btn:hover{background:var(--navy2)}
+
+    /* ABSENCES */
+    .absences-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:1.5rem}
+    .abs-card{background:var(--white);border:0.5px solid var(--border);padding:1.1rem 1.25rem}
+    .abs-card h4{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:0.07em;margin-bottom:6px}
+    .abs-val{font-family:'Playfair Display',serif;font-size:1.8rem;font-weight:700}
+    .abs-val.red{color:var(--red)}
+    .abs-val.green{color:var(--green)}
+    .abs-val.orange{color:var(--orange)}
+    .abs-table{width:100%;border-collapse:collapse;background:var(--white);border:0.5px solid var(--border)}
+    .abs-table th{background:var(--navy);color:var(--white);font-size:11px;font-weight:600;letter-spacing:0.05em;text-transform:uppercase;padding:10px 14px;text-align:left}
+    .abs-table td{padding:10px 14px;font-size:13px;border-bottom:0.5px solid var(--border)}
+    .abs-table tr:last-child td{border-bottom:none}
+    .status-just{background:var(--green-bg);color:var(--green);font-size:10px;font-weight:600;padding:3px 8px}
+    .status-unjust{background:var(--red-bg);color:var(--red);font-size:10px;font-weight:600;padding:3px 8px}
+    .status-late{background:var(--orange-bg);color:var(--orange);font-size:10px;font-weight:600;padding:3px 8px}
+
+    /* ANNONCES */
+    .annonces-list{display:flex;flex-direction:column;gap:12px}
+    .annonce-card{background:var(--white);border:0.5px solid var(--border);padding:1.25rem 1.5rem;border-left:3px solid var(--gold)}
+    .annonce-card.urgent{border-left-color:var(--red)}
+    .annonce-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}
+    .annonce-title{font-size:14px;font-weight:600;color:var(--navy)}
+    .annonce-date{font-size:11px;color:var(--muted)}
+    .annonce-body{font-size:13px;color:var(--gray);line-height:1.65}
+    .annonce-tag{font-size:10px;font-weight:600;padding:3px 9px;margin-top:10px;display:inline-block}
+    .tag-info{background:var(--blue-bg);color:var(--blue)}
+    .tag-urgent{background:var(--red-bg);color:var(--red)}
+    .tag-event{background:var(--gold-bg);color:#92660A}
+
+    /* MESSAGES */
+    .msg-layout{display:grid;grid-template-columns:220px 1fr;background:var(--white);border:0.5px solid var(--border);height:460px}
+    .msg-contacts{border-right:0.5px solid var(--border);display:flex;flex-direction:column}
+    .msg-contact-header{padding:10px 14px;border-bottom:0.5px solid var(--border);font-size:11px;font-weight:600;color:var(--navy);text-transform:uppercase;letter-spacing:0.07em}
+    .contact-item{padding:10px 14px;cursor:pointer;display:flex;align-items:center;gap:9px;border-bottom:0.5px solid var(--border);transition:background 0.15s;border-left:3px solid transparent}
+    .contact-item:hover{background:var(--gold-bg)}
+    .contact-item.active{background:var(--gold-bg);border-left-color:var(--gold)}
+    .contact-avatar{width:30px;height:30px;border-radius:50%;background:var(--navy);display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;color:var(--gold);flex-shrink:0}
+    .contact-name{font-size:12px;font-weight:500;color:var(--text)}
+    .contact-preview{font-size:10px;color:var(--muted);margin-top:1px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:120px}
+    .unread-dot{width:7px;height:7px;background:var(--gold);border-radius:50%;margin-left:auto;flex-shrink:0}
+    .msg-thread{display:flex;flex-direction:column;height:100%}
+    .thread-header{padding:10px 14px;border-bottom:0.5px solid var(--border);display:flex;align-items:center;gap:10px}
+    .thread-avatar{width:30px;height:30px;border-radius:50%;background:var(--navy2);display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:700;color:var(--gold);flex-shrink:0}
+    .thread-header strong{font-size:13px;color:var(--navy)}
+    .thread-header span{font-size:11px;color:var(--muted)}
+    .thread-messages{flex:1;padding:12px 14px;overflow-y:auto;display:flex;flex-direction:column;gap:10px;background:var(--cream)}
+    .msg-bubble{max-width:72%;padding:9px 13px;font-size:12px;line-height:1.55}
+    .msg-bubble.received{background:var(--white);border:0.5px solid var(--border);color:var(--text);align-self:flex-start}
+    .msg-bubble.sent{background:var(--navy);color:rgba(255,255,255,0.9);align-self:flex-end}
+    .msg-time{font-size:10px;margin-top:4px;opacity:0.45}
+    .thread-input{padding:10px 14px;border-top:0.5px solid var(--border);display:flex;gap:8px;align-items:center;background:var(--white)}
+    .thread-input input{flex:1;border:1px solid var(--border);padding:9px 12px;font-size:13px;outline:none;background:var(--cream);font-family:'Inter',sans-serif;transition:border-color 0.15s}
+    .thread-input input:focus{border-color:var(--gold)}
+    .send-btn{background:var(--navy);border:none;padding:9px 14px;cursor:pointer;transition:background 0.15s;flex-shrink:0}
+    .send-btn:hover{background:var(--navy2)}
+    .send-btn i{font-size:16px;color:var(--white)}
+
+    .toast{position:fixed;bottom:1.5rem;right:1.5rem;background:var(--navy);color:var(--white);padding:11px 20px;font-size:13px;font-weight:500;z-index:999;display:none;align-items:center;gap:8px}
+    .toast.show{display:flex}
+    .toast i{color:var(--gold);font-size:17px}
+  </style>
+  <script src="securite-ilch.js"></script>
+</head>
+<body>
+
+<div class="toast" id="toast"><i class="ti ti-check" aria-hidden="true"></i><span id="toast-msg"></span></div>
+
+<aside class="sidebar">
+  <div class="sb-logo">
+    <div class="sb-logo-mark">
+      <div class="sb-badge">ILCH</div>
+      <div class="sb-name">Espace parents<small>Institution Louis Chauvet</small></div>
+    </div>
+  </div>
+  <nav class="sb-nav">
+    <div class="sb-section">Suivi de l'enfant</div>
+    <div class="sb-item active" onclick="showPanel('dash',this)"><i class="ti ti-home" aria-hidden="true"></i>Tableau de bord</div>
+    <div class="sb-item" onclick="showPanel('notes',this)"><i class="ti ti-chart-bar" aria-hidden="true"></i>Notes & bulletins</div>
+    <div class="sb-item" onclick="showPanel('absences',this)"><i class="ti ti-calendar-x" aria-hidden="true"></i>Absences & présence</div>
+    <div class="sb-section">Communication</div>
+    <div class="sb-item" onclick="showPanel('annonces',this)"><i class="ti ti-speakerphone" aria-hidden="true"></i>Annonces de l'école</div>
+    <div class="sb-item" onclick="showPanel('msgs',this)"><i class="ti ti-message" aria-hidden="true"></i>Messages<span class="sb-badge-count">2</span></div>
+    <div class="sb-section">Compte</div>
+    <div class="sb-item" onclick="showPanel('profil',this)"><i class="ti ti-user" aria-hidden="true"></i>Mon profil</div>
+  </nav>
+  <div class="sb-user">
+    <div class="sb-user-row">
+      <div class="sb-avatar">MP</div>
+      <div><div class="sb-user-name">Marie Pierre</div><div class="sb-user-role">Parent · 1 enfant suivi</div></div>
+    </div>
+    <button class="logout-btn" onclick="window.location.href='login.html'"><i class="ti ti-logout" style="font-size:13px" aria-hidden="true"></i> Déconnexion</button>
+  </div>
+</aside>
+
+<div class="sidebar-overlay" id="sidebar-overlay" onclick="closeSidebar()"></div>
+<div class="main">
+  <div class="topbar">
+    <button class="hamburger" id="hamburger" onclick="toggleSidebar()" aria-label="Menu"><span></span><span></span><span></span></button><div class="topbar-title" id="topbar-title">Tableau de bord</div>
+    <div class="notif-pill"><div class="notif-dot"></div><span class="notif-text">2 nouvelles annonces</span></div>
+  </div>
+
+  <div class="content">
+
+    <!-- DASHBOARD -->
+    <div class="panel active" id="panel-dash">
+      <div class="child-selector">
+        <label>Enfant suivi :</label>
+        <select><option>Jean Pierre — Terminale A</option></select>
+      </div>
+      <div class="stats-row">
+        <div class="stat-card good">
+          <div class="stat-label">Moyenne générale</div>
+          <div class="stat-val">14.2</div>
+          <div class="stat-sub">Trimestre 2 · Sur 20</div>
+        </div>
+        <div class="stat-card alert">
+          <div class="stat-label">Absences ce mois</div>
+          <div class="stat-val">3</div>
+          <div class="stat-sub">1 non justifiée</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Retards</div>
+          <div class="stat-val">2</div>
+          <div class="stat-sub">Ce trimestre</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">Annonces non lues</div>
+          <div class="stat-val">2</div>
+          <div class="stat-sub">De l'administration</div>
+        </div>
+      </div>
+      <div class="block-title"><i class="ti ti-clock" style="font-size:15px;color:var(--gold)" aria-hidden="true"></i>Activité récente</div>
+      <div class="recent-list">
+        <div class="recent-item">
+          <div class="recent-icon red"><i class="ti ti-alert-triangle" aria-hidden="true"></i></div>
+          <div class="recent-info"><p>Absence non justifiée — Lundi 30 juin</p><span>Mathématiques · 8h00</span></div>
+          <span class="badge badge-alert">À justifier</span>
+        </div>
+        <div class="recent-item">
+          <div class="recent-icon gold"><i class="ti ti-chart-bar" aria-hidden="true"></i></div>
+          <div class="recent-info"><p>Bulletin Trimestre 2 disponible</p><span>Publié par l'administration · il y a 2 jours</span></div>
+          <span class="badge badge-new">Nouveau</span>
+        </div>
+        <div class="recent-item">
+          <div class="recent-icon gold"><i class="ti ti-speakerphone" aria-hidden="true"></i></div>
+          <div class="recent-info"><p>Annonce : Journée culturelle le 15 juillet</p><span>De l'administration ILCH</span></div>
+          <span class="badge badge-new">Nouveau</span>
+        </div>
+        <div class="recent-item">
+          <div class="recent-icon green"><i class="ti ti-message" aria-hidden="true"></i></div>
+          <div class="recent-info"><p>Message de Prof. Marie Céleste</p><span>« Jean progresse bien en mathématiques »</span></div>
+          <span class="badge badge-done">Lu</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- NOTES -->
+    <div class="panel" id="panel-notes">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem">
+        <div style="font-size:14px;font-weight:600;color:var(--navy)">Notes de Jean Pierre — Trimestre 2</div>
+        <button class="bulletin-btn" onclick="showToast('Téléchargement du bulletin PDF...')"><i class="ti ti-download" aria-hidden="true"></i>Télécharger le bulletin</button>
+      </div>
+      <table class="notes-table">
+        <thead><tr><th>Matière</th><th>Professeur</th><th>Note / 20</th><th>Progression</th><th>Appréciation</th></tr></thead>
+        <tbody>
+          <tr><td>Mathématiques</td><td>Prof. Marie Céleste</td><td class="grade-good">16</td><td><div class="avg-bar-wrap"><div class="avg-bar" style="width:80%;background:var(--green)"></div></div></td><td>Très bien</td></tr>
+          <tr><td>Français</td><td>Prof. René Joseph</td><td class="grade-mid">13</td><td><div class="avg-bar-wrap"><div class="avg-bar" style="width:65%;background:var(--orange)"></div></div></td><td>Assez bien</td></tr>
+          <tr><td>Sciences naturelles</td><td>Prof. Claire Blanc</td><td class="grade-good">17</td><td><div class="avg-bar-wrap"><div class="avg-bar" style="width:85%;background:var(--green)"></div></div></td><td>Excellent</td></tr>
+          <tr><td>Histoire-Géographie</td><td>Prof. Jean Luc</td><td class="grade-mid">12</td><td><div class="avg-bar-wrap"><div class="avg-bar" style="width:60%;background:var(--orange)"></div></div></td><td>Passable</td></tr>
+          <tr><td>Anglais</td><td>Prof. Sandra Moreau</td><td class="grade-good">15</td><td><div class="avg-bar-wrap"><div class="avg-bar" style="width:75%;background:var(--green)"></div></div></td><td>Bien</td></tr>
+          <tr><td>Philosophie</td><td>Prof. Paul Henry</td><td class="grade-low">9</td><td><div class="avg-bar-wrap"><div class="avg-bar" style="width:45%;background:var(--red)"></div></div></td><td>Insuffisant — À surveiller</td></tr>
+        </tbody>
+      </table>
+      <div style="background:var(--orange-bg);border:1px solid #FDE68A;padding:12px 16px;margin-top:1rem;font-size:13px;color:#92400E;display:flex;align-items:center;gap:8px">
+        <i class="ti ti-alert-triangle" aria-hidden="true"></i>
+        Attention : la note de Philosophie (9/20) est en dessous de la moyenne. Un contact avec le professeur est recommandé.
+      </div>
+    </div>
+
+    <!-- ABSENCES -->
+    <div class="panel" id="panel-absences">
+      <div class="absences-grid">
+        <div class="abs-card"><h4>Total absences</h4><div class="abs-val orange">3</div><div style="font-size:11px;color:var(--gray);margin-top:4px">Ce mois · juin 2026</div></div>
+        <div class="abs-card"><h4>Non justifiées</h4><div class="abs-val red">1</div><div style="font-size:11px;color:var(--gray);margin-top:4px">À régulariser</div></div>
+        <div class="abs-card"><h4>Retards</h4><div class="abs-val orange">2</div><div style="font-size:11px;color:var(--gray);margin-top:4px">Ce trimestre</div></div>
+      </div>
+      <table class="abs-table">
+        <thead><tr><th>Date</th><th>Matière</th><th>Professeur</th><th>Durée</th><th>Statut</th></tr></thead>
+        <tbody>
+          <tr><td>Lun. 30 juin</td><td>Mathématiques</td><td>Prof. Marie Céleste</td><td>2h</td><td><span class="status-unjust">Non justifiée</span></td></tr>
+          <tr><td>Jeu. 26 juin</td><td>Français</td><td>Prof. René Joseph</td><td>2h</td><td><span class="status-just">Justifiée</span></td></tr>
+          <tr><td>Mar. 24 juin</td><td>Sciences</td><td>Prof. Claire Blanc</td><td>2h</td><td><span class="status-just">Justifiée</span></td></tr>
+          <tr><td>Lun. 23 juin</td><td>Anglais</td><td>Prof. Sandra Moreau</td><td>Retard 15 min</td><td><span class="status-late">Retard</span></td></tr>
+          <tr><td>Mar. 17 juin</td><td>Histoire</td><td>Prof. Jean Luc</td><td>Retard 20 min</td><td><span class="status-late">Retard</span></td></tr>
+        </tbody>
+      </table>
+      <div style="margin-top:1rem;font-size:12px;color:var(--gray);font-style:italic">Pour justifier une absence, contactez l'administration à institutionlouischauvet@gmail.com</div>
+    </div>
+
+    <!-- ANNONCES -->
+    <div class="panel" id="panel-annonces">
+      <div class="annonces-list">
+        <div class="annonce-card urgent">
+          <div class="annonce-header">
+            <div class="annonce-title">Réunion de parents — Trimestre 2</div>
+            <div class="annonce-date">2 juillet 2026</div>
+          </div>
+          <div class="annonce-body">Une réunion de parents est organisée le vendredi 10 juillet 2026 à 17h00 dans la salle principale de l'institution. La présence de tous les parents est vivement souhaitée pour discuter des résultats du trimestre et des orientations pour la fin d'année.</div>
+          <span class="annonce-tag tag-urgent">Urgent</span>
+        </div>
+        <div class="annonce-card">
+          <div class="annonce-header">
+            <div class="annonce-title">Journée culturelle — 15 juillet 2026</div>
+            <div class="annonce-date">28 juin 2026</div>
+          </div>
+          <div class="annonce-body">L'Institution Louis Chauvet organise sa journée culturelle annuelle le 15 juillet 2026. Les élèves sont invités à porter leur tenue traditionnelle. Des activités artistiques, sportives et culinaires seront au programme. Les parents sont les bienvenus.</div>
+          <span class="annonce-tag tag-event">Événement</span>
+        </div>
+        <div class="annonce-card">
+          <div class="annonce-header">
+            <div class="annonce-title">Calendrier des examens finaux</div>
+            <div class="annonce-date">20 juin 2026</div>
+          </div>
+          <div class="annonce-body">Les examens de fin d'année se dérouleront du 20 au 30 juillet 2026. Les élèves doivent se présenter 30 minutes avant le début de chaque épreuve avec leur carte d'identité scolaire. Tout retard non justifié entraînera l'exclusion de l'examen.</div>
+          <span class="annonce-tag tag-info">Information</span>
+        </div>
+        <div class="annonce-card">
+          <div class="annonce-header">
+            <div class="annonce-title">Paiement des frais scolaires — Rappel</div>
+            <div class="annonce-date">15 juin 2026</div>
+          </div>
+          <div class="annonce-body">Nous rappelons aux familles que le paiement des frais scolaires du 3e trimestre est dû avant le 15 juillet 2026. Tout solde impayé pourra entraîner la suspension de l'accès aux examens. Contactez l'administration pour tout arrangement.</div>
+          <span class="annonce-tag tag-urgent">Urgent</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- MESSAGES -->
+    <div class="panel" id="panel-msgs">
+      <div class="msg-layout">
+        <div class="msg-contacts">
+          <div class="msg-contact-header">Contacts</div>
+          <div class="contact-item active" onclick="switchContact('Prof. Marie Céleste','Mathématiques','MC',this)">
+            <div class="contact-avatar">MC</div>
+            <div style="min-width:0"><div class="contact-name">Prof. Marie Céleste</div><div class="contact-preview">Jean progresse bien</div></div>
+            <div class="unread-dot"></div>
+          </div>
+          <div class="contact-item" onclick="switchContact('Prof. Paul Henry','Philosophie','PH',this)">
+            <div class="contact-avatar" style="background:#1A3D6B">PH</div>
+            <div style="min-width:0"><div class="contact-name">Prof. Paul Henry</div><div class="contact-preview">Résultats en baisse</div></div>
+            <div class="unread-dot"></div>
+          </div>
+          <div class="contact-item" onclick="switchContact('Administration ILCH','Secrétariat','AD',this)">
+            <div class="contact-avatar" style="background:#0F3460">AD</div>
+            <div style="min-width:0"><div class="contact-name">Administration ILCH</div><div class="contact-preview">Absence du 30 juin</div></div>
+          </div>
+        </div>
+        <div class="msg-thread">
+          <div class="thread-header">
+            <div class="thread-avatar" id="thread-avatar">MC</div>
+            <div><strong id="thread-name">Prof. Marie Céleste</strong><br><span id="thread-sub">Mathématiques</span></div>
+          </div>
+          <div class="thread-messages" id="thread-msgs">
+            <div class="msg-bubble received">Bonjour Madame Pierre, je voulais vous informer que Jean progresse très bien en mathématiques ce trimestre. Sa note de 16/20 reflète ses efforts.<div class="msg-time">Hier, 14h20</div></div>
+            <div class="msg-bubble sent">Merci professeure, c'est une excellente nouvelle ! Nous l'encourageons beaucoup à la maison.<div class="msg-time">Hier, 15h00</div></div>
+            <div class="msg-bubble received">Continuez ainsi. Il a le potentiel pour exceller au baccalauréat.<div class="msg-time">Hier, 15h10</div></div>
+          </div>
+          <div class="thread-input">
+            <input type="text" id="msg-input" placeholder="Écrire un message...">
+            <button class="send-btn" onclick="sendMsg()" aria-label="Envoyer"><i class="ti ti-send" aria-hidden="true"></i></button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- PROFIL -->
+    <div class="panel" id="panel-profil">
+      <div style="background:var(--white);border:0.5px solid var(--border);max-width:520px;padding:2rem">
+        <div style="display:flex;align-items:center;gap:16px;margin-bottom:1.5rem;padding-bottom:1.5rem;border-bottom:1px solid var(--border)">
+          <div style="width:56px;height:56px;border-radius:50%;background:var(--gold-bg);display:flex;align-items:center;justify-content:center;font-size:20px;font-weight:700;color:var(--navy)">MP</div>
+          <div>
+            <div style="font-family:'Playfair Display',serif;font-size:18px;font-weight:700;color:var(--navy)">Marie Pierre</div>
+            <div style="font-size:12px;color:var(--gray);margin-top:2px">Parent · ILCH</div>
+          </div>
+        </div>
+        <table style="width:100%;font-size:13px;border-collapse:collapse">
+          <tr><td style="color:var(--muted);padding:8px 0;width:160px">Identifiant</td><td style="font-weight:500">marie.pierre.parent</td></tr>
+          <tr><td style="color:var(--muted);padding:8px 0">Enfant suivi</td><td style="font-weight:500">Jean Pierre — Terminale A</td></tr>
+          <tr><td style="color:var(--muted);padding:8px 0">Email</td><td style="font-weight:500">marie.pierre@email.com</td></tr>
+          <tr><td style="color:var(--muted);padding:8px 0">Téléphone</td><td style="font-weight:500">+509 3X XX XX XX</td></tr>
+        </table>
+        <div style="margin-top:1.5rem;padding-top:1.5rem;border-top:1px solid var(--border);font-size:12px;color:var(--gray)">Pour modifier vos informations, contactez l'administration à <a href="mailto:institutionlouischauvet@gmail.com" style="color:var(--navy);font-weight:500">institutionlouischauvet@gmail.com</a>.</div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+  var titles={dash:'Tableau de bord',notes:'Notes & bulletins',absences:'Absences & présence',annonces:'Annonces de l\'école',msgs:'Messages',profil:'Mon profil'};
+  function showPanel(id,el){
+    document.querySelectorAll('.panel').forEach(function(p){p.classList.remove('active')});
+    document.getElementById('panel-'+id).classList.add('active');
+    document.querySelectorAll('.sb-item').forEach(function(i){i.classList.remove('active')});
+    el.classList.add('active');
+    document.getElementById('topbar-title').textContent=titles[id]||id;
+  }
+  function switchContact(name,sub,initials,el){
+    document.querySelectorAll('.contact-item').forEach(function(i){i.classList.remove('active')});
+    el.classList.add('active');
+    var dot=el.querySelector('.unread-dot');
+    if(dot)dot.remove();
+    document.getElementById('thread-name').textContent=name;
+    document.getElementById('thread-sub').textContent=sub;
+    document.getElementById('thread-avatar').textContent=initials;
+    document.getElementById('thread-msgs').innerHTML='<div class="msg-bubble received">Bonjour, comment puis-je vous aider ?<div class="msg-time">Aujourd\'hui</div></div>';
+  }
+  function sendMsg(){
+    var inp=document.getElementById('msg-input');
+    var txt=inp.value.trim();
+    if(!txt)return;
+    var msgs=document.getElementById('thread-msgs');
+    var b=document.createElement('div');
+    b.className='msg-bubble sent';
+    b.innerHTML=txt+'<div class="msg-time">À l\'instant</div>';
+    msgs.appendChild(b);
+    msgs.scrollTop=msgs.scrollHeight;
+    inp.value='';
+    showToast('Message envoyé');
+  }
+  function showToast(msg){
+    var t=document.getElementById('toast');
+    document.getElementById('toast-msg').textContent=msg;
+    t.classList.add('show');
+    setTimeout(function(){t.classList.remove('show')},3000);
+  }
+  document.addEventListener('keydown',function(e){
+    if(e.key==='Enter'&&document.activeElement===document.getElementById('msg-input'))sendMsg();
+  });
+</script>
+</body>
+</html>
+<script>
+function toggleSidebar(){
+  var sb=document.querySelector(".sidebar");
+  var ov=document.getElementById("sidebar-overlay");
+  var hb=document.getElementById("hamburger");
+  if(!sb||!ov) return;
+  sb.classList.toggle("open");
+  ov.classList.toggle("show");
+  if(hb) hb.classList.toggle("open");
+}
+function closeSidebar(){
+  var sb=document.querySelector(".sidebar");
+  var ov=document.getElementById("sidebar-overlay");
+  var hb=document.getElementById("hamburger");
+  if(!sb||!ov) return;
+  sb.classList.remove("open");
+  ov.classList.remove("show");
+  if(hb) hb.classList.remove("open");
+}
+document.addEventListener("DOMContentLoaded",function(){
+  document.querySelectorAll(".sb-item").forEach(function(item){
+    item.addEventListener("click",function(){
+      if(window.innerWidth<=768) closeSidebar();
+    });
+  });
+  document.addEventListener("keydown",function(e){if(e.key==="Escape") closeSidebar();});
+});
+</script>
+<!-- Script Firebase pour Dashboard Parent -->
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import {
+  getFirestore, collection, doc,
+  getDocs, onSnapshot, query, where
+} from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyDjrBnsTu7CNWnqeqSm29-arbs8MPoTBJ0",
+  authDomain: "ilch-plateforme.firebaseapp.com",
+  projectId: "ilch-plateforme",
+  storageBucket: "ilch-plateforme.firebasestorage.app",
+  messagingSenderId: "978336467476",
+  appId: "1:978336467476:web:1f716ca406469a0c62b501"
+};
+
+const app = initializeApp(firebaseConfig);
+const db  = getFirestore(app);
+const user = JSON.parse(sessionStorage.getItem('ilch_user') || '{}');
+
+// ── Récupérer les enfants du parent ──────────────────────
+async function getEnfants() {
+  if (!user || !user.enfantsIds || !user.enfantsIds.length) return [];
+  var enfants = [];
+  for (var id of user.enfantsIds) {
+    try {
+      const snap = await getDocs(query(collection(db, 'eleves'), where('__name__', '==', id)));
+      snap.docs.forEach(function(d) { enfants.push({ id: d.id, ...d.data() }); });
+    } catch(e) {}
+  }
+  return enfants;
+}
+
+// ── NOTES des enfants en temps réel ──────────────────────
+async function ecouterNotesEnfants() {
+  var enfants = await getEnfants();
+  if (!enfants.length) return;
+
+  enfants.forEach(function(enfant) {
+    onSnapshot(
+      query(collection(db, 'notes'), where('eleveId', '==', enfant.id)),
+      function(snap) {
+        var notes = snap.docs.map(function(d) { return { id: d.id, ...d.data() }; });
+        localStorage.setItem('ilch_notes_enfant_' + enfant.id, JSON.stringify(notes));
+        // Mettre à jour l'affichage
+        if (typeof renderNotesParent === 'function') renderNotesParent(enfant, notes);
+        // Badge moyenne
+        if (notes.length) {
+          var moy = notes.reduce(function(s,n) { return s + Number(n.note||0); }, 0) / notes.length;
+          var el = document.getElementById('stat-moy');
+          if (el) el.textContent = moy.toFixed(1);
+        }
+      }
+    );
+  });
+}
+
+// ── ABSENCES des enfants ──────────────────────────────────
+async function ecouterAbsencesEnfants() {
+  var enfants = await getEnfants();
+  if (!enfants.length) return;
+
+  enfants.forEach(function(enfant) {
+    onSnapshot(
+      query(collection(db, 'absences'), where('eleveId', '==', enfant.id)),
+      function(snap) {
+        var abs = snap.docs.map(function(d) { return { id: d.id, ...d.data() }; });
+        localStorage.setItem('ilch_absences_' + enfant.id, JSON.stringify(abs));
+        var el = document.getElementById('stat-abs');
+        if (el) el.textContent = abs.length;
+        if (typeof renderAbsencesParent === 'function') renderAbsencesParent(enfant, abs);
+      }
+    );
+  });
+}
+
+// ── ANNONCES pour les parents ─────────────────────────────
+onSnapshot(collection(db, 'annonces'), function(snap) {
+  var annonces = snap.docs.map(function(d) { return { id: d.id, ...d.data() }; });
+  localStorage.setItem('ilch_annonces', JSON.stringify(annonces));
+  if (typeof renderAnnoncesParent === 'function') renderAnnoncesParent(annonces);
+});
+
+// ── MESSAGES pour le parent ───────────────────────────────
+if (user && user.id) {
+  onSnapshot(
+    query(collection(db, 'messages'), where('destinataireId', '==', user.id)),
+    function(snap) {
+      var nonLus = snap.docs.filter(function(d) { return !d.data().lu; }).length;
+      var badge = document.getElementById('msg-badge');
+      if (badge) badge.textContent = nonLus || '';
+    }
+  );
+}
+
+// Initialiser
+ecouterNotesEnfants();
+ecouterAbsencesEnfants();
+console.log('✓ Dashboard Parent connecté à Firebase');
+</script>
+<script>
+if("serviceWorker" in navigator){
+  window.addEventListener("load",function(){
+    navigator.serviceWorker.register("/sw.js").then(function(reg){
+      console.log("[ILCH] PWA Service Worker actif");
+    }).catch(function(err){console.log("[ILCH] SW erreur:",err);});
+  });
+}
+</script>
+<script>
+// Déconnexion automatique après 30 min d'inactivité
+var _timer = null;
+function _resetTimer() {
+  if (_timer) clearTimeout(_timer);
+  _timer = setTimeout(function() {
+    sessionStorage.clear();
+    alert('Session expirée par inactivité. Veuillez vous reconnecter.');
+    window.location.href = 'login.html';
+  }, 30 * 60 * 1000); // 30 minutes
+}
+['click','keypress','scroll','mousemove','touchstart'].forEach(function(e) {
+  document.addEventListener(e, _resetTimer, { passive: true });
+});
+_resetTimer();
+
+// Vérifier session valide
+(function() {
+  var user = sessionStorage.getItem('ilch_user');
+  if (!user) {
+    window.location.href = 'login.html';
+  }
+})();
+</script>

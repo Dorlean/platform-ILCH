@@ -1,0 +1,1427 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#0D2B4E">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="ILCH">
+  <link rel="apple-touch-icon" href="icon-192.png">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Administration — ILCH</title>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
+  <link rel="stylesheet" href="mobile.css">
+  <style>
+    *{margin:0;padding:0;box-sizing:border-box}
+    :root{
+      --navy:#0D2B4E;--navy2:#1A3D6B;--gold:#C9A96E;--gold-bg:#FAF3E8;--gold-light:#E8D5B0;
+      --cream:#FAFAF8;--white:#fff;--gray:#6B7280;--gray-light:#F3F4F6;
+      --border:#E5E7EB;--text:#1F2937;--muted:#9CA3AF;
+      --green:#16A34A;--green-bg:#F0FDF4;--blue:#2563EB;--blue-bg:#EFF6FF;
+      --red:#DC2626;--red-bg:#FEF2F2;--orange:#D97706;--orange-bg:#FFFBEB;
+    }
+    body{font-family:'Inter',sans-serif;background:var(--cream);color:var(--text);display:flex;min-height:100vh}
+    a{text-decoration:none;color:inherit}
+    .sidebar{width:230px;background:var(--navy);flex-shrink:0;display:flex;flex-direction:column;min-height:100vh;position:fixed;top:0;left:0;bottom:0;z-index:50}
+    .sb-logo{padding:1.25rem 1rem;border-bottom:1px solid rgba(255,255,255,0.08)}
+    .sb-logo-mark{display:flex;align-items:center;gap:10px}
+    .sb-badge{width:32px;height:32px;background:var(--gold);display:flex;align-items:center;justify-content:center;font-family:'Playfair Display',serif;font-weight:700;font-size:12px;color:var(--navy);flex-shrink:0}
+    .sb-name{font-size:12px;font-weight:600;color:var(--white);line-height:1.3}
+    .sb-name small{display:block;font-size:10px;color:rgba(255,255,255,0.4);font-weight:300}
+    .sb-nav{flex:1;padding:1rem 0;overflow-y:auto}
+    .sb-section{font-size:9px;color:rgba(255,255,255,0.3);letter-spacing:0.12em;text-transform:uppercase;padding:0.75rem 1rem 0.35rem}
+    .sb-item{display:flex;align-items:center;gap:10px;padding:10px 1rem;font-size:13px;color:rgba(255,255,255,0.6);cursor:pointer;border-left:3px solid transparent;transition:all 0.15s;user-select:none}
+    .sb-item:hover{background:rgba(255,255,255,0.06);color:var(--white)}
+    .sb-item.active{background:rgba(201,169,110,0.12);color:var(--gold);border-left-color:var(--gold)}
+    .sb-item i{font-size:16px;width:18px;flex-shrink:0}
+    .sb-count{margin-left:auto;background:var(--red);color:var(--white);font-size:10px;font-weight:700;padding:2px 7px;border-radius:10px}
+    .sb-user{padding:1rem;border-top:1px solid rgba(255,255,255,0.08)}
+    .sb-user-row{display:flex;align-items:center;gap:9px}
+    .sb-avatar{width:34px;height:34px;border-radius:50%;background:var(--gold-bg);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;color:var(--navy);flex-shrink:0}
+    .sb-user-name{font-size:12px;color:var(--white);font-weight:500}
+    .sb-user-role{font-size:10px;color:rgba(255,255,255,0.4)}
+    .logout-btn{display:inline-flex;align-items:center;gap:5px;font-size:11px;color:rgba(255,255,255,0.3);cursor:pointer;margin-top:8px;transition:color 0.15s;background:none;border:none;font-family:'Inter',sans-serif;padding:0}
+    .logout-btn:hover{color:var(--gold)}
+    .main{flex:1;margin-left:230px;display:flex;flex-direction:column;min-height:100vh}
+    .topbar{background:var(--white);border-bottom:1px solid var(--border);padding:0.875rem 1.75rem;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:40}
+    .topbar-title{font-family:'Playfair Display',serif;font-size:17px;font-weight:600;color:var(--navy)}
+    .admin-badge{background:var(--navy);color:var(--gold);font-size:10px;font-weight:700;padding:4px 10px;letter-spacing:0.06em}
+    .content{flex:1;padding:1.75rem;background:var(--cream)}
+    .panel{display:none}.panel.active{display:block}
+
+    /* STATS */
+    .stats-row{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:1.5rem}
+    .stat-card{background:var(--white);border:0.5px solid var(--border);padding:1.1rem 1.25rem;position:relative}
+    .stat-card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px}
+    .stat-card.blue::before{background:var(--blue)}
+    .stat-card.green::before{background:var(--green)}
+    .stat-card.gold::before{background:var(--gold)}
+    .stat-card.red::before{background:var(--red)}
+    .stat-label{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:0.07em;margin-bottom:5px;font-weight:500}
+    .stat-val{font-family:'Playfair Display',serif;font-size:2rem;color:var(--navy);font-weight:700;line-height:1}
+    .stat-sub{font-size:11px;color:var(--gray);margin-top:5px}
+    .stat-icon{position:absolute;top:1rem;right:1rem;font-size:22px;color:var(--gray-light)}
+
+    /* TABLE */
+    .data-table{width:100%;border-collapse:collapse;background:var(--white);border:0.5px solid var(--border)}
+    .data-table th{background:var(--navy);color:var(--white);font-size:11px;font-weight:600;letter-spacing:0.05em;text-transform:uppercase;padding:11px 14px;text-align:left}
+    .data-table td{padding:10px 14px;font-size:13px;border-bottom:0.5px solid var(--border);color:var(--text);vertical-align:middle}
+    .data-table tr:last-child td{border-bottom:none}
+    .data-table tr:hover td{background:var(--gray-light)}
+    .tbl-actions{display:flex;gap:6px}
+
+    /* BADGES */
+    .badge{font-size:10px;font-weight:600;padding:3px 9px}
+    .badge-eleve{background:var(--blue-bg);color:var(--blue)}
+    .badge-prof{background:var(--gold-bg);color:#92660A}
+    .badge-parent{background:var(--green-bg);color:var(--green)}
+    .badge-active{background:var(--green-bg);color:var(--green)}
+    .badge-inactive{background:var(--red-bg);color:var(--red)}
+
+    /* BUTTONS */
+    .btn{border:none;cursor:pointer;font-family:'Inter',sans-serif;display:inline-flex;align-items:center;gap:6px;font-weight:600;transition:all 0.15s}
+    .btn-primary{background:var(--navy);color:var(--white);padding:9px 16px;font-size:12px}.btn-primary:hover{background:var(--navy2)}
+    .btn-gold{background:var(--gold);color:var(--navy);padding:9px 16px;font-size:12px}.btn-gold:hover{background:#d4b57c}
+    .btn-danger{background:var(--red);color:var(--white);padding:6px 10px;font-size:11px}.btn-danger:hover{background:#b91c1c}
+    .btn-edit{background:var(--gray-light);color:var(--text);padding:6px 10px;font-size:11px;border:0.5px solid var(--border)}.btn-edit:hover{border-color:var(--navy)}
+    .btn-sm{background:var(--gray-light);color:var(--text);padding:6px 12px;font-size:11px;border:0.5px solid var(--border)}
+
+    /* SECTION HDR */
+    .section-hdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem;flex-wrap:wrap;gap:8px}
+    .section-hdr-title{font-size:14px;font-weight:600;color:var(--navy)}
+    .search-bar{display:flex;gap:8px;margin-bottom:1rem;flex-wrap:wrap}
+    .search-bar input,.search-bar select{border:1px solid var(--border);padding:8px 12px;font-size:13px;background:var(--white);outline:none;font-family:'Inter',sans-serif}
+    .search-bar input{width:240px}.search-bar input:focus,.search-bar select:focus{border-color:var(--gold)}
+
+    /* MODAL */
+    .modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.45);z-index:200;align-items:center;justify-content:center;padding:1rem}
+    .modal-overlay.open{display:flex}
+    .modal{background:var(--white);width:100%;max-width:520px;max-height:90vh;overflow-y:auto;position:relative}
+    .modal-header{padding:1.25rem 1.5rem;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;background:var(--white);z-index:1}
+    .modal-title{font-family:'Playfair Display',serif;font-size:1.1rem;color:var(--navy);font-weight:700}
+    .modal-close{background:none;border:none;cursor:pointer;font-size:20px;color:var(--gray);padding:4px}
+    .modal-body{padding:1.5rem}
+    .modal-footer{padding:1rem 1.5rem;border-top:1px solid var(--border);display:flex;gap:8px;justify-content:flex-end;background:var(--white)}
+    .form-group{margin-bottom:1rem}
+    .form-group label{display:block;font-size:11px;font-weight:600;color:var(--navy);text-transform:uppercase;letter-spacing:0.05em;margin-bottom:5px}
+    .form-group input,.form-group select,.form-group textarea{width:100%;border:1px solid var(--border);padding:9px 12px;font-size:13px;background:var(--cream);outline:none;font-family:'Inter',sans-serif;color:var(--text)}
+    .form-group input:focus,.form-group select:focus,.form-group textarea:focus{border-color:var(--gold)}
+    .form-row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+    .form-hint{font-size:11px;color:var(--muted);margin-top:4px}
+    .pw-field{position:relative}
+    .pw-field input{padding-right:80px}
+    .pw-gen{position:absolute;right:8px;top:50%;transform:translateY(-50%);background:var(--navy);color:var(--white);border:none;padding:4px 8px;font-size:10px;cursor:pointer;font-family:'Inter',sans-serif}
+
+    /* CLASSES & MATIERES */
+    .tag-list{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+    .tag{background:var(--navy);color:var(--white);padding:5px 10px;font-size:12px;display:inline-flex;align-items:center;gap:6px}
+    .tag-remove{cursor:pointer;opacity:0.6;font-size:14px;line-height:1}.tag-remove:hover{opacity:1}
+    .tag.gold{background:var(--gold);color:var(--navy)}
+    .tag.blue{background:var(--blue);color:var(--white)}
+    .add-tag-row{display:flex;gap:8px;margin-top:10px}
+    .add-tag-row input{flex:1;border:1px solid var(--border);padding:8px 12px;font-size:13px;background:var(--cream);outline:none;font-family:'Inter',sans-serif}
+    .add-tag-row input:focus{border-color:var(--gold)}
+
+    /* TOAST */
+    .toast{position:fixed;bottom:1.5rem;right:1.5rem;background:var(--navy);color:var(--white);padding:11px 20px;font-size:13px;font-weight:500;z-index:999;display:none;align-items:center;gap:8px}
+    .toast.show{display:flex}
+    .toast i{color:var(--gold);font-size:17px}
+
+    /* EMPTY STATE */
+    .empty-state{text-align:center;padding:3rem;color:var(--muted)}
+    .empty-state i{font-size:48px;display:block;margin-bottom:1rem;color:var(--border)}
+    .empty-state p{font-size:14px}
+  </style>
+  <script src="securite-ilch.js"></script>
+</head>
+<body>
+
+<div class="toast" id="toast"><i class="ti ti-check" aria-hidden="true"></i><span id="toast-msg"></span></div>
+
+<!-- MODAL ÉLÈVE -->
+<div class="modal-overlay" id="modal-eleve">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title" id="modal-eleve-title">Ajouter un élève</div>
+      <button class="modal-close" onclick="closeModal('modal-eleve')"><i class="ti ti-x" aria-hidden="true"></i></button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="eleve-edit-id">
+
+      <!-- Preview mot de passe auto -->
+      <div id="pw-auto-preview" style="display:none;background:#F0FDF4;border:1px solid #BBF7D0;padding:10px 14px;margin-bottom:1rem;font-size:12px;color:#16A34A;display:flex;align-items:center;gap:8px">
+        <i class="ti ti-sparkles"></i>
+        <div>Identifiant et mot de passe générés automatiquement !</div>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group"><label>Prénom *</label><input type="text" id="e-prenom" placeholder="Prénom de l'élève" oninput="autoGenCredentials()"></div>
+        <div class="form-group"><label>Nom *</label><input type="text" id="e-nom" placeholder="Nom de famille" oninput="autoGenCredentials()"></div>
+      </div>
+      <div class="form-row">
+        <div class="form-group"><label>Classe *</label><select id="e-classe" onchange="autoGenCredentials()"><option value="">-- Choisir --</option></select></div>
+        <div class="form-group"><label>Date de naissance</label><input type="date" id="e-dob"></div>
+      </div>
+      <div class="form-group"><label>Nom du parent / responsable</label><input type="text" id="e-parent" placeholder="Prénom Nom du parent"></div>
+      <div class="form-group"><label>Téléphone parent</label><input type="text" id="e-tel" placeholder="+509 XX XX XX XX"></div>
+
+      <div style="background:var(--navy);padding:12px;margin-bottom:1rem">
+        <div style="font-size:10px;color:rgba(255,255,255,0.5);text-transform:uppercase;letter-spacing:0.07em;margin-bottom:8px">Identifiants générés automatiquement</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+          <div>
+            <div style="font-size:10px;color:rgba(255,255,255,0.5);margin-bottom:3px">Identifiant</div>
+            <div style="background:rgba(255,255,255,0.1);padding:6px 10px;font-family:monospace;font-size:13px;color:var(--gold)" id="preview-eleve-id">—</div>
+          </div>
+          <div>
+            <div style="font-size:10px;color:rgba(255,255,255,0.5);margin-bottom:3px">Mot de passe</div>
+            <div style="background:rgba(255,255,255,0.1);padding:6px 10px;font-family:monospace;font-size:13px;color:#4ADE80" id="preview-eleve-pw">—</div>
+          </div>
+        </div>
+        <div style="font-size:10px;color:rgba(255,255,255,0.4);margin-top:8px">⚠️ Communiquez ces identifiants à l'élève et au parent</div>
+      </div>
+
+      <div class="form-group"><label>Identifiant de connexion</label>
+        <input type="text" id="e-id" placeholder="Généré automatiquement">
+        <div class="form-hint">Modifiable si nécessaire</div>
+      </div>
+      <div class="form-group"><label>Mot de passe</label>
+        <div class="pw-field">
+          <input type="text" id="e-pw" placeholder="Généré automatiquement">
+          <button class="pw-gen" onclick="genPw('e-pw')">Générer</button>
+        </div>
+        <div class="form-hint">Modifiable si nécessaire</div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-gold" onclick="saveEleve()"><i class="ti ti-check" aria-hidden="true"></i>Enregistrer</button>
+      <button class="btn btn-sm" onclick="closeModal('modal-eleve')">Annuler</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL PROFESSEUR -->
+<div class="modal-overlay" id="modal-prof">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title" id="modal-prof-title">Ajouter un professeur</div>
+      <button class="modal-close" onclick="closeModal('modal-prof')"><i class="ti ti-x" aria-hidden="true"></i></button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="prof-edit-id">
+      <div class="form-row">
+        <div class="form-group"><label>Prénom</label><input type="text" id="p-prenom" placeholder="Prénom"></div>
+        <div class="form-group"><label>Nom</label><input type="text" id="p-nom" placeholder="Nom de famille"></div>
+      </div>
+      <div class="form-group"><label>Matière(s) enseignée(s)</label>
+        <div class="add-tag-row">
+          <input type="text" id="p-matiere-input" placeholder="Ex: Mathématiques">
+          <button class="btn btn-primary" onclick="addTag('p-matieres','p-matiere-input','gold')"><i class="ti ti-plus" aria-hidden="true"></i>Ajouter</button>
+        </div>
+        <div class="tag-list" id="p-matieres"></div>
+      </div>
+      <div class="form-group"><label>Classe(s)</label>
+        <div class="add-tag-row">
+          <select id="p-classe-input" style="flex:1;border:1px solid var(--border);padding:8px 12px;font-size:13px;background:var(--cream);outline:none;font-family:'Inter',sans-serif"><option value="">-- Choisir classe --</option></select>
+          <button class="btn btn-primary" onclick="addTagFromSelect('p-classes','p-classe-input','blue')"><i class="ti ti-plus" aria-hidden="true"></i>Ajouter</button>
+        </div>
+        <div class="tag-list" id="p-classes"></div>
+      </div>
+      <div class="form-group"><label>Téléphone</label><input type="text" id="p-tel" placeholder="+509 XX XX XX XX"></div>
+      <div class="form-group"><label>Identifiant de connexion</label><input type="text" id="p-id" placeholder="Ex: marie.celeste"></div>
+      <div class="form-group"><label>Mot de passe</label>
+        <div class="pw-field">
+          <input type="text" id="p-pw" placeholder="Mot de passe">
+          <button class="pw-gen" onclick="genPw('p-pw')">Générer</button>
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-gold" onclick="saveProf()"><i class="ti ti-check" aria-hidden="true"></i>Enregistrer</button>
+      <button class="btn btn-sm" onclick="closeModal('modal-prof')">Annuler</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL PARENT -->
+<div class="modal-overlay" id="modal-parent">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title" id="modal-parent-title">Ajouter un parent</div>
+      <button class="modal-close" onclick="closeModal('modal-parent')"><i class="ti ti-x" aria-hidden="true"></i></button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="par-edit-id">
+      <div class="form-row">
+        <div class="form-group"><label>Prénom</label><input type="text" id="par-prenom" placeholder="Prénom"></div>
+        <div class="form-group"><label>Nom</label><input type="text" id="par-nom" placeholder="Nom de famille"></div>
+      </div>
+      <div class="form-group"><label>Téléphone</label><input type="text" id="par-tel" placeholder="+509 XX XX XX XX"></div>
+      <div class="form-group"><label>Email (optionnel)</label><input type="email" id="par-email" placeholder="email@exemple.com"></div>
+      <div class="form-group"><label>Enfant(s) suivi(s)</label><select id="par-enfant" multiple style="height:100px"><option value="">Chargement...</option></select><div class="form-hint">Maintenez Ctrl pour sélectionner plusieurs enfants</div></div>
+      <div class="form-group"><label>Identifiant de connexion</label><input type="text" id="par-id" placeholder="Ex: marie.pierre"></div>
+      <div class="form-group"><label>Mot de passe</label>
+        <div class="pw-field">
+          <input type="text" id="par-pw" placeholder="Mot de passe">
+          <button class="pw-gen" onclick="genPw('par-pw')">Générer</button>
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-gold" onclick="saveParent()"><i class="ti ti-check" aria-hidden="true"></i>Enregistrer</button>
+      <button class="btn btn-sm" onclick="closeModal('modal-parent')">Annuler</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL CLASSE -->
+<div class="modal-overlay" id="modal-classe">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title">Ajouter une classe</div>
+      <button class="modal-close" onclick="closeModal('modal-classe')"><i class="ti ti-x" aria-hidden="true"></i></button>
+    </div>
+    <div class="modal-body">
+      <div class="form-group"><label>Nom de la classe</label><input type="text" id="cl-nom" placeholder="Ex: Terminale A, 5ème Fondamentale..."></div>
+      <div class="form-group"><label>Niveau</label>
+        <select id="cl-niveau">
+          <option>Préscolaire</option>
+          <option>Fondamental Cycle 1 (1→3)</option>
+          <option>Fondamental Cycle 2 (4→6)</option>
+          <option>Fondamental Cycle 3 (7→9)</option>
+          <option>Secondaire</option>
+          <option>Terminale</option>
+        </select>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-gold" onclick="saveClasse()"><i class="ti ti-check" aria-hidden="true"></i>Ajouter</button>
+      <button class="btn btn-sm" onclick="closeModal('modal-classe')">Annuler</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL MATIÈRE -->
+<div class="modal-overlay" id="modal-matiere">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title">Ajouter une matière</div>
+      <button class="modal-close" onclick="closeModal('modal-matiere')"><i class="ti ti-x" aria-hidden="true"></i></button>
+    </div>
+    <div class="modal-body">
+      <div class="form-group"><label>Nom de la matière</label><input type="text" id="mat-nom" placeholder="Ex: Mathématiques, Créole haïtien..."></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-gold" onclick="saveMatiere()"><i class="ti ti-check" aria-hidden="true"></i>Ajouter</button>
+      <button class="btn btn-sm" onclick="closeModal('modal-matiere')">Annuler</button>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL MOT DE PASSE -->
+<div class="modal-overlay" id="modal-pw">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title">Réinitialiser le mot de passe</div>
+      <button class="modal-close" onclick="closeModal('modal-pw')"><i class="ti ti-x" aria-hidden="true"></i></button>
+    </div>
+    <div class="modal-body">
+      <div style="background:var(--gold-bg);border:1px solid var(--gold-light);padding:12px;margin-bottom:1rem;font-size:13px;color:var(--navy)">
+        <strong id="pw-user-name">Utilisateur</strong> — <span id="pw-user-role">Rôle</span>
+      </div>
+      <div class="form-group"><label>Nouveau mot de passe</label>
+        <div class="pw-field">
+          <input type="text" id="new-pw" placeholder="Nouveau mot de passe">
+          <button class="pw-gen" onclick="genPw('new-pw')">Générer</button>
+        </div>
+        <div class="form-hint">Communiquez ce mot de passe à l'utilisateur après la réinitialisation</div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-danger" onclick="confirmResetPw()"><i class="ti ti-key" aria-hidden="true"></i>Réinitialiser</button>
+      <button class="btn btn-sm" onclick="closeModal('modal-pw')">Annuler</button>
+    </div>
+  </div>
+</div>
+
+<!-- SIDEBAR -->
+<aside class="sidebar">
+  <div class="sb-logo">
+    <div class="sb-logo-mark">
+      <div class="sb-badge">ILCH</div>
+      <div class="sb-name">Administration<small>Institution Louis Chauvet</small></div>
+    </div>
+  </div>
+  <nav class="sb-nav">
+    <div class="sb-section">Vue d'ensemble</div>
+    <div class="sb-item active" onclick="showPanel('dash',this)"><i class="ti ti-home" aria-hidden="true"></i>Tableau de bord</div>
+    <div class="sb-section">Gestion des comptes</div>
+    <div class="sb-item" onclick="showPanel('eleves',this)"><i class="ti ti-users" aria-hidden="true"></i>Élèves</div>
+    <div class="sb-item" onclick="showPanel('profs',this)"><i class="ti ti-chalkboard" aria-hidden="true"></i>Professeurs</div>
+    <div class="sb-item" onclick="showPanel('parents',this)"><i class="ti ti-heart" aria-hidden="true"></i>Parents</div>
+    <div class="sb-section">Structure scolaire</div>
+    <div class="sb-item" onclick="showPanel('classes',this)"><i class="ti ti-door" aria-hidden="true"></i>Classes</div>
+    <div class="sb-item" onclick="showPanel('matieres',this)"><i class="ti ti-book" aria-hidden="true"></i>Matières</div>
+    <div class="sb-section">Sécurité</div>
+    <div class="sb-item" onclick="showPanel('motsdepasse',this)"><i class="ti ti-key" aria-hidden="true"></i>Mots de passe</div>
+    <div class="sb-section">Communication</div>
+    <div class="sb-item" onclick="showPanel('annonces',this)"><i class="ti ti-speakerphone" aria-hidden="true"></i>Annonces</div>
+  </nav>
+  <div class="sb-user">
+    <div class="sb-user-row">
+      <div class="sb-avatar">AD</div>
+      <div><div class="sb-user-name">Administration</div><div class="sb-user-role">Gestionnaire ILCH</div></div>
+    </div>
+    <button class="logout-btn" onclick="window.location.href='login.html'"><i class="ti ti-logout" style="font-size:13px" aria-hidden="true"></i> Déconnexion</button>
+  </div>
+</aside>
+
+<div class="sidebar-overlay" id="sidebar-overlay" onclick="closeSidebar()"></div>
+<div class="main">
+  <div class="topbar">
+    <button class="hamburger" id="hamburger" onclick="toggleSidebar()" aria-label="Menu"><span></span><span></span><span></span></button><div class="topbar-title" id="topbar-title">Tableau de bord</div>
+    <span class="admin-badge">ADMINISTRATION</span>
+  </div>
+  <div class="content">
+
+    <!-- DASHBOARD -->
+    <div class="panel active" id="panel-dash">
+      <div class="stats-row">
+        <div class="stat-card blue"><i class="ti ti-users stat-icon" aria-hidden="true"></i><div class="stat-label">Élèves inscrits</div><div class="stat-val" id="ds-eleves">0</div><div class="stat-sub">Année 2025–2026</div></div>
+        <div class="stat-card gold"><i class="ti ti-chalkboard stat-icon" aria-hidden="true"></i><div class="stat-label">Professeurs</div><div class="stat-val" id="ds-profs">0</div><div class="stat-sub">Actifs</div></div>
+        <div class="stat-card green"><i class="ti ti-heart stat-icon" aria-hidden="true"></i><div class="stat-label">Parents</div><div class="stat-val" id="ds-parents">0</div><div class="stat-sub">Comptes créés</div></div>
+        <div class="stat-card red"><i class="ti ti-door stat-icon" aria-hidden="true"></i><div class="stat-label">Classes</div><div class="stat-val" id="ds-classes">0</div><div class="stat-sub">Configurées</div></div>
+      </div>
+      <div style="background:var(--white);border:0.5px solid var(--border);padding:1.5rem">
+        <div style="font-size:14px;font-weight:600;color:var(--navy);margin-bottom:1rem">Démarrage rapide</div>
+        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px">
+          <button class="btn btn-primary" onclick="showPanel('classes',document.querySelector('.sb-item:nth-child(9)'))"><i class="ti ti-door" aria-hidden="true"></i>1. Créer les classes</button>
+          <button class="btn btn-primary" onclick="showPanel('matieres',document.querySelector('.sb-item:nth-child(10)'))"><i class="ti ti-book" aria-hidden="true"></i>2. Créer les matières</button>
+          <button class="btn btn-primary" onclick="showPanel('profs',document.querySelector('.sb-item:nth-child(7)'))"><i class="ti ti-chalkboard" aria-hidden="true"></i>3. Ajouter les professeurs</button>
+          <button class="btn btn-primary" onclick="showPanel('eleves',document.querySelector('.sb-item:nth-child(6)'))"><i class="ti ti-users" aria-hidden="true"></i>4. Inscrire les élèves</button>
+          <button class="btn btn-primary" onclick="showPanel('parents',document.querySelector('.sb-item:nth-child(8)'))"><i class="ti ti-heart" aria-hidden="true"></i>5. Ajouter les parents</button>
+          <button class="btn btn-gold" onclick="exportData()"><i class="ti ti-download" aria-hidden="true"></i>Exporter les données</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ÉLÈVES -->
+    <div class="panel" id="panel-eleves">
+      <div class="section-hdr">
+        <div class="section-hdr-title">Gestion des élèves</div>
+        <button class="btn btn-gold" onclick="openModalEleve()"><i class="ti ti-plus" aria-hidden="true"></i>Ajouter un élève</button>
+      </div>
+      <div class="search-bar">
+        <input type="text" id="search-eleve" placeholder="Rechercher un élève..." oninput="filterTable('tbl-eleves','search-eleve')">
+        <select id="filter-classe" onchange="filterTable('tbl-eleves','search-eleve')"><option value="">Toutes les classes</option></select>
+      </div>
+      <table class="data-table" id="tbl-eleves">
+        <thead><tr><th>Nom complet</th><th>Classe</th><th>Identifiant</th><th>Parent</th><th>Téléphone</th><th>Actions</th></tr></thead>
+        <tbody id="tbody-eleves"></tbody>
+      </table>
+    </div>
+
+    <!-- PROFESSEURS -->
+    <div class="panel" id="panel-profs">
+      <div class="section-hdr">
+        <div class="section-hdr-title">Gestion des professeurs</div>
+        <button class="btn btn-gold" onclick="openModalProf()"><i class="ti ti-plus" aria-hidden="true"></i>Ajouter un professeur</button>
+      </div>
+      <div class="search-bar">
+        <input type="text" id="search-prof" placeholder="Rechercher un professeur..." oninput="filterTable('tbl-profs','search-prof')">
+      </div>
+      <table class="data-table" id="tbl-profs">
+        <thead><tr><th>Nom complet</th><th>Matière(s)</th><th>Classes</th><th>Identifiant</th><th>Téléphone</th><th>Actions</th></tr></thead>
+        <tbody id="tbody-profs"></tbody>
+      </table>
+    </div>
+
+    <!-- PARENTS -->
+    <div class="panel" id="panel-parents">
+      <div class="section-hdr">
+        <div class="section-hdr-title">Gestion des parents</div>
+        <button class="btn btn-gold" onclick="openModalParent()"><i class="ti ti-plus" aria-hidden="true"></i>Ajouter un parent</button>
+      </div>
+      <div class="search-bar">
+        <input type="text" id="search-parent" placeholder="Rechercher un parent..." oninput="filterTable('tbl-parents','search-parent')">
+      </div>
+      <table class="data-table" id="tbl-parents">
+        <thead><tr><th>Nom complet</th><th>Identifiant</th><th>Téléphone</th><th>Email</th><th>Enfant(s)</th><th>Actions</th></tr></thead>
+        <tbody id="tbody-parents"></tbody>
+      </table>
+    </div>
+
+    <!-- CLASSES -->
+    <div class="panel" id="panel-classes">
+      <div class="section-hdr">
+        <div class="section-hdr-title">Gestion des classes</div>
+        <button class="btn btn-gold" onclick="openModal('modal-classe')"><i class="ti ti-plus" aria-hidden="true"></i>Ajouter une classe</button>
+      </div>
+      <table class="data-table" id="tbl-classes">
+        <thead><tr><th>Nom de la classe</th><th>Niveau</th><th>Nb élèves</th><th>Actions</th></tr></thead>
+        <tbody id="tbody-classes"></tbody>
+      </table>
+    </div>
+
+    <!-- MATIÈRES -->
+    <div class="panel" id="panel-matieres">
+      <div class="section-hdr">
+        <div class="section-hdr-title">Gestion des matières</div>
+        <button class="btn btn-gold" onclick="openModal('modal-matiere')"><i class="ti ti-plus" aria-hidden="true"></i>Ajouter une matière</button>
+      </div>
+      <table class="data-table" id="tbl-matieres">
+        <thead><tr><th>Nom de la matière</th><th>Nb professeurs</th><th>Actions</th></tr></thead>
+        <tbody id="tbody-matieres"></tbody>
+      </table>
+    </div>
+
+    <!-- MOTS DE PASSE -->
+    <div class="panel" id="panel-motsdepasse">
+      <div class="section-hdr"><div class="section-hdr-title">Gestion des mots de passe</div></div>
+      <div class="search-bar">
+        <input type="text" id="search-pw" placeholder="Rechercher un utilisateur..." oninput="filterTable('tbl-pw','search-pw')">
+        <select id="filter-pw-role" onchange="filterTable('tbl-pw','search-pw')">
+          <option value="">Tous les rôles</option>
+          <option value="Élève">Élèves</option>
+          <option value="Professeur">Professeurs</option>
+          <option value="Parent">Parents</option>
+        </select>
+      </div>
+      <table class="data-table" id="tbl-pw">
+        <thead><tr><th>Nom</th><th>Rôle</th><th>Identifiant</th><th>Action</th></tr></thead>
+        <tbody id="tbody-pw"></tbody>
+      </table>
+    </div>
+
+    <!-- ANNONCES -->
+    <div class="panel" id="panel-annonces">
+      <div class="section-hdr">
+        <div class="section-hdr-title">Publier une annonce</div>
+      </div>
+      <div style="background:var(--white);border:0.5px solid var(--border);padding:1.5rem;margin-bottom:1.25rem">
+        <div class="form-row" style="margin-bottom:1rem">
+          <div class="form-group"><label>Titre de l'annonce</label><input type="text" id="ann-title" placeholder="Titre"></div>
+          <div class="form-group"><label>Type</label><select id="ann-type"><option value="info">Information</option><option value="urgent">Urgent</option><option value="event">Événement</option></select></div>
+        </div>
+        <div class="form-group"><label>Destinataires</label><select id="ann-dest"><option>Tous</option><option>Parents uniquement</option><option>Élèves uniquement</option><option>Professeurs uniquement</option></select></div>
+        <div class="form-group"><label>Contenu</label><textarea id="ann-body" rows="3" placeholder="Rédigez votre annonce..." style="width:100%;resize:vertical"></textarea></div>
+        <button class="btn btn-gold" onclick="publishAnn()"><i class="ti ti-speakerphone" aria-hidden="true"></i>Publier</button>
+      </div>
+      <div id="ann-list" style="display:flex;flex-direction:column;gap:10px"></div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+// ─── STORAGE — Firebase + localStorage sync ────────────────
+var DB = {
+  get: function(k){
+    // Lire depuis localStorage (mis à jour par Firebase en temps réel)
+    try{return JSON.parse(localStorage.getItem('ilch_'+k))||[];}catch(e){return [];}
+  },
+  set: function(k,v){ localStorage.setItem('ilch_'+k,JSON.stringify(v)); },
+  id:  function(){ return 'id_'+Date.now()+'_'+Math.random().toString(36).substr(2,5); }
+};
+
+// ─── INIT ──────────────────────────────────────────────────
+window.onload = function(){
+  // Classes par défaut si vides
+  if(!DB.get('classes').length){
+    DB.set('classes',[
+      {id:'c1',nom:'Préscolaire',niveau:'Préscolaire'},
+      {id:'c2',nom:'1ère Fondamentale',niveau:'Fondamental Cycle 1'},
+      {id:'c3',nom:'2ème Fondamentale',niveau:'Fondamental Cycle 1'},
+      {id:'c4',nom:'3ème Fondamentale',niveau:'Fondamental Cycle 1'},
+      {id:'c5',nom:'4ème Fondamentale',niveau:'Fondamental Cycle 2'},
+      {id:'c6',nom:'5ème Fondamentale',niveau:'Fondamental Cycle 2'},
+      {id:'c7',nom:'6ème Fondamentale',niveau:'Fondamental Cycle 2'},
+      {id:'c8',nom:'7ème Fondamentale',niveau:'Fondamental Cycle 3'},
+      {id:'c9',nom:'8ème Fondamentale',niveau:'Fondamental Cycle 3'},
+      {id:'c10',nom:'9ème Fondamentale',niveau:'Fondamental Cycle 3'},
+      {id:'c11',nom:'NSI','NSII','NSIII','NSIV',niveau:'Secondaire'},
+      {id:'c12',nom:'Rhétorique',niveau:'Secondaire'},
+      {id:'c13',nom:'Terminale A',niveau:'Terminale'},
+      {id:'c14',nom:'Terminale B',niveau:'Terminale'},
+    ]);
+  }
+  if(!DB.get('matieres').length){
+    DB.set('matieres',[
+      {id:'m1',nom:'Mathématiques'},{id:'m2',nom:'Français'},
+      {id:'m3',nom:'Sciences naturelles'},{id:'m4',nom:'Histoire-Géographie'},
+      {id:'m5',nom:'Anglais'},{id:'m6',nom:'Philosophie'},
+      {id:'m7',nom:'Espagnol'},{id:'m8',nom:'Créole haïtien'},
+      {id:'m9',nom:'Éducation physique'},{id:'m10',nom:'Informatique'},
+    ]);
+  }
+  updateDashboard();
+  renderAll();
+};
+
+// ─── RENDER ────────────────────────────────────────────────
+function renderAll(){
+  renderEleves(); renderProfs(); renderParents();
+  renderClasses(); renderMatieres(); renderPW();
+  updateClasseSelects();
+}
+
+function renderEleves(){
+  var eleves = JSON.parse(localStorage.getItem('ilch_eleves') || '[]');
+  var tb = document.getElementById('tbody-eleves');
+  if(!eleves.length){ tb.innerHTML='<tr><td colspan="6"><div class="empty-state"><i class="ti ti-users" aria-hidden="true"></i><p>Aucun élève dans Firebase. Utilisez le générateur de comptes.</p></div></td></tr>'; return; }
+  tb.innerHTML = eleves.map(function(e){
+    return '<tr data-search="'+((e.prenom+' '+e.nom+' '+(e.classe||'')+' '+(e.parentNom||'')).toLowerCase())+'">'+
+      '<td><strong>'+e.prenom+' '+e.nom+'</strong></td>'+
+      '<td>'+(e.classe||'—')+'</td>'+
+      '<td><code style="background:var(--gray-light);padding:2px 6px;font-size:11px">'+(e.identifiant||'—')+'</code></td>'+
+      '<td>'+(e.parentNom||'—')+'</td>'+
+      '<td>'+(e.tel||'—')+'</td>'+
+      '<td><div class="tbl-actions">'+
+        '<button class="btn btn-edit" onclick="editEleve(\''+e.id+'\')"><i class="ti ti-pencil" aria-hidden="true"></i></button>'+
+        '<button class="btn btn-danger" onclick="deleteItem(\'eleves\',\''+e.id+'\',renderEleves)"><i class="ti ti-trash" aria-hidden="true"></i></button>'+
+        '<button class="btn btn-edit" onclick="openResetPw(\''+e.id+'\',\''+( e.prenom+' '+e.nom).replace(/'/g,"\\'")+'\',\'Élève\')"><i class="ti ti-key" aria-hidden="true"></i></button>'+
+      '</div></td></tr>';
+  }).join('');
+  document.getElementById('ds-eleves').textContent = eleves.length;
+}
+
+function renderProfs(){
+  var profs = JSON.parse(localStorage.getItem('ilch_profs') || '[]');
+  var tb = document.getElementById('tbody-profs');
+  if(!profs.length){ tb.innerHTML='<tr><td colspan="6"><div class="empty-state"><i class="ti ti-chalkboard" aria-hidden="true"></i><p>Aucun professeur dans Firebase.</p></div></td></tr>'; return; }
+  tb.innerHTML = profs.map(function(p){
+    var mats = ((p.matieres||[]).map(function(m){return '<span class="badge badge-prof">'+m+'</span>';}).join(' ')) || '—';
+    return '<tr data-search="'+((p.prenom+' '+p.nom+' '+((p.matieres||[]).join(' '))).toLowerCase())+'">'+
+      '<td><strong>'+p.prenom+' '+p.nom+'</strong></td>'+
+      '<td>'+mats+'</td>'+
+      '<td>'+((p.classes||[]).join(', ')||'—')+'</td>'+
+      '<td><code style="background:var(--gray-light);padding:2px 6px;font-size:11px">'+(p.identifiant||'—')+'</code></td>'+
+      '<td>'+(p.tel||'—')+'</td>'+
+      '<td><div class="tbl-actions">'+
+        '<button class="btn btn-edit" onclick="editProf(\''+p.id+'\')"><i class="ti ti-pencil" aria-hidden="true"></i></button>'+
+        '<button class="btn btn-danger" onclick="deleteItem(\'profs\',\''+p.id+'\',renderProfs)"><i class="ti ti-trash" aria-hidden="true"></i></button>'+
+        '<button class="btn btn-edit" onclick="openResetPw(\''+p.id+'\',\''+(p.prenom+' '+p.nom).replace(/'/g,"\\'")+'\',\'Professeur\')"><i class="ti ti-key" aria-hidden="true"></i></button>'+
+      '</div></td></tr>';
+  }).join('');
+  document.getElementById('ds-profs').textContent = profs.length;
+}
+
+function renderParents(){
+  var parents = JSON.parse(localStorage.getItem('ilch_parents') || '[]');
+  var eleves = JSON.parse(localStorage.getItem('ilch_eleves') || '[]');
+  var tb = document.getElementById('tbody-parents');
+  if(!parents.length){ tb.innerHTML='<tr><td colspan="6"><div class="empty-state"><i class="ti ti-heart" aria-hidden="true"></i><p>Aucun parent dans Firebase.</p></div></td></tr>'; return; }
+  tb.innerHTML = parents.map(function(p){
+    var enfants = (p.enfantsIds||[]).map(function(eid){
+      var e = eleves.find(function(x){return x.id===eid;});
+      return e ? e.prenom+' '+e.nom : '?';
+    }).join(', ');
+    return '<tr data-search="'+((p.prenom+' '+p.nom).toLowerCase())+'">'+
+      '<td><strong>'+p.prenom+' '+p.nom+'</strong></td>'+
+      '<td><code style="background:var(--gray-light);padding:2px 6px;font-size:11px">'+(p.identifiant||'—')+'</code></td>'+
+      '<td>'+(p.tel||'—')+'</td>'+
+      '<td>'+(p.email||'—')+'</td>'+
+      '<td>'+(enfants||'—')+'</td>'+
+      '<td><div class="tbl-actions">'+
+        '<button class="btn btn-edit" onclick="editParent(\''+p.id+'\')"><i class="ti ti-pencil" aria-hidden="true"></i></button>'+
+        '<button class="btn btn-danger" onclick="deleteItem(\'parents\',\''+p.id+'\',renderParents)"><i class="ti ti-trash" aria-hidden="true"></i></button>'+
+        '<button class="btn btn-edit" onclick="openResetPw(\''+p.id+'\',\''+(p.prenom+' '+p.nom).replace(/'/g,"\\'")+'\',\'Parent\')"><i class="ti ti-key" aria-hidden="true"></i></button>'+
+      '</div></td></tr>';
+  }).join('');
+  document.getElementById('ds-parents').textContent = parents.length;
+}
+
+function renderClasses(){
+  var classes = DB.get('classes');
+  var eleves = DB.get('eleves');
+  var tb = document.getElementById('tbody-classes');
+  if(!classes.length){ tb.innerHTML='<tr><td colspan="4"><div class="empty-state"><i class="ti ti-door" aria-hidden="true"></i><p>Aucune classe créée.</p></div></td></tr>'; return; }
+  tb.innerHTML = classes.map(function(c){
+    var nb = eleves.filter(function(e){return e.classe===c.nom;}).length;
+    return '<tr>'+
+      '<td><strong>'+c.nom+'</strong></td>'+
+      '<td><span class="badge badge-eleve">'+c.niveau+'</span></td>'+
+      '<td>'+nb+' élève'+(nb>1?'s':'')+'</td>'+
+      '<td><div class="tbl-actions">'+
+        '<button class="btn btn-danger" onclick="deleteItem(\'classes\',\''+c.id+'\',function(){renderClasses();updateClasseSelects();})"><i class="ti ti-trash" aria-hidden="true"></i>Supprimer</button>'+
+      '</div></td></tr>';
+  }).join('');
+  document.getElementById('ds-classes').textContent = classes.length;
+}
+
+function renderMatieres(){
+  var matieres = DB.get('matieres');
+  var profs = DB.get('profs');
+  var tb = document.getElementById('tbody-matieres');
+  if(!matieres.length){ tb.innerHTML='<tr><td colspan="3"><div class="empty-state"><i class="ti ti-book" aria-hidden="true"></i><p>Aucune matière créée.</p></div></td></tr>'; return; }
+  tb.innerHTML = matieres.map(function(m){
+    var nb = profs.filter(function(p){return (p.matieres||[]).indexOf(m.nom)>-1;}).length;
+    return '<tr>'+
+      '<td><strong>'+m.nom+'</strong></td>'+
+      '<td>'+nb+' prof'+(nb>1?'s':'')+'</td>'+
+      '<td><div class="tbl-actions">'+
+        '<button class="btn btn-danger" onclick="deleteItem(\'matieres\',\''+m.id+'\',renderMatieres)"><i class="ti ti-trash" aria-hidden="true"></i>Supprimer</button>'+
+      '</div></td></tr>';
+  }).join('');
+}
+
+function renderPW(){
+  var all = [];
+  // Lire depuis localStorage (synchronisé par Firebase)
+  var eleves = JSON.parse(localStorage.getItem('ilch_eleves') || '[]');
+  var profs = JSON.parse(localStorage.getItem('ilch_profs') || '[]');
+  var parents = JSON.parse(localStorage.getItem('ilch_parents') || '[]');
+
+  eleves.forEach(function(e){ all.push({id:e.id,nom:(e.prenom||'')+ ' '+(e.nom||''),role:'Élève',identifiant:e.identifiant||''}); });
+  profs.forEach(function(p){ all.push({id:p.id,nom:(p.prenom||'')+' '+(p.nom||''),role:'Professeur',identifiant:p.identifiant||''}); });
+  parents.forEach(function(p){ all.push({id:p.id,nom:(p.prenom||'')+' '+(p.nom||''),role:'Parent',identifiant:p.identifiant||''}); });
+
+  var tb = document.getElementById('tbody-pw');
+  if(!tb) return;
+
+  // Filtre recherche
+  var q = document.getElementById('search-pw') ? document.getElementById('search-pw').value.toLowerCase() : '';
+  var filterRole = document.getElementById('filter-pw-role') ? document.getElementById('filter-pw-role').value : '';
+  var filtered = all.filter(function(u){
+    var matchQ = !q || (u.nom + ' ' + u.identifiant).toLowerCase().indexOf(q) > -1;
+    var matchR = !filterRole || u.role === filterRole;
+    return matchQ && matchR;
+  });
+
+  if(!filtered.length){
+    tb.innerHTML='<tr><td colspan="4"><div class="empty-state"><i class="ti ti-key" aria-hidden="true"></i><p>'+(all.length?'Aucun résultat':'Aucun utilisateur dans Firebase.')+'</p></div></td></tr>';
+    return;
+  }
+
+  tb.innerHTML = filtered.map(function(u){
+    var cls = u.role==='Élève'?'badge-eleve':u.role==='Professeur'?'badge-prof':'badge-parent';
+    return '<tr data-search="'+(u.nom+' '+u.role+' '+u.identifiant).toLowerCase()+'">'+
+      '<td><strong>'+u.nom+'</strong></td>'+
+      '<td><span class="badge '+cls+'">'+u.role+'</span></td>'+
+      '<td><code style="background:var(--gray-light);padding:2px 6px;font-size:11px">'+u.identifiant+'</code></td>'+
+      '<td><button class="btn btn-danger" onclick="openResetPw(\''+u.id+'\',\''+u.nom.replace(/'/g,"\\'")+ '\',\''+u.role+'\')"><i class="ti ti-key" aria-hidden="true"></i>Réinitialiser</button></td></tr>';
+  }).join('');
+}
+
+// ─── HELPERS ───────────────────────────────────────────────
+function updateClasseSelects(){
+  var classes = DB.get('classes');
+  var opts = '<option value="">-- Choisir --</option>'+classes.map(function(c){return '<option value="'+c.nom+'">'+c.nom+'</option>';}).join('');
+  var els = ['e-classe','p-classe-input','filter-classe'];
+  els.forEach(function(id){ var el=document.getElementById(id); if(el) el.innerHTML=(id==='filter-classe'?'<option value="">Toutes les classes</option>':'')+classes.map(function(c){return '<option value="'+c.nom+'">'+c.nom+'</option>';}).join(''); });
+  // Parent enfant select
+  var eleves = DB.get('eleves');
+  var pe = document.getElementById('par-enfant');
+  if(pe) pe.innerHTML = eleves.map(function(e){return '<option value="'+e.id+'">'+e.prenom+' '+e.nom+' ('+e.classe+')</option>';}).join('');
+}
+
+function updateDashboard(){
+  document.getElementById('ds-eleves').textContent = DB.get('eleves').length;
+  document.getElementById('ds-profs').textContent = DB.get('profs').length;
+  document.getElementById('ds-parents').textContent = DB.get('parents').length;
+  document.getElementById('ds-classes').textContent = DB.get('classes').length;
+}
+
+function genPw(fieldId){
+  var chars='abcdefghjkmnpqrstuvwxyz23456789';
+  var pw=''; for(var i=0;i<8;i++) pw+=chars[Math.floor(Math.random()*chars.length)];
+  document.getElementById(fieldId).value=pw;
+}
+
+// ── Génération automatique identifiant + mot de passe ──────
+function nettoyerTexte(str) {
+  return (str||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-zA-Z]/g,'').toLowerCase();
+}
+
+function getAbrClasse(classe) {
+  var abr = {
+    'Préscolaire':'PS','1ère Fondamentale':'1F','2ème Fondamentale':'2F',
+    '3ème Fondamentale':'3F','4ème Fondamentale':'4F','5ème Fondamentale':'5F',
+    '6ème Fondamentale':'6F','7ème Fondamentale':'7F','8ème Fondamentale':'8F',
+    '9ème Fondamentale':'9F','NSI','NSII','NSIII','NSIV':'NS','Rhétorique':'RH',
+    'Terminale A':'TA','Terminale B':'TB'
+  };
+  return abr[classe] || classe.replace(/[^a-zA-Z0-9]/g,'').slice(0,2).toUpperCase();
+}
+
+function autoGenCredentials() {
+  var prenom = document.getElementById('e-prenom').value.trim();
+  var nom = document.getElementById('e-nom').value.trim();
+  var classe = document.getElementById('e-classe').value;
+  if (!prenom || !nom) return;
+
+  var p = nettoyerTexte(prenom);
+  var n = nettoyerTexte(nom);
+  var identifiant = p + '.' + n;
+  var pw = p.slice(0,3) + '.' + n.slice(0,3) + '.' + (classe ? getAbrClasse(classe) : 'XX') + '2026';
+
+  // Remplir les champs
+  document.getElementById('e-id').value = identifiant;
+  document.getElementById('e-pw').value = pw;
+
+  // Afficher preview
+  var previewId = document.getElementById('preview-eleve-id');
+  var previewPw = document.getElementById('preview-eleve-pw');
+  if (previewId) previewId.textContent = identifiant;
+  if (previewPw) previewPw.textContent = pw;
+}
+
+function deleteItem(store,id,cb){
+  if(!confirm('Supprimer cet élément ?')) return;
+  var items = DB.get(store).filter(function(x){return x.id!==id;});
+  DB.set(store,items);
+  cb();
+  updateDashboard();
+  showToast('Élément supprimé');
+}
+
+function filterTable(tblId, inputId){
+  var q = document.getElementById(inputId).value.toLowerCase();
+  var filterEl = document.getElementById(tblId==='tbl-eleves'?'filter-classe':tblId==='tbl-pw'?'filter-pw-role':null);
+  var filterVal = filterEl ? filterEl.value.toLowerCase() : '';
+  var rows = document.querySelectorAll('#'+tblId+' tbody tr');
+  rows.forEach(function(r){
+    var search = (r.getAttribute('data-search')||'').toLowerCase();
+    var matchQ = !q || search.indexOf(q)>-1;
+    var matchF = !filterVal || search.indexOf(filterVal)>-1;
+    r.style.display = (matchQ&&matchF)?'':'none';
+  });
+}
+
+// ─── MODALS ────────────────────────────────────────────────
+function openModal(id){ document.getElementById(id).classList.add('open'); updateClasseSelects(); }
+function closeModal(id){ document.getElementById(id).classList.remove('open'); }
+
+// Élève
+function openModalEleve(){
+  document.getElementById('modal-eleve-title').textContent='Ajouter un élève';
+  document.getElementById('eleve-edit-id').value='';
+  ['e-prenom','e-nom','e-id','e-pw','e-parent','e-tel'].forEach(function(id){document.getElementById(id).value='';});
+  document.getElementById('e-dob').value='';
+  openModal('modal-eleve');
+}
+function editEleve(id){
+  var e = DB.get('eleves').find(function(x){return x.id===id;});
+  if(!e) return;
+  document.getElementById('modal-eleve-title').textContent='Modifier l\'élève';
+  document.getElementById('eleve-edit-id').value=e.id;
+  document.getElementById('e-prenom').value=e.prenom;
+  document.getElementById('e-nom').value=e.nom;
+  document.getElementById('e-parent').value=e.parentNom||'';
+  document.getElementById('e-tel').value=e.tel||'';
+  document.getElementById('e-id').value=e.identifiant;
+  document.getElementById('e-pw').value=e.motDePasse||'';
+  document.getElementById('e-dob').value=e.dob||'';
+  openModal('modal-eleve');
+  setTimeout(function(){document.getElementById('e-classe').value=e.classe;},100);
+}
+function saveEleve(){
+  var prenom=document.getElementById('e-prenom').value.trim();
+  var nom=document.getElementById('e-nom').value.trim();
+  var classe=document.getElementById('e-classe').value;
+  var identifiant=document.getElementById('e-id').value.trim();
+  var pw=document.getElementById('e-pw').value.trim();
+  if(!prenom||!nom||!classe||!identifiant||!pw){showToast('Veuillez remplir tous les champs obligatoires');return;}
+  var eleves=DB.get('eleves');
+  var editId=document.getElementById('eleve-edit-id').value;
+  var obj={
+    id:editId||DB.id(),prenom:prenom,nom:nom,classe:classe,
+    parentNom:document.getElementById('e-parent').value.trim(),
+    tel:document.getElementById('e-tel').value.trim(),
+    dob:document.getElementById('e-dob').value,
+    identifiant:identifiant,motDePasse:pw
+  };
+  if(editId){ var idx=eleves.findIndex(function(x){return x.id===editId;}); if(idx>-1) eleves[idx]=obj; }
+  else eleves.push(obj);
+  DB.set('eleves',eleves);
+  closeModal('modal-eleve');
+  renderEleves(); updateDashboard();
+  showToast(prenom+' '+nom+' '+(editId?'modifié':'ajouté')+'(e) avec succès');
+}
+
+// Professeur — tags
+var profMatieres=[], profClasses=[];
+function addTag(listId,inputId,cls){
+  var val=document.getElementById(inputId).value.trim();
+  if(!val) return;
+  if(listId==='p-matieres') profMatieres.push(val);
+  document.getElementById(inputId).value='';
+  renderTags(listId,listId==='p-matieres'?profMatieres:profClasses,cls);
+}
+function addTagFromSelect(listId,selectId,cls){
+  var val=document.getElementById(selectId).value;
+  if(!val) return;
+  if(listId==='p-classes' && profClasses.indexOf(val)===-1) profClasses.push(val);
+  renderTags(listId,listId==='p-matieres'?profMatieres:profClasses,cls);
+}
+function renderTags(listId,arr,cls){
+  document.getElementById(listId).innerHTML=arr.map(function(v,i){
+    return '<span class="tag '+cls+'">'+v+'<span class="tag-remove" onclick="removeTag(\''+listId+'\','+i+',\''+cls+'\')">×</span></span>';
+  }).join('');
+}
+function removeTag(listId,i,cls){
+  if(listId==='p-matieres') profMatieres.splice(i,1);
+  else profClasses.splice(i,1);
+  renderTags(listId,listId==='p-matieres'?profMatieres:profClasses,cls);
+}
+function openModalProf(){
+  document.getElementById('modal-prof-title').textContent='Ajouter un professeur';
+  document.getElementById('prof-edit-id').value='';
+  profMatieres=[]; profClasses=[];
+  ['p-prenom','p-nom','p-tel','p-id','p-pw'].forEach(function(id){document.getElementById(id).value='';});
+  document.getElementById('p-matieres').innerHTML='';
+  document.getElementById('p-classes').innerHTML='';
+  // Populate matières input datalist
+  var matieres=DB.get('matieres');
+  openModal('modal-prof');
+}
+function editProf(id){
+  var p=DB.get('profs').find(function(x){return x.id===id;});
+  if(!p) return;
+  document.getElementById('modal-prof-title').textContent='Modifier le professeur';
+  document.getElementById('prof-edit-id').value=p.id;
+  document.getElementById('p-prenom').value=p.prenom;
+  document.getElementById('p-nom').value=p.nom;
+  document.getElementById('p-tel').value=p.tel||'';
+  document.getElementById('p-id').value=p.identifiant;
+  document.getElementById('p-pw').value=p.motDePasse||'';
+  profMatieres=p.matieres?[].concat(p.matieres):[];
+  profClasses=p.classes?[].concat(p.classes):[];
+  openModal('modal-prof');
+  renderTags('p-matieres',profMatieres,'gold');
+  renderTags('p-classes',profClasses,'blue');
+}
+function saveProf(){
+  var prenom=document.getElementById('p-prenom').value.trim();
+  var nom=document.getElementById('p-nom').value.trim();
+  var identifiant=document.getElementById('p-id').value.trim();
+  var pw=document.getElementById('p-pw').value.trim();
+  if(!prenom||!nom||!identifiant||!pw){showToast('Veuillez remplir tous les champs');return;}
+  var profs=DB.get('profs');
+  var editId=document.getElementById('prof-edit-id').value;
+  var obj={id:editId||DB.id(),prenom:prenom,nom:nom,tel:document.getElementById('p-tel').value.trim(),identifiant:identifiant,motDePasse:pw,matieres:profMatieres,classes:profClasses};
+  if(editId){ var idx=profs.findIndex(function(x){return x.id===editId;}); if(idx>-1) profs[idx]=obj; }
+  else profs.push(obj);
+  DB.set('profs',profs);
+  closeModal('modal-prof');
+  renderProfs(); updateDashboard();
+  showToast(prenom+' '+nom+' '+(editId?'modifié':'ajouté')+'(e)');
+}
+
+// Parent
+function openModalParent(){
+  document.getElementById('modal-parent-title').textContent='Ajouter un parent';
+  document.getElementById('par-edit-id').value='';
+  ['par-prenom','par-nom','par-tel','par-email','par-id','par-pw'].forEach(function(id){document.getElementById(id).value='';});
+  openModal('modal-parent');
+}
+function editParent(id){
+  var p=DB.get('parents').find(function(x){return x.id===id;});
+  if(!p) return;
+  document.getElementById('modal-parent-title').textContent='Modifier le parent';
+  document.getElementById('par-edit-id').value=p.id;
+  document.getElementById('par-prenom').value=p.prenom;
+  document.getElementById('par-nom').value=p.nom;
+  document.getElementById('par-tel').value=p.tel||'';
+  document.getElementById('par-email').value=p.email||'';
+  document.getElementById('par-id').value=p.identifiant;
+  document.getElementById('par-pw').value=p.motDePasse||'';
+  openModal('modal-parent');
+  setTimeout(function(){
+    var sel=document.getElementById('par-enfant');
+    (p.enfantsIds||[]).forEach(function(eid){
+      for(var i=0;i<sel.options.length;i++) if(sel.options[i].value===eid) sel.options[i].selected=true;
+    });
+  },100);
+}
+function saveParent(){
+  var prenom=document.getElementById('par-prenom').value.trim();
+  var nom=document.getElementById('par-nom').value.trim();
+  var identifiant=document.getElementById('par-id').value.trim();
+  var pw=document.getElementById('par-pw').value.trim();
+  if(!prenom||!nom||!identifiant||!pw){showToast('Veuillez remplir tous les champs');return;}
+  var sel=document.getElementById('par-enfant');
+  var enfantsIds=Array.from(sel.selectedOptions).map(function(o){return o.value;});
+  var parents=DB.get('parents');
+  var editId=document.getElementById('par-edit-id').value;
+  var obj={id:editId||DB.id(),prenom:prenom,nom:nom,tel:document.getElementById('par-tel').value.trim(),email:document.getElementById('par-email').value.trim(),identifiant:identifiant,motDePasse:pw,enfantsIds:enfantsIds};
+  if(editId){ var idx=parents.findIndex(function(x){return x.id===editId;}); if(idx>-1) parents[idx]=obj; }
+  else parents.push(obj);
+  DB.set('parents',parents);
+  closeModal('modal-parent');
+  renderParents(); updateDashboard();
+  showToast(prenom+' '+nom+' '+(editId?'modifié':'ajouté'));
+}
+
+// Classe
+function saveClasse(){
+  var nom=document.getElementById('cl-nom').value.trim();
+  var niveau=document.getElementById('cl-niveau').value;
+  if(!nom){showToast('Veuillez saisir un nom de classe');return;}
+  var classes=DB.get('classes');
+  classes.push({id:DB.id(),nom:nom,niveau:niveau});
+  DB.set('classes',classes);
+  closeModal('modal-classe');
+  renderClasses(); updateClasseSelects(); updateDashboard();
+  showToast('Classe "'+nom+'" créée');
+  document.getElementById('cl-nom').value='';
+}
+
+// Matière
+function saveMatiere(){
+  var nom=document.getElementById('mat-nom').value.trim();
+  if(!nom){showToast('Veuillez saisir un nom de matière');return;}
+  var matieres=DB.get('matieres');
+  matieres.push({id:DB.id(),nom:nom});
+  DB.set('matieres',matieres);
+  closeModal('modal-matiere');
+  renderMatieres();
+  showToast('Matière "'+nom+'" créée');
+  document.getElementById('mat-nom').value='';
+}
+
+// Mot de passe
+var pwEditId='', pwEditStore='';
+function openResetPw(id,nom,role){
+  pwEditId=id;
+  pwEditStore=role==='Élève'?'eleves':role==='Professeur'?'profs':'parents';
+  document.getElementById('pw-user-name').textContent=nom;
+  document.getElementById('pw-user-role').textContent=role;
+  document.getElementById('new-pw').value='';
+  openModal('modal-pw');
+}
+function confirmResetPw(){
+  var pw=document.getElementById('new-pw').value.trim();
+  if(!pw||pw.length<4){showToast('Mot de passe trop court (minimum 4 caractères)');return;}
+  var items=DB.get(pwEditStore);
+  var idx=items.findIndex(function(x){return x.id===pwEditId;});
+  if(idx>-1){ items[idx].motDePasse=pw; DB.set(pwEditStore,items); }
+  closeModal('modal-pw');
+  showToast('Mot de passe réinitialisé avec succès');
+}
+
+// Annonces
+function publishAnn(){
+  var t=document.getElementById('ann-title').value.trim();
+  var b=document.getElementById('ann-body').value.trim();
+  if(!t||!b){showToast('Veuillez remplir le titre et le contenu');return;}
+  var type=document.getElementById('ann-type').value;
+  var color=type==='urgent'?'var(--red)':type==='event'?'var(--gold)':'var(--blue)';
+  var today=new Date().toLocaleDateString('fr-FR');
+  var card=document.createElement('div');
+  card.style.cssText='background:var(--white);border:0.5px solid var(--border);border-left:3px solid '+color+';padding:1rem 1.25rem;display:flex;justify-content:space-between;align-items:start';
+  card.innerHTML='<div><div style="font-size:13px;font-weight:600;color:var(--navy);margin-bottom:4px">'+t+'</div><div style="font-size:12px;color:var(--gray)">'+b+'</div><div style="font-size:10px;color:var(--muted);margin-top:4px">'+today+' · '+document.getElementById('ann-dest').value+'</div></div><button class="btn btn-danger" onclick="this.closest(\'div\').remove()"><i class="ti ti-trash" aria-hidden="true"></i></button>';
+  document.getElementById('ann-list').prepend(card);
+  document.getElementById('ann-title').value='';
+  document.getElementById('ann-body').value='';
+  showToast('Annonce publiée');
+}
+
+// Export
+function exportData(){
+  var data={eleves:DB.get('eleves'),profs:DB.get('profs'),parents:DB.get('parents'),classes:DB.get('classes'),matieres:DB.get('matieres')};
+  var blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'});
+  var a=document.createElement('a');
+  a.href=URL.createObjectURL(blob);
+  a.download='ilch_donnees_'+new Date().toISOString().slice(0,10)+'.json';
+  a.click();
+  showToast('Données exportées');
+}
+
+// ─── UI ────────────────────────────────────────────────────
+var titles={dash:'Tableau de bord',eleves:'Gestion des élèves',profs:'Gestion des professeurs',parents:'Gestion des parents',classes:'Gestion des classes',matieres:'Gestion des matières',motsdepasse:'Mots de passe',annonces:'Annonces'};
+function showPanel(id,el){
+  document.querySelectorAll('.panel').forEach(function(p){p.classList.remove('active')});
+  document.getElementById('panel-'+id).classList.add('active');
+  document.querySelectorAll('.sb-item').forEach(function(i){i.classList.remove('active')});
+  if(el) el.classList.add('active');
+  document.getElementById('topbar-title').textContent=titles[id]||id;
+  renderAll();
+}
+
+function showToast(msg){
+  var t=document.getElementById('toast');
+  document.getElementById('toast-msg').textContent=msg;
+  t.classList.add('show');
+  setTimeout(function(){t.classList.remove('show')},3000);
+}
+
+// Fermer modal en cliquant dehors
+document.querySelectorAll('.modal-overlay').forEach(function(m){
+  m.addEventListener('click',function(e){if(e.target===m)m.classList.remove('open');});
+});
+</script>
+</body>
+</html>
+<script>
+function toggleSidebar(){
+  var sb=document.querySelector(".sidebar");
+  var ov=document.getElementById("sidebar-overlay");
+  var hb=document.getElementById("hamburger");
+  if(!sb||!ov) return;
+  sb.classList.toggle("open");
+  ov.classList.toggle("show");
+  if(hb) hb.classList.toggle("open");
+}
+function closeSidebar(){
+  var sb=document.querySelector(".sidebar");
+  var ov=document.getElementById("sidebar-overlay");
+  var hb=document.getElementById("hamburger");
+  if(!sb||!ov) return;
+  sb.classList.remove("open");
+  ov.classList.remove("show");
+  if(hb) hb.classList.remove("open");
+}
+document.addEventListener("DOMContentLoaded",function(){
+  document.querySelectorAll(".sb-item").forEach(function(item){
+    item.addEventListener("click",function(){
+      if(window.innerWidth<=768) closeSidebar();
+    });
+  });
+  document.addEventListener("keydown",function(e){if(e.key==="Escape") closeSidebar();});
+});
+</script>
+<script>
+if("serviceWorker" in navigator){
+  window.addEventListener("load",function(){
+    navigator.serviceWorker.register("/sw.js").then(function(reg){
+      console.log("[ILCH] PWA Service Worker actif");
+    }).catch(function(err){console.log("[ILCH] SW erreur:",err);});
+  });
+}
+</script>
+<script type="module">
+// ── Connexion Firebase pour Dashboard Admin ────────────────
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import {
+  getFirestore, collection, getDocs, addDoc, updateDoc, deleteDoc, doc, onSnapshot
+} from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyDjrBnsTu7CNWnqeqSm29-arbs8MPoTBJ0",
+  authDomain: "ilch-plateforme.firebaseapp.com",
+  projectId: "ilch-plateforme",
+  storageBucket: "ilch-plateforme.firebasestorage.app",
+  messagingSenderId: "978336467476",
+  appId: "1:978336467476:web:1f716ca406469a0c62b501"
+};
+
+const app = initializeApp(firebaseConfig);
+const db  = getFirestore(app);
+
+// ── Écouter les données en temps réel ─────────────────────
+onSnapshot(collection(db, 'eleves'), function(snap) {
+  var eleves = snap.docs.map(function(d) { return { id: d.id, ...d.data() }; });
+  localStorage.setItem('ilch_eleves', JSON.stringify(eleves));
+  var el = document.getElementById('ds-eleves');
+  if (el) el.textContent = eleves.length;
+  if (typeof renderEleves === 'function') renderEleves();
+  if (typeof renderPW === 'function') renderPW();
+});
+
+onSnapshot(collection(db, 'professeurs'), function(snap) {
+  var profs = snap.docs.map(function(d) { return { id: d.id, ...d.data() }; });
+  localStorage.setItem('ilch_profs', JSON.stringify(profs));
+  var el = document.getElementById('ds-profs');
+  if (el) el.textContent = profs.length;
+  if (typeof renderProfs === 'function') renderProfs();
+});
+
+onSnapshot(collection(db, 'parents'), function(snap) {
+  var parents = snap.docs.map(function(d) { return { id: d.id, ...d.data() }; });
+  localStorage.setItem('ilch_parents', JSON.stringify(parents));
+  var el = document.getElementById('ds-parents');
+  if (el) el.textContent = parents.length;
+  if (typeof renderParents === 'function') renderParents();
+});
+
+// ── Sauvegarder dans Firebase aussi ───────────────────────
+var origSaveEleve = window.saveEleve;
+window.saveEleve = async function() {
+  var prenom = document.getElementById('e-prenom').value.trim();
+  var nom = document.getElementById('e-nom').value.trim();
+  var classe = document.getElementById('e-classe').value;
+  var identifiant = document.getElementById('e-id').value.trim();
+  var pw = document.getElementById('e-pw').value.trim();
+  if (!prenom||!nom||!classe||!identifiant||!pw) { return; }
+
+  try {
+    var editId = document.getElementById('eleve-edit-id').value;
+    var data = {
+      prenom: prenom, nom: nom, classe: classe,
+      parentNom: document.getElementById('e-parent').value.trim(),
+      tel: document.getElementById('e-tel').value.trim(),
+      dob: document.getElementById('e-dob').value,
+      identifiant: identifiant, motDePasse: pw, role: 'eleve'
+    };
+    if (editId) {
+      await updateDoc(doc(db, 'eleves', editId), data);
+    } else {
+      await addDoc(collection(db, 'eleves'), { ...data, createdAt: new Date().toISOString() });
+    }
+  } catch(e) { console.error('Firebase eleve:', e); }
+
+  if (origSaveEleve) origSaveEleve();
+};
+
+var origSaveProf = window.saveProf;
+window.saveProf = async function() {
+  try {
+    var editId = document.getElementById('prof-edit-id').value;
+    var data = {
+      prenom: document.getElementById('p-prenom').value.trim(),
+      nom: document.getElementById('p-nom').value.trim(),
+      tel: document.getElementById('p-tel').value.trim(),
+      identifiant: document.getElementById('p-id').value.trim(),
+      motDePasse: document.getElementById('p-pw').value.trim(),
+      role: 'professeur'
+    };
+    if (editId) {
+      await updateDoc(doc(db, 'professeurs', editId), data);
+    } else {
+      await addDoc(collection(db, 'professeurs'), { ...data, createdAt: new Date().toISOString() });
+    }
+  } catch(e) { console.error('Firebase prof:', e); }
+  if (origSaveProf) origSaveProf();
+};
+
+console.log('✓ Dashboard Admin connecté à Firebase en temps réel');
+</script>
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import {
+  getFirestore, collection, doc,
+  addDoc, getDocs, updateDoc, deleteDoc, onSnapshot
+} from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyDjrBnsTu7CNWnqeqSm29-arbs8MPoTBJ0",
+  authDomain: "ilch-plateforme.firebaseapp.com",
+  projectId: "ilch-plateforme",
+  storageBucket: "ilch-plateforme.firebasestorage.app",
+  messagingSenderId: "978336467476",
+  appId: "1:978336467476:web:1f716ca406469a0c62b501"
+};
+
+const app = initializeApp(firebaseConfig);
+const db  = getFirestore(app);
+
+// ── Synchroniser Firebase → localStorage → Dashboard ──────
+function syncCollection(fbCol, lsKey, renderFn, statId) {
+  return onSnapshot(collection(db, fbCol), function(snap) {
+    var data = snap.docs.map(function(d) { return { id: d.id, ...d.data() }; });
+    localStorage.setItem('ilch_' + lsKey, JSON.stringify(data));
+    var el = document.getElementById(statId);
+    if (el) el.textContent = data.length;
+    if (typeof renderFn === 'function') {
+      try { renderFn(); } catch(e) {}
+    }
+    if (typeof updateDashboard === 'function') {
+      try { updateDashboard(); } catch(e) {}
+    }
+    if (typeof renderPW === 'function') {
+      try { renderPW(); } catch(e) {}
+    }
+  });
+}
+
+// Synchroniser toutes les collections
+syncCollection('eleves',      'eleves',  function(){ if(typeof renderEleves==='function') renderEleves(); },  'ds-eleves');
+syncCollection('professeurs', 'profs',   function(){ if(typeof renderProfs==='function') renderProfs(); },    'ds-profs');
+syncCollection('parents',     'parents', function(){ if(typeof renderParents==='function') renderParents(); },'ds-parents');
+
+// ── Interception des sauvegardes → Firebase ───────────────
+// Élèves
+var _origSaveEleve = window.saveEleve;
+window.saveEleve = async function() {
+  try {
+    var editId = document.getElementById('eleve-edit-id').value;
+    var data = {
+      prenom: document.getElementById('e-prenom').value.trim(),
+      nom: document.getElementById('e-nom').value.trim(),
+      classe: document.getElementById('e-classe').value,
+      parentNom: document.getElementById('e-parent').value.trim(),
+      tel: document.getElementById('e-tel').value.trim(),
+      dob: document.getElementById('e-dob').value,
+      identifiant: document.getElementById('e-id').value.trim(),
+      motDePasse: document.getElementById('e-pw').value.trim(),
+      role: 'eleve',
+      updatedAt: new Date().toISOString()
+    };
+    if (!data.prenom || !data.nom || !data.classe || !data.identifiant || !data.motDePasse) {
+      if (_origSaveEleve) _origSaveEleve(); return;
+    }
+    if (editId) {
+      await updateDoc(doc(db, 'eleves', editId), data);
+    } else {
+      data.createdAt = new Date().toISOString();
+      await addDoc(collection(db, 'eleves'), data);
+    }
+    if (typeof showToast === 'function') showToast('✓ Élève sauvegardé dans Firebase');
+  } catch(e) {
+    console.error('Firebase élève:', e);
+    if (_origSaveEleve) _origSaveEleve();
+    return;
+  }
+  document.getElementById('modal-eleve').classList.remove('open');
+};
+
+// Professeurs
+var _origSaveProf = window.saveProf;
+window.saveProf = async function() {
+  try {
+    var editId = document.getElementById('prof-edit-id').value;
+    var data = {
+      prenom: document.getElementById('p-prenom').value.trim(),
+      nom: document.getElementById('p-nom').value.trim(),
+      tel: document.getElementById('p-tel').value.trim(),
+      identifiant: document.getElementById('p-id').value.trim(),
+      motDePasse: document.getElementById('p-pw').value.trim(),
+      matieres: window.profMatieres || [],
+      classes: window.profClasses || [],
+      role: 'professeur',
+      updatedAt: new Date().toISOString()
+    };
+    if (!data.prenom || !data.nom || !data.identifiant || !data.motDePasse) {
+      if (_origSaveProf) _origSaveProf(); return;
+    }
+    if (editId) {
+      await updateDoc(doc(db, 'professeurs', editId), data);
+    } else {
+      data.createdAt = new Date().toISOString();
+      await addDoc(collection(db, 'professeurs'), data);
+    }
+    if (typeof showToast === 'function') showToast('✓ Professeur sauvegardé dans Firebase');
+  } catch(e) {
+    console.error('Firebase prof:', e);
+    if (_origSaveProf) _origSaveProf();
+    return;
+  }
+  document.getElementById('modal-prof').classList.remove('open');
+};
+
+// Parents
+var _origSaveParent = window.saveParent;
+window.saveParent = async function() {
+  try {
+    var editId = document.getElementById('par-edit-id').value;
+    var sel = document.getElementById('par-enfant');
+    var enfantsIds = sel ? Array.from(sel.selectedOptions).map(function(o){return o.value;}) : [];
+    var data = {
+      prenom: document.getElementById('par-prenom').value.trim(),
+      nom: document.getElementById('par-nom').value.trim(),
+      tel: document.getElementById('par-tel').value.trim(),
+      email: document.getElementById('par-email').value.trim(),
+      identifiant: document.getElementById('par-id').value.trim(),
+      motDePasse: document.getElementById('par-pw').value.trim(),
+      enfantsIds: enfantsIds,
+      role: 'parent',
+      updatedAt: new Date().toISOString()
+    };
+    if (!data.prenom || !data.nom || !data.identifiant || !data.motDePasse) {
+      if (_origSaveParent) _origSaveParent(); return;
+    }
+    if (editId) {
+      await updateDoc(doc(db, 'parents', editId), data);
+    } else {
+      data.createdAt = new Date().toISOString();
+      await addDoc(collection(db, 'parents'), data);
+    }
+    if (typeof showToast === 'function') showToast('✓ Parent sauvegardé dans Firebase');
+  } catch(e) {
+    console.error('Firebase parent:', e);
+    if (_origSaveParent) _origSaveParent();
+    return;
+  }
+  document.getElementById('modal-parent').classList.remove('open');
+};
+
+// Suppression
+var _origDeleteItem = window.deleteItem;
+window.deleteItem = async function(store, id, cb) {
+  if (!confirm('Supprimer cet élément ?')) return;
+  var fbCol = store === 'eleves' ? 'eleves' :
+              store === 'profs' ? 'professeurs' :
+              store === 'parents' ? 'parents' : null;
+  if (fbCol && id && !id.startsWith('id_')) {
+    try {
+      await deleteDoc(doc(db, fbCol, id));
+      if (typeof showToast === 'function') showToast('Élément supprimé de Firebase');
+    } catch(e) { console.error(e); }
+  } else {
+    // localStorage fallback
+    var items = JSON.parse(localStorage.getItem('ilch_' + store) || '[]')
+      .filter(function(x){return x.id !== id;});
+    localStorage.setItem('ilch_' + store, JSON.stringify(items));
+    if (cb) cb();
+    if (typeof showToast === 'function') showToast('Élément supprimé');
+  }
+};
+
+// Réinitialisation mot de passe
+var _origConfirmResetPw = window.confirmResetPw;
+window.confirmResetPw = async function() {
+  var pw = document.getElementById('new-pw').value.trim();
+  if (!pw || pw.length < 4) { showToast('Mot de passe trop court'); return; }
+  var id = window.pwEditId;
+  var store = window.pwEditStore;
+  var fbCol = store === 'eleves' ? 'eleves' :
+              store === 'profs' ? 'professeurs' :
+              store === 'parents' ? 'parents' : null;
+  if (fbCol && id && !id.startsWith('id_')) {
+    try {
+      await updateDoc(doc(db, fbCol, id), { motDePasse: pw });
+      if (typeof showToast === 'function') showToast('✓ Mot de passe réinitialisé dans Firebase');
+    } catch(e) { console.error(e); }
+  } else {
+    if (_origConfirmResetPw) _origConfirmResetPw();
+    return;
+  }
+  document.getElementById('modal-pw').classList.remove('open');
+};
+
+// Export Firebase
+window.exportData = async function() {
+  try {
+    var data = {};
+    var cols = ['eleves','professeurs','parents','utilisateurs'];
+    for (var col of cols) {
+      var snap = await getDocs(collection(db, col));
+      data[col] = snap.docs.map(function(d){return {id:d.id,...d.data()};});
+    }
+    var blob = new Blob([JSON.stringify(data,null,2)],{type:'application/json'});
+    var a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = 'ilch_firebase_' + new Date().toISOString().slice(0,10) + '.json';
+    a.click();
+    showToast('✓ Export Firebase téléchargé');
+  } catch(e) { showToast('Erreur export: ' + e.message); }
+};
+
+console.log('✓ Dashboard Admin entièrement connecté à Firebase');
+</script>
+<script>
+// Déconnexion automatique après 30 min d'inactivité
+var _timer = null;
+function _resetTimer() {
+  if (_timer) clearTimeout(_timer);
+  _timer = setTimeout(function() {
+    sessionStorage.clear();
+    alert('Session expirée par inactivité. Veuillez vous reconnecter.');
+    window.location.href = 'login.html';
+  }, 30 * 60 * 1000); // 30 minutes
+}
+['click','keypress','scroll','mousemove','touchstart'].forEach(function(e) {
+  document.addEventListener(e, _resetTimer, { passive: true });
+});
+_resetTimer();
+
+// Vérifier session valide
+(function() {
+  var user = sessionStorage.getItem('ilch_user');
+  if (!user) {
+    window.location.href = 'login.html';
+  }
+})();
+</script>

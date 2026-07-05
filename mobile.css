@@ -1,0 +1,360 @@
+/* ══════════════════════════════════════════════════════════
+   mobile.css — Styles responsive pour tous les dashboards
+   Institution Louis Chauvet · Pétion-Ville, Haïti
+   Fonctionne sur iPhone, Android et tablette
+   ══════════════════════════════════════════════════════════ */
+
+/* ── BOUTON HAMBURGER (caché sur desktop, visible sur mobile) */
+.hamburger {
+  display: none;
+  flex-direction: column;
+  gap: 5px;
+  cursor: pointer;
+  padding: 8px;
+  background: none;
+  border: none;
+  z-index: 200;
+  flex-shrink: 0;
+}
+.hamburger span {
+  display: block;
+  width: 22px;
+  height: 2px;
+  background: #0D2B4E;
+  transition: all 0.3s;
+  border-radius: 2px;
+}
+.hamburger.open span:nth-child(1) { transform: rotate(45deg) translate(5px, 5px); }
+.hamburger.open span:nth-child(2) { opacity: 0; }
+.hamburger.open span:nth-child(3) { transform: rotate(-45deg) translate(5px, -5px); }
+
+/* ── OVERLAY pour fermer la sidebar ─────────────────────── */
+.sidebar-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.5);
+  z-index: 49;
+}
+.sidebar-overlay.show { display: block; }
+
+/* ══════════════════════════════════════════════════════════
+   TABLETTE (max 1024px)
+   ══════════════════════════════════════════════════════════ */
+@media (max-width: 1024px) {
+  .stats-row {
+    grid-template-columns: repeat(2, 1fr) !important;
+  }
+  .books-grid {
+    grid-template-columns: repeat(2, 1fr) !important;
+  }
+  .form-row, .form-row-2 {
+    grid-template-columns: 1fr !important;
+  }
+}
+
+/* ══════════════════════════════════════════════════════════
+   MOBILE (max 768px)
+   ══════════════════════════════════════════════════════════ */
+@media (max-width: 768px) {
+
+  /* SIDEBAR — cachée par défaut sur mobile */
+  .sidebar {
+    transform: translateX(-100%);
+    transition: transform 0.3s ease;
+    z-index: 100;
+    width: 260px !important;
+  }
+  .sidebar.open {
+    transform: translateX(0);
+  }
+
+  /* MAIN — pleine largeur */
+  .main {
+    margin-left: 0 !important;
+  }
+
+  /* TOPBAR */
+  .topbar {
+    padding: 0.75rem 1rem !important;
+    gap: 8px;
+  }
+  .topbar-title {
+    font-size: 14px !important;
+  }
+
+  /* HAMBURGER visible sur mobile */
+  .hamburger {
+    display: flex !important;
+  }
+
+  /* TOPBAR layout flex */
+  .topbar {
+    display: flex !important;
+    align-items: center !important;
+    gap: 8px !important;
+  }
+
+  /* CONTENU */
+  .content {
+    padding: 1rem !important;
+  }
+
+  /* STATS — 2 colonnes sur mobile */
+  .stats-row {
+    grid-template-columns: repeat(2, 1fr) !important;
+    gap: 8px !important;
+    margin-bottom: 1rem !important;
+  }
+  .stat-card {
+    padding: 0.875rem 1rem !important;
+  }
+  .stat-val {
+    font-size: 1.5rem !important;
+  }
+  .stat-label {
+    font-size: 9px !important;
+  }
+
+  /* TABLES — scroll horizontal */
+  .data-table {
+    display: block;
+    overflow-x: auto;
+    white-space: nowrap;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  /* GRILLES — 1 colonne */
+  .books-grid {
+    grid-template-columns: 1fr !important;
+  }
+  .form-row, .form-row-2 {
+    grid-template-columns: 1fr !important;
+  }
+
+  /* SECTION HDR */
+  .section-hdr {
+    flex-direction: column !important;
+    align-items: flex-start !important;
+    gap: 8px !important;
+  }
+  .section-hdr .btn,
+  .section-hdr button {
+    width: 100% !important;
+    justify-content: center !important;
+  }
+
+  /* SEARCH BAR */
+  .search-bar {
+    flex-direction: column !important;
+  }
+  .search-bar input,
+  .search-bar select {
+    width: 100% !important;
+  }
+
+  /* MESSAGES layout */
+  .msg-layout {
+    grid-template-columns: 1fr !important;
+    height: auto !important;
+  }
+  .msg-contacts {
+    height: 200px;
+    overflow-y: auto;
+    border-right: none !important;
+    border-bottom: 0.5px solid var(--border);
+  }
+  .thread-messages {
+    height: 220px !important;
+  }
+
+  /* MODALS */
+  .modal {
+    max-width: 100% !important;
+    margin: 0.5rem !important;
+    max-height: 95vh !important;
+  }
+  .modal-body {
+    padding: 1rem !important;
+  }
+  .modal-footer {
+    flex-direction: column !important;
+  }
+  .modal-footer button {
+    width: 100% !important;
+  }
+
+  /* BUTTONS */
+  .btn {
+    font-size: 12px !important;
+    padding: 8px 12px !important;
+  }
+
+  /* RAPPORT */
+  .rapport-card,
+  [style*="grid-template-columns: 1fr 1fr"] {
+    grid-template-columns: 1fr !important;
+  }
+
+  /* BADGES TOPBAR */
+  .topbar-section-badge,
+  .admin-badge,
+  .nurse-pill,
+  .compta-badge,
+  .lib-badge {
+    font-size: 10px !important;
+    padding: 4px 8px !important;
+  }
+
+  /* SIDEBAR USER */
+  .sb-user {
+    padding: 0.75rem !important;
+  }
+
+  /* AFFECTATIONS */
+  #affectations-grid {
+    grid-template-columns: 1fr !important;
+  }
+
+  /* BOOKS GRID */
+  .book-cover {
+    height: 100px !important;
+  }
+
+  /* DEVOIR CARD */
+  .devoir-footer {
+    flex-direction: column !important;
+    align-items: flex-start !important;
+  }
+  .devoir-actions {
+    flex-wrap: wrap !important;
+    width: 100% !important;
+  }
+
+  /* VERSEMENTS */
+  .stats-row.four-col {
+    grid-template-columns: repeat(2, 1fr) !important;
+  }
+}
+
+/* ══════════════════════════════════════════════════════════
+   PETIT MOBILE (max 480px)
+   ══════════════════════════════════════════════════════════ */
+@media (max-width: 480px) {
+
+  /* STATS — 1 colonne sur très petit écran */
+  .stats-row {
+    grid-template-columns: 1fr !important;
+  }
+
+  /* TOPBAR */
+  .topbar-title {
+    font-size: 13px !important;
+  }
+
+  /* MODAL full screen */
+  .modal-overlay {
+    padding: 0 !important;
+    align-items: flex-end !important;
+  }
+  .modal {
+    max-height: 90vh !important;
+    border-radius: 16px 16px 0 0 !important;
+    margin: 0 !important;
+  }
+
+  /* CONTENU */
+  .content {
+    padding: 0.75rem !important;
+  }
+
+  /* STAT VAL plus petit */
+  .stat-val {
+    font-size: 1.3rem !important;
+  }
+}
+
+/* ══════════════════════════════════════════════════════════
+   LOGIN PAGE RESPONSIVE
+   ══════════════════════════════════════════════════════════ */
+@media (max-width: 768px) {
+  .role-cards {
+    grid-template-columns: repeat(2, 1fr) !important;
+    gap: 8px !important;
+  }
+  .role-cards-2 {
+    grid-template-columns: repeat(3, 1fr) !important;
+    gap: 8px !important;
+  }
+  .role-card {
+    padding: 0.75rem 0.5rem !important;
+  }
+  .role-icon {
+    width: 32px !important;
+    height: 32px !important;
+    font-size: 14px !important;
+  }
+  .role-title {
+    font-size: 10px !important;
+  }
+  .role-desc {
+    display: none !important;
+  }
+  .login-box {
+    padding: 1.25rem !important;
+  }
+  .portal-badge {
+    width: 38px !important;
+    height: 38px !important;
+    font-size: 14px !important;
+  }
+  .portal-name {
+    font-size: 16px !important;
+  }
+}
+
+@media (max-width: 480px) {
+  .role-cards {
+    grid-template-columns: repeat(2, 1fr) !important;
+  }
+  .role-cards-2 {
+    grid-template-columns: repeat(2, 1fr) !important;
+  }
+  .wrap {
+    padding: 1rem !important;
+  }
+}
+
+/* ══════════════════════════════════════════════════════════
+   INDEX.HTML RESPONSIVE
+   ══════════════════════════════════════════════════════════ */
+@media (max-width: 768px) {
+  /* NAVBAR */
+  .nav-links {
+    display: none !important;
+  }
+  .nav-hamburger {
+    display: flex !important;
+  }
+  .mobile-menu {
+    display: flex !important;
+  }
+
+  /* HERO */
+  .hero-content h1 {
+    font-size: 1.75rem !important;
+  }
+  .hero-content p {
+    font-size: 13px !important;
+  }
+
+  /* SECTIONS */
+  .vie-grid,
+  .events-grid,
+  .admissions-layout {
+    grid-template-columns: 1fr !important;
+  }
+  .stats-band {
+    grid-template-columns: repeat(2, 1fr) !important;
+  }
+}

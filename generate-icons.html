@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html>
+<head><meta charset="UTF-8"><title>Générer Icônes ILCH</title></head>
+<body style="font-family:sans-serif;padding:2rem;background:#0D2B4E;color:white">
+<h2>🎨 Génération des icônes ILCH</h2>
+<p>Cliquez sur chaque bouton pour télécharger l'icône correspondante</p>
+<div id="icons" style="display:flex;flex-wrap:wrap;gap:1rem;margin-top:1rem"></div>
+<canvas id="canvas" style="display:none"></canvas>
+<script>
+var sizes = [72,96,128,144,152,192,384,512];
+var canvas = document.getElementById('canvas');
+var ctx = canvas.getContext('2d');
+
+function drawIcon(size) {
+  canvas.width = size;
+  canvas.height = size;
+
+  // Fond navy
+  ctx.fillStyle = '#0D2B4E';
+  ctx.fillRect(0, 0, size, size);
+
+  // Cercle doré
+  var cx = size/2, cy = size/2, r = size*0.42;
+  ctx.beginPath();
+  ctx.arc(cx, cy, r, 0, Math.PI*2);
+  ctx.fillStyle = '#C9A96E';
+  ctx.fill();
+
+  // Texte ILCH
+  ctx.fillStyle = '#0D2B4E';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.font = 'bold ' + (size*0.22) + 'px Georgia,serif';
+  ctx.fillText('ILCH', cx, cy);
+
+  return canvas.toDataURL('image/png');
+}
+
+var container = document.getElementById('icons');
+sizes.forEach(function(size) {
+  var dataUrl = drawIcon(size);
+  var div = document.createElement('div');
+  div.style.cssText = 'text-align:center;background:rgba(255,255,255,0.1);padding:1rem;border-radius:8px';
+
+  var img = document.createElement('img');
+  img.src = dataUrl;
+  img.style.cssText = 'display:block;width:'+Math.min(size,64)+'px;height:'+Math.min(size,64)+'px;margin:0 auto 8px';
+
+  var btn = document.createElement('a');
+  btn.href = dataUrl;
+  btn.download = 'icon-'+size+'.png';
+  btn.textContent = size+'×'+size;
+  btn.style.cssText = 'display:block;background:#C9A96E;color:#0D2B4E;padding:6px 12px;text-decoration:none;font-weight:700;font-size:12px;border-radius:4px';
+
+  div.appendChild(img);
+  div.appendChild(btn);
+  container.appendChild(div);
+});
+
+// Auto-télécharger tous
+setTimeout(function(){
+  var links = document.querySelectorAll('a');
+  var i = 0;
+  function next(){
+    if(i < links.length){ links[i].click(); i++; setTimeout(next,300); }
+    else { document.querySelector('p').textContent = '✅ Toutes les icônes téléchargées ! Copiez-les dans platform ILCH'; }
+  }
+  next();
+}, 500);
+</script>
+</body>
+</html>

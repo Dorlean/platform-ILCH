@@ -1,0 +1,599 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#0D2B4E">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="ILCH">
+  <link rel="apple-touch-icon" href="icon-192.png">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Institution Louis Chauvet (ILCH)</title>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <style>
+    *{margin:0;padding:0;box-sizing:border-box}
+    :root{
+      --navy:#0D2B4E;--navy2:#1A3D6B;--gold:#C9A96E;--gold-light:#E8D5B0;--gold-bg:#FAF3E8;
+      --cream:#FAFAF8;--white:#fff;--gray:#6B7280;--gray-light:#F3F4F6;
+      --border:#E5E7EB;--text:#1F2937;--haiti-blue:#00209F;--haiti-red:#D21034;
+    }
+    body{font-family:'Inter',sans-serif;background:var(--cream);color:var(--text);overflow-x:hidden}
+    a{text-decoration:none;color:inherit}
+
+    /* NAV */
+    nav{position:fixed;top:0;left:0;right:0;z-index:100;background:rgba(13,43,78,0.97);backdrop-filter:blur(8px);padding:0 2rem}
+    .nav-inner{max-width:1100px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;height:64px}
+    .logo-mark{display:flex;align-items:center;gap:12px}
+    .logo-badge{width:38px;height:38px;background:var(--gold);display:flex;align-items:center;justify-content:center;font-family:'Playfair Display',serif;font-weight:700;font-size:14px;color:var(--navy);flex-shrink:0}
+    .logo-text{font-family:'Playfair Display',serif;font-size:15px;color:var(--white);font-weight:600;line-height:1.2}
+    .logo-sub{font-size:10px;color:var(--gold-light);font-weight:300;letter-spacing:0.08em;text-transform:uppercase}
+    .nav-links{display:flex;gap:1.5rem;list-style:none;align-items:center}
+    .nav-links a{font-size:13px;color:rgba(255,255,255,0.75);letter-spacing:0.03em;transition:color 0.2s}
+    .nav-links a:hover{color:var(--gold)}
+    .nav-login-btn{background:var(--gold);color:var(--navy)!important;padding:8px 16px;font-weight:600!important;font-size:13px!important;transition:background 0.2s!important}
+    .nav-login-btn:hover{background:#d4b57c!important}
+
+    /* HERO SLIDER */
+    .hero{min-height:100vh;position:relative;overflow:hidden;padding-top:64px;display:flex;align-items:center}
+
+    /* Slides */
+    .slider{position:absolute;inset:0;z-index:0}
+    .slide{position:absolute;inset:0;opacity:0;transition:opacity 1.2s ease;background-size:cover;background-position:center}
+    .slide.active{opacity:1}
+    .slide-overlay{position:absolute;inset:0;background:linear-gradient(to right,rgba(13,43,78,0.65) 35%,rgba(13,43,78,0.15) 100%)}
+
+    /* Dots */
+    .slider-dots{position:absolute;bottom:2rem;left:50%;transform:translateX(-50%);display:flex;gap:10px;z-index:10}
+    .slider-dot{width:10px;height:10px;border-radius:50%;background:rgba(255,255,255,0.35);cursor:pointer;border:none;transition:background 0.3s,transform 0.3s}
+    .slider-dot.active{background:var(--gold);transform:scale(1.2)}
+
+    /* Arrows */
+    .slider-arrow{position:absolute;top:50%;transform:translateY(-50%);z-index:10;background:rgba(255,255,255,0.1);border:1px solid rgba(255,255,255,0.2);color:var(--white);width:44px;height:44px;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:20px;transition:background 0.2s;backdrop-filter:blur(4px)}
+    .slider-arrow:hover{background:rgba(201,169,110,0.4);border-color:var(--gold)}
+    .slider-arrow.prev{left:1.5rem}
+    .slider-arrow.next{right:1.5rem}
+
+    /* Slide counter */
+    .slide-counter{position:absolute;top:calc(64px + 1.5rem);right:1.5rem;z-index:10;font-size:12px;color:rgba(255,255,255,0.5);letter-spacing:0.08em}
+    .slide-counter span{color:var(--gold);font-weight:600}
+
+    /* Hero content */
+    .hero-content{position:relative;z-index:5;max-width:1100px;margin:0 auto;padding:0 2rem;width:100%}
+    .hero-eyebrow{display:inline-flex;align-items:center;gap:8px;background:rgba(201,169,110,0.15);border:1px solid rgba(201,169,110,0.3);padding:6px 14px;margin-bottom:2rem}
+    .hero-eyebrow span{font-size:11px;color:var(--gold);letter-spacing:0.12em;text-transform:uppercase;font-weight:500}
+    .hero-eyebrow-dot{width:5px;height:5px;background:var(--gold);border-radius:50%}
+    h1.hero-title{font-family:'Playfair Display',serif;font-size:clamp(2.2rem,5vw,3.8rem);color:var(--white);font-weight:700;line-height:1.15;max-width:620px;margin-bottom:1.5rem}
+    h1.hero-title em{color:var(--gold);font-style:normal}
+    .hero-subtitle{font-size:1.05rem;color:rgba(255,255,255,0.6);max-width:480px;line-height:1.7;margin-bottom:2.5rem;font-weight:300}
+    .hero-actions{display:flex;gap:1rem;flex-wrap:wrap}
+    .btn-primary{background:var(--gold);color:var(--navy);padding:14px 28px;font-size:14px;font-weight:600;letter-spacing:0.04em;display:inline-block;transition:background 0.2s,transform 0.15s}
+    .btn-primary:hover{background:#d4b57c;transform:translateY(-1px)}
+    .btn-ghost{border:1px solid rgba(255,255,255,0.3);color:rgba(255,255,255,0.85);padding:14px 28px;font-size:14px;font-weight:400;display:inline-block;transition:border-color 0.2s,color 0.2s}
+    .btn-ghost:hover{border-color:var(--gold);color:var(--gold)}
+    .hero-stats{display:flex;gap:3rem;margin-top:4rem;padding-top:2rem;border-top:1px solid rgba(255,255,255,0.1)}
+    .stat-num{font-family:'Playfair Display',serif;font-size:2rem;color:var(--gold);font-weight:600}
+    .stat-label{font-size:12px;color:rgba(255,255,255,0.45);letter-spacing:0.06em;text-transform:uppercase;font-weight:300;margin-top:2px}
+
+    /* SECTIONS COMMUNES */
+    .section{padding:6rem 2rem}
+    .container{max-width:1100px;margin:0 auto}
+    .section-label{font-size:11px;color:var(--gold);letter-spacing:0.14em;text-transform:uppercase;font-weight:500;margin-bottom:1rem}
+    .section-title{font-family:'Playfair Display',serif;font-size:clamp(1.8rem,3.5vw,2.6rem);color:var(--navy);font-weight:700;line-height:1.2;margin-bottom:1rem}
+    .section-body{font-size:1rem;color:var(--gray);line-height:1.75;max-width:580px}
+    .gold-line{width:40px;height:3px;background:var(--gold);margin-bottom:1.5rem}
+    .section-header{display:flex;flex-direction:column}
+
+    /* ABOUT */
+    .about-bg{background:var(--white)}
+    .about-grid{display:grid;grid-template-columns:1fr 1fr;gap:5rem;align-items:start;margin-top:3.5rem}
+    .values-list{list-style:none;display:flex;flex-direction:column;gap:1rem;margin-top:2rem}
+    .values-list li{display:flex;align-items:center;gap:12px;font-size:14px;color:var(--text)}
+    .value-dot{width:8px;height:8px;background:var(--gold);flex-shrink:0}
+    .about-card{background:var(--navy);padding:2.5rem;color:var(--white)}
+    .about-card-title{font-family:'Playfair Display',serif;font-size:1.3rem;color:var(--gold);margin-bottom:1rem}
+    .about-card p{font-size:14px;line-height:1.8;color:rgba(255,255,255,0.7)}
+    .about-link{display:inline-flex;align-items:center;gap:8px;margin-top:1.5rem;font-size:13px;color:var(--gold);font-weight:500;letter-spacing:0.04em;border-bottom:1px solid rgba(201,169,110,0.4);padding-bottom:2px;transition:gap 0.2s}
+    .about-link:hover{gap:14px}
+
+    /* VIE SCOLAIRE */
+    .vie-bg{background:var(--gray-light)}
+    .vie-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:1.5rem;margin-top:3rem}
+    .vie-card{background:var(--white);overflow:hidden;transition:transform 0.25s;box-shadow:0 2px 12px rgba(0,0,0,0.06)}
+    .vie-card:hover{transform:translateY(-4px);box-shadow:0 8px 24px rgba(0,0,0,0.1)}
+    .vie-img{width:100%;height:420px;background:var(--navy2);display:flex;align-items:center;justify-content:center;position:relative;overflow:hidden}
+    .vie-img-label{position:absolute;bottom:16px;left:16px;background:var(--gold);color:var(--navy);font-size:10px;font-weight:700;letter-spacing:0.1em;text-transform:uppercase;padding:6px 14px}
+    .vie-img img{width:100%;height:100%;object-fit:cover;object-position:center;transition:transform 0.5s ease}
+    .vie-img:hover img{transform:scale(1.03)}
+    .vie-text{padding:1.25rem 1.5rem 1.5rem}
+    .vie-text h3{font-family:'Playfair Display',serif;font-size:1.05rem;color:var(--navy);margin-bottom:6px}
+    .vie-text p{font-size:13px;color:var(--gray);line-height:1.6}
+
+    /* ADMISSIONS */
+    .admissions-bg{background:var(--white)}
+    .admissions-layout{display:grid;grid-template-columns:1fr 1fr;gap:4rem;align-items:center;margin-top:3rem}
+    .admission-box{background:var(--cream);border-left:3px solid var(--gold);padding:2rem 2rem 2rem 1.75rem}
+    .admission-box h3{font-family:'Playfair Display',serif;font-size:1.1rem;color:var(--navy);margin-bottom:1rem}
+    .admission-list{list-style:none;display:flex;flex-direction:column;gap:0.75rem}
+    .admission-list li{display:flex;align-items:center;gap:10px;font-size:14px;color:var(--text)}
+    .admission-list li::before{content:'';width:6px;height:6px;background:var(--gold);border-radius:50%;flex-shrink:0}
+
+    /* EVENTS */
+    .events-bg{background:var(--navy)}
+    .events-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:1.5rem;margin-top:3rem}
+    .event-card{position:relative;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);overflow:hidden;transition:all 0.25s;box-shadow:0 2px 10px rgba(0,0,0,0.15)}
+    .event-card:hover{border-color:rgba(201,169,110,0.5);transform:translateY(-4px);box-shadow:0 8px 24px rgba(0,0,0,0.25)}
+    .event-img{width:100%;height:280px;background:rgba(26,61,107,0.8);display:flex;align-items:center;justify-content:center;overflow:hidden;position:relative}
+    .event-img img{width:100%;height:100%;object-fit:cover;object-position:center top;transition:transform 0.5s ease}
+    .event-img:hover img{transform:scale(1.03)}
+    .event-info{padding:1.25rem}
+    .event-info h3{font-family:'Playfair Display',serif;font-size:1rem;color:var(--white);margin-bottom:6px}
+    .event-info p{font-size:12px;color:rgba(255,255,255,0.5);line-height:1.6}
+    .event-dot{width:8px;height:8px;background:var(--gold);position:absolute;top:1rem;right:1rem}
+
+    /* PLATEFORME CTA */
+    .plateforme-bg{background:var(--gold-bg)}
+    .plateforme-inner{display:grid;grid-template-columns:1fr 1fr;gap:5rem;align-items:center}
+    .plateforme-cards{display:grid;grid-template-columns:1fr 1fr;gap:1rem}
+    .pf-card{background:var(--white);border:1px solid var(--border);padding:1.5rem;transition:border-color 0.2s,transform 0.2s}
+    .pf-card:hover{border-color:var(--gold);transform:translateY(-2px)}
+    .pf-icon{width:40px;height:40px;background:var(--gold-bg);border:1px solid var(--gold-light);display:flex;align-items:center;justify-content:center;font-size:18px;margin-bottom:1rem}
+    .pf-card h3{font-family:'Playfair Display',serif;font-size:0.95rem;color:var(--navy);margin-bottom:5px}
+    .pf-card p{font-size:12px;color:var(--gray);line-height:1.5}
+
+    /* ESPACE */
+    .espace-bg{background:var(--cream)}
+    .prive-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:1.5rem;margin-top:3rem}
+    .prive-card{background:var(--white);border:1px solid var(--border);padding:2rem;transition:border-color 0.2s,transform 0.2s}
+    .prive-card:hover{border-color:var(--gold);transform:translateY(-2px)}
+    .prive-icon{width:44px;height:44px;background:var(--gold-bg);display:flex;align-items:center;justify-content:center;margin-bottom:1.25rem;font-size:20px}
+    .prive-card h3{font-family:'Playfair Display',serif;font-size:1rem;color:var(--navy);margin-bottom:8px}
+    .prive-card p{font-size:13px;color:var(--gray);line-height:1.6;margin-bottom:1.25rem}
+    .btn-sm{display:inline-block;background:var(--navy);color:var(--white);padding:9px 18px;font-size:12px;letter-spacing:0.05em;font-weight:500;transition:background 0.2s}
+    .btn-sm:hover{background:var(--navy2)}
+
+    /* FOOTER */
+    footer{background:var(--navy);padding:4rem 2rem}
+    .footer-inner{max-width:1100px;margin:0 auto;display:grid;grid-template-columns:1fr 1fr 1fr;gap:3rem;padding-bottom:2.5rem;border-bottom:1px solid rgba(255,255,255,0.1)}
+    .footer-brand .logo-text{font-size:1.1rem;color:var(--white)}
+    .footer-desc{font-size:13px;color:rgba(255,255,255,0.45);line-height:1.7;margin-top:0.75rem;max-width:240px}
+    .footer-col h4{font-size:11px;color:var(--gold);letter-spacing:0.12em;text-transform:uppercase;font-weight:500;margin-bottom:1rem}
+    .footer-col ul{list-style:none;display:flex;flex-direction:column;gap:0.5rem}
+    .footer-col ul li a{font-size:13px;color:rgba(255,255,255,0.5);transition:color 0.2s}
+    .footer-col ul li a:hover{color:var(--gold)}
+    .footer-contact p{font-size:13px;color:rgba(255,255,255,0.5);line-height:1.8}
+    .footer-contact a{color:rgba(255,255,255,0.5);transition:color 0.2s}
+    .footer-contact a:hover{color:var(--gold)}
+    .footer-bottom{max-width:1100px;margin:0 auto;padding-top:1.5rem;display:flex;justify-content:space-between;align-items:center}
+    .footer-copy{font-size:12px;color:rgba(255,255,255,0.3);letter-spacing:0.04em}
+    .footer-flag{display:flex;gap:4px;align-items:center}
+    .flag-stripe{width:16px;height:10px}
+
+    @media(max-width:768px){
+      .nav-links{display:none}
+      .nav-hamburger{display:flex!important}
+      .mobile-menu{display:flex}
+      .mobile-menu.closed{display:none}
+      .about-grid,.admissions-layout,.plateforme-inner,.footer-inner{grid-template-columns:1fr;gap:2rem}
+      .vie-grid,.plateforme-cards,.prive-grid{grid-template-columns:1fr}
+      .events-grid{grid-template-columns:1fr}
+      .vie-img{height:280px!important}
+      .event-img{height:220px!important}
+    }
+    @media(max-width:480px){
+      .vie-img{height:220px!important}
+      .event-img{height:180px!important}
+    }
+    .nav-hamburger{display:none;flex-direction:column;gap:5px;cursor:pointer;padding:8px;background:none;border:none;z-index:200}
+    .nav-hamburger span{display:block;width:22px;height:2px;background:var(--white);border-radius:2px;transition:all 0.3s}
+    .nav-hamburger.open span:nth-child(1){transform:rotate(45deg) translate(5px,5px)}
+    .nav-hamburger.open span:nth-child(2){opacity:0}
+    .nav-hamburger.open span:nth-child(3){transform:rotate(-45deg) translate(5px,-5px)}
+    .mobile-menu{display:none;flex-direction:column;position:fixed;top:64px;left:0;right:0;background:rgba(13,43,78,0.98);backdrop-filter:blur(8px);z-index:99;padding:1rem 0;border-top:1px solid rgba(255,255,255,0.1)}
+    .mobile-menu a{display:block;padding:14px 2rem;font-size:14px;color:rgba(255,255,255,0.85);border-bottom:1px solid rgba(255,255,255,0.06);transition:color 0.2s;text-decoration:none}
+    .mobile-menu a:hover{color:var(--gold);background:rgba(255,255,255,0.04)}
+    .mobile-menu .mob-login{background:var(--gold);color:var(--navy)!important;margin:1rem 2rem;text-align:center;font-weight:700;padding:12px 2rem}
+  </style>
+</head>
+<body>
+
+<header>
+  <nav>
+    <div class="nav-inner">
+      <button class="nav-hamburger" id="nav-hamburger" onclick="toggleMobileMenu()" aria-label="Menu">
+        <span></span><span></span><span></span>
+      </button>
+      <div class="logo-mark">
+        <div class="logo-badge">ILCH</div>
+        <div>
+          <div class="logo-text">Institution Louis Chauvet</div>
+          <div class="logo-sub">Thomassin 25 · Pétion-Ville · Haïti</div>
+        </div>
+      </div>
+      <ul class="nav-links">
+        <li><a href="#accueil">Accueil</a></li>
+        <li><a href="#apropos">À propos</a></li>
+        <li><a href="#vie-scolaire">Vie scolaire</a></li>
+        <li><a href="#admissions">Admissions</a></li>
+        <li><a href="#evenements">Événements</a></li>
+        <li><a href="#plateforme">Plateforme</a></li>
+        <li><a href="login.html" class="nav-login-btn">Se connecter</a></li>
+      </ul>
+    </div>
+  </nav>
+
+  <!-- MENU MOBILE -->
+  <div class="mobile-menu" id="mobile-menu" style="display:none">
+    <a href="#accueil" onclick="closeMobileMenu()">🏠 Accueil</a>
+    <a href="#apropos" onclick="closeMobileMenu()">📖 À propos</a>
+    <a href="#vie" onclick="closeMobileMenu()">🎓 Vie scolaire</a>
+    <a href="#admissions" onclick="closeMobileMenu()">✏️ Admissions</a>
+    <a href="#evenements" onclick="closeMobileMenu()">🎉 Événements</a>
+    <a href="#plateforme" onclick="closeMobileMenu()">💻 Plateforme</a>
+    <a href="login.html" class="mob-login">Se connecter →</a>
+  </div>
+</header>
+
+<main>
+
+  <!-- HERO SLIDER -->
+  <section id="accueil" class="hero">
+
+    <!-- SLIDES -->
+    <div class="slider">
+      <div class="slide active" style="background-image:url('photo1.jpg')">
+        <div class="slide-overlay"></div>
+      </div>
+      <div class="slide" style="background-image:url('photo2.jpg')">
+        <div class="slide-overlay"></div>
+      </div>
+      <div class="slide" style="background-image:url('photo3.jpg')">
+        <div class="slide-overlay"></div>
+      </div>
+    </div>
+
+    <!-- COMPTEUR -->
+    <div class="slide-counter"><span id="slide-current">1</span> / 3</div>
+
+    <!-- FLÈCHES -->
+    <button class="slider-arrow prev" onclick="changeSlide(-1)" aria-label="Précédent">&#8592;</button>
+    <button class="slider-arrow next" onclick="changeSlide(1)" aria-label="Suivant">&#8594;</button>
+
+    <!-- DOTS -->
+    <div class="slider-dots">
+      <button class="slider-dot active" onclick="goToSlide(0)" aria-label="Slide 1"></button>
+      <button class="slider-dot" onclick="goToSlide(1)" aria-label="Slide 2"></button>
+      <button class="slider-dot" onclick="goToSlide(2)" aria-label="Slide 3"></button>
+    </div>
+
+    <!-- CONTENU -->
+    <div class="hero-content">
+      <div class="hero-eyebrow">
+        <div class="hero-eyebrow-dot"></div>
+        <span>Établissement d'enseignement · MENFP</span>
+      </div>
+      <h1 class="hero-title">Former les <em>esprits</em> qui bâtiront demain</h1>
+      <p class="hero-subtitle">L'Institution Louis Chauvet offre un enseignement conforme aux programmes haïtiens, dans un cadre structuré qui allie rigueur académique, discipline et épanouissement de l'élève.</p>
+      <div class="hero-actions">
+        <a href="#admissions" class="btn-primary">Demander une inscription</a>
+        <a href="#apropos" class="btn-ghost">Découvrir l'institution</a>
+      </div>
+      <div class="hero-stats">
+        <div><div class="stat-num">Prémat.</div><div class="stat-label">Petite enfance</div></div>
+        <div><div class="stat-num">Fond.</div><div class="stat-label">Enseignement fondamental</div></div>
+        <div><div class="stat-num">Sec.</div><div class="stat-label">Cycle secondaire</div></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- À PROPOS -->
+  <section id="apropos" class="section about-bg">
+    <div class="container">
+      <div class="section-header">
+        <div class="section-label">L'institution</div>
+        <div class="gold-line"></div>
+        <h2 class="section-title">Une école ancrée dans ses valeurs</h2>
+      </div>
+      <div class="about-grid">
+        <div>
+          <p class="section-body">Située à Thomassin 25, Pétion-Ville, l'Institution Louis Chauvet est un établissement scolaire relevant du Ministère de l'Éducation Nationale et de la Formation Professionnelle. Elle accueille des élèves des deux sexes et prépare chacun aux examens nationaux dans un environnement exigeant et bienveillant.</p>
+          <ul class="values-list">
+            <li><div class="value-dot"></div> Respect et tolérance entre tous les membres</li>
+            <li><div class="value-dot"></div> Discipline et sens des responsabilités</li>
+            <li><div class="value-dot"></div> Égalité des chances pour chaque élève</li>
+            <li><div class="value-dot"></div> Refus ferme de toute forme de violence</li>
+            <li><div class="value-dot"></div> Encadrement sérieux et personnalisé</li>
+          </ul>
+          <a href="reglement.html" class="about-link">Lire le règlement intérieur →</a>
+        </div>
+        <div class="about-card">
+          <div class="about-card-title">Notre mission</div>
+          <p>Former des élèves intellectuellement compétents, moralement solides et socialement responsables. Chaque décision pédagogique est prise dans l'intérêt supérieur de l'enfant.</p>
+          <p style="margin-top:1rem">Notre corps enseignant qualifié, notre administration rigoureuse et notre environnement sécurisé créent les conditions optimales pour l'apprentissage et l'épanouissement.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- VIE SCOLAIRE -->
+  <section id="vie-scolaire" class="section vie-bg">
+    <div class="container">
+      <div class="section-header">
+        <div class="section-label">Au quotidien</div>
+        <div class="gold-line"></div>
+        <h2 class="section-title">La vie à l'ILCH</h2>
+        <p class="section-body" style="margin-top:0.5rem">Un cadre harmonieux qui favorise la discipline, la participation et l'épanouissement de chaque élève.</p>
+      </div>
+      <div class="vie-grid">
+        <div class="vie-card">
+          <div class="vie-img" style="overflow:hidden">
+            <img src="event1.jpg" alt="Rassemblement scolaire" style="width:100%;height:100%;object-fit:cover">
+            <div class="vie-img-label">Rassemblement</div>
+          </div>
+          <div class="vie-text"><h3>Rassemblements scolaires</h3><p>Des moments de discipline, de communication et d'unité au sein de l'établissement.</p></div>
+        </div>
+        <div class="vie-card">
+          <div class="vie-img" style="overflow:hidden">
+            <img src="event2.jpg" alt="Vie en communauté" style="width:100%;height:100%;object-fit:cover">
+            <div class="vie-img-label">Communauté</div>
+          </div>
+          <div class="vie-text"><h3>Vie en communauté</h3><p>Les élèves évoluent dans un cadre harmonieux, structuré et éducatif.</p></div>
+        </div>
+        <div class="vie-card">
+          <div class="vie-img" style="overflow:hidden">
+            <img src="event3.jpg" alt="Présentation des élèves" style="width:100%;height:100%;object-fit:cover">
+            <div class="vie-img-label">Expression</div>
+          </div>
+          <div class="vie-text"><h3>Présentation des élèves</h3><p>Des activités qui permettent aux élèves de s'exprimer et de représenter leur école.</p></div>
+        </div>
+        <div class="vie-card">
+          <div class="vie-img" style="overflow:hidden">
+            <img src="event4.jpg" alt="Journée culturelle" style="width:100%;height:100%;object-fit:cover">
+            <div class="vie-img-label">Journée culturelle</div>
+          </div>
+          <div class="vie-text"><h3>Journée culturelle</h3><p>Une journée de fête, de créativité et de partage entre tous les élèves de l'ILCH.</p></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ADMISSIONS -->
+  <section id="admissions" class="section admissions-bg">
+    <div class="container">
+      <div class="admissions-layout">
+        <div>
+          <div class="section-header">
+            <div class="section-label">Rejoindre l'institution</div>
+            <div class="gold-line"></div>
+            <h2 class="section-title">Processus d'admission</h2>
+          </div>
+          <p class="section-body" style="margin-top:0.5rem">L'ILCH accueille les candidatures de familles partageant nos valeurs d'excellence et de rigueur. Contactez l'administration pour toute information concernant les inscriptions et le calendrier scolaire.</p>
+          <a href="mailto:institutionlouischauvet@gmail.com" class="btn-primary" style="margin-top:2rem">Nous contacter</a>
+        </div>
+        <div>
+          <div class="admission-box">
+            <h3>Dossier de candidature</h3>
+            <ul class="admission-list">
+              <li>Acte de naissance de l'élève</li>
+              <li>Bulletins scolaires récents (dernière année)</li>
+              <li>Photos d'identité récentes</li>
+              <li>Coordonnées des parents ou responsables</li>
+            </ul>
+          </div>
+          <p style="font-size:12px;color:var(--gray);margin-top:1rem;font-style:italic">Les pièces exactes peuvent varier selon le niveau visé. Contactez l'administration pour confirmation.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ÉVÉNEMENTS -->
+  <section id="evenements" class="section events-bg">
+    <div class="container">
+      <div class="section-header">
+        <div class="section-label" style="color:var(--gold)">Événements</div>
+        <div class="gold-line"></div>
+        <h2 class="section-title" style="color:var(--white)">Moments marquants de l'année</h2>
+        <p class="section-body" style="color:rgba(255,255,255,0.5);margin-top:0.5rem">Des activités pensées pour enrichir l'expérience scolaire au-delà des cours.</p>
+      </div>
+      <div class="events-grid">
+        <div class="event-card">
+          <div class="event-img" style="overflow:hidden;position:relative">
+            <!-- Mini slider journée culturelle -->
+            <div class="mini-slide active" style="position:absolute;inset:0;transition:opacity 0.8s"><img src="cult1.jpg" alt="Journée culturelle 1" style="width:100%;height:100%;object-fit:cover"></div>
+            <div class="mini-slide" style="position:absolute;inset:0;opacity:0;transition:opacity 0.8s"><img src="cult2.jpg" alt="Journée culturelle 2" style="width:100%;height:100%;object-fit:cover"></div>
+            <div class="mini-slide" style="position:absolute;inset:0;opacity:0;transition:opacity 0.8s"><img src="cult3.jpg" alt="Journée culturelle 3" style="width:100%;height:100%;object-fit:cover"></div>
+            <div class="mini-slide" style="position:absolute;inset:0;opacity:0;transition:opacity 0.8s"><img src="cult4.jpg" alt="Journée culturelle 4" style="width:100%;height:100%;object-fit:cover"></div>
+            <!-- Dots mini slider -->
+            <div style="position:absolute;bottom:8px;left:50%;transform:translateX(-50%);display:flex;gap:5px;z-index:5">
+              <span class="mini-dot" style="width:6px;height:6px;border-radius:50%;background:var(--gold);display:inline-block;cursor:pointer" onclick="goMini(0)"></span>
+              <span class="mini-dot" style="width:6px;height:6px;border-radius:50%;background:rgba(255,255,255,0.5);display:inline-block;cursor:pointer" onclick="goMini(1)"></span>
+              <span class="mini-dot" style="width:6px;height:6px;border-radius:50%;background:rgba(255,255,255,0.5);display:inline-block;cursor:pointer" onclick="goMini(2)"></span>
+              <span class="mini-dot" style="width:6px;height:6px;border-radius:50%;background:rgba(255,255,255,0.5);display:inline-block;cursor:pointer" onclick="goMini(3)"></span>
+            </div>
+          </div>
+          <div class="event-dot"></div>
+          <div class="event-info"><h3>Journée culturelle</h3><p>Une journée riche en couleurs, créativité et valorisation des talents des élèves.</p></div>
+        </div>
+        <div class="event-card">
+          <div class="event-img" style="overflow:hidden"><img src="event3.jpg" alt="Activités & animation" style="width:100%;height:100%;object-fit:cover"></div>
+          <div class="event-dot"></div>
+          <div class="event-info"><h3>Activités & animation</h3><p>Des activités favorisant la cohésion, la joie et l'esprit de communauté.</p></div>
+        </div>
+        <div class="event-card">
+          <div class="event-img" style="overflow:hidden"><img src="event4.jpg" alt="Cérémonies scolaires" style="width:100%;height:100%;object-fit:cover"></div>
+          <div class="event-dot"></div>
+          <div class="event-info"><h3>Cérémonies scolaires</h3><p>Des moments de célébration et de valorisation de la vie académique.</p></div>
+        </div>
+        <div class="event-card">
+          <div class="event-img" style="overflow:hidden"><img src="event2.jpg" alt="Convivialité" style="width:100%;height:100%;object-fit:cover"></div>
+          <div class="event-dot"></div>
+          <div class="event-info"><h3>Collation et convivialité</h3><p>Des temps de partage et de convivialité entre élèves lors des activités.</p></div>
+        </div>
+        <div class="event-card">
+          <div class="event-img" style="overflow:hidden"><img src="event3.jpg" alt="Présentation culturelle" style="width:100%;height:100%;object-fit:cover"></div>
+          <div class="event-dot"></div>
+          <div class="event-info"><h3>Présentation culturelle</h3><p>Les élèves expriment leur créativité et leur fierté haïtienne.</p></div>
+        </div>
+        <div class="event-card">
+          <div class="event-img" style="overflow:hidden"><img src="photo3.jpg" alt="Rassemblement" style="width:100%;height:100%;object-fit:cover"></div>
+          <div class="event-dot"></div>
+          <div class="event-info"><h3>Rassemblements scolaires</h3><p>Des cérémonies qui marquent les grandes étapes du parcours scolaire.</p></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- PLATEFORME NUMÉRIQUE -->
+  <section id="plateforme" class="section plateforme-bg">
+    <div class="container">
+      <div class="plateforme-inner">
+        <div>
+          <div class="section-label">Numérique</div>
+          <div class="gold-line"></div>
+          <h2 class="section-title">Plateforme élèves & professeurs</h2>
+          <p class="section-body" style="margin-top:0.5rem">Un espace en ligne sécurisé pour suivre les cours, consulter les notes et communiquer directement avec les enseignants — à tout moment, de n'importe où.</p>
+          <a href="login.html" class="btn-primary" style="margin-top:2rem">Accéder à la plateforme</a>
+        </div>
+        <div class="plateforme-cards">
+          <div class="pf-card">
+            <div class="pf-icon">🎥</div>
+            <h3>Cours vidéo</h3>
+            <p>Les professeurs publient des vidéos accessibles à tout moment.</p>
+          </div>
+          <div class="pf-card">
+            <div class="pf-icon">📊</div>
+            <h3>Notes & bulletins</h3>
+            <p>Consultez vos résultats et bulletins en temps réel.</p>
+          </div>
+          <div class="pf-card">
+            <div class="pf-icon">💬</div>
+            <h3>Messagerie</h3>
+            <p>Échangez directement avec vos professeurs.</p>
+          </div>
+          <div class="pf-card">
+            <div class="pf-icon">📅</div>
+            <h3>Suivi de présence</h3>
+            <p>Absences et ponctualité suivies par les parents.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<footer id="contact">
+  <div class="footer-inner">
+    <div class="footer-brand">
+      <div class="logo-mark">
+        <div class="logo-badge">ILCH</div>
+        <div><div class="logo-text">Institution Louis Chauvet</div></div>
+      </div>
+      <p class="footer-desc">Excellence, discipline et valeurs au service de l'éducation haïtienne.</p>
+    </div>
+    <div class="footer-col">
+      <h4>Navigation</h4>
+      <ul>
+        <li><a href="#accueil">Accueil</a></li>
+        <li><a href="#apropos">À propos</a></li>
+        <li><a href="#vie-scolaire">Vie scolaire</a></li>
+        <li><a href="#admissions">Admissions</a></li>
+        <li><a href="#evenements">Événements</a></li>
+        <li><a href="login.html">Plateforme</a></li>
+      </ul>
+    </div>
+    <div class="footer-col footer-contact">
+      <h4>Contact</h4>
+      <p>Thomassin 25<br>Pétion-Ville, Haïti</p>
+      <p style="margin-top:0.75rem"><a href="mailto:institutionlouischauvet@gmail.com">institutionlouischauvet@gmail.com</a></p>
+    </div>
+  </div>
+  <div class="footer-bottom">
+    <span class="footer-copy">© 2026 Institution Louis Chauvet. Tous droits réservés.</span>
+    <div class="footer-flag">
+      <div class="flag-stripe" style="background:#00209F"></div>
+      <div class="flag-stripe" style="background:#D21034"></div>
+    </div>
+  </div>
+</footer>
+
+<script>
+  // Mini slider journée culturelle
+  var miniCurrent = 0;
+  var miniSlides = document.querySelectorAll('.mini-slide');
+  var miniDots   = document.querySelectorAll('.mini-dot');
+
+  function goMini(n) {
+    miniSlides[miniCurrent].style.opacity = '0';
+    miniDots[miniCurrent].style.background = 'rgba(255,255,255,0.5)';
+    miniCurrent = (n + miniSlides.length) % miniSlides.length;
+    miniSlides[miniCurrent].style.opacity = '1';
+    miniDots[miniCurrent].style.background = 'var(--gold)';
+  }
+  setInterval(function(){ goMini(miniCurrent + 1); }, 3000);
+
+  // Slider principal
+  var currentSlide = 0;
+  var totalSlides = 3;
+  var autoTimer;
+
+  function goToSlide(n) {
+    var slides = document.querySelectorAll('.slide');
+    var dots   = document.querySelectorAll('.slider-dot');
+    slides[currentSlide].classList.remove('active');
+    dots[currentSlide].classList.remove('active');
+    currentSlide = (n + totalSlides) % totalSlides;
+    slides[currentSlide].classList.add('active');
+    dots[currentSlide].classList.add('active');
+    document.getElementById('slide-current').textContent = currentSlide + 1;
+  }
+
+  function changeSlide(dir) {
+    clearInterval(autoTimer);
+    goToSlide(currentSlide + dir);
+    startAuto();
+  }
+
+  function startAuto() {
+    autoTimer = setInterval(function(){ goToSlide(currentSlide + 1); }, 5000);
+  }
+
+  startAuto();
+</script>
+</body>
+</html>
+<script>
+function toggleMobileMenu(){
+  var menu=document.getElementById('mobile-menu');
+  var btn=document.getElementById('nav-hamburger');
+  if(!menu||!btn) return;
+  var isOpen = menu.style.display==='flex';
+  if(isOpen){
+    menu.style.display='none';
+    btn.classList.remove('open');
+  } else {
+    menu.style.display='flex';
+    btn.classList.add('open');
+  }
+}
+function closeMobileMenu(){
+  var menu=document.getElementById('mobile-menu');
+  var btn=document.getElementById('nav-hamburger');
+  if(!menu||!btn) return;
+  menu.style.display='none';
+  btn.classList.remove('open');
+}
+window.addEventListener('scroll',function(){
+  var menu=document.getElementById('mobile-menu');
+  if(menu&&menu.style.display==='flex') closeMobileMenu();
+});
+</script>
+<script>
+if("serviceWorker" in navigator){
+  window.addEventListener("load",function(){
+    navigator.serviceWorker.register("/sw.js").then(function(reg){
+      console.log("[ILCH] PWA Service Worker actif");
+    }).catch(function(err){console.log("[ILCH] SW erreur:",err);});
+  });
+}
+</script>
