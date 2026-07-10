@@ -360,6 +360,7 @@
     <div class="sb-item" onclick="showPanel('eleves',this)"><i class="ti ti-users" aria-hidden="true"></i>Élèves</div>
     <div class="sb-item" onclick="showPanel('profs',this)"><i class="ti ti-chalkboard" aria-hidden="true"></i>Professeurs</div>
     <div class="sb-item" onclick="showPanel('parents',this)"><i class="ti ti-heart" aria-hidden="true"></i>Parents</div>
+    <div class="sb-item" onclick="showPanel('personnel',this)"><i class="ti ti-user-plus" aria-hidden="true"></i>Personnel &amp; Direction</div>
     <div class="sb-section">Structure scolaire</div>
     <div class="sb-item" onclick="showPanel('classes',this)"><i class="ti ti-door" aria-hidden="true"></i>Classes</div>
     <div class="sb-item" onclick="showPanel('matieres',this)"><i class="ti ti-book" aria-hidden="true"></i>Matières</div>
@@ -493,6 +494,37 @@
         <thead><tr><th>Nom</th><th>Rôle</th><th>Identifiant</th><th>Action</th></tr></thead>
         <tbody id="tbody-pw"></tbody>
       </table>
+    </div>
+
+    <!-- PERSONNEL & DIRECTION -->
+    <div class="panel" id="panel-personnel">
+      <div class="section-hdr"><div class="section-hdr-title">Créer un compte Personnel &amp; Direction</div></div>
+      <div style="background:var(--white);border:0.5px solid var(--border);padding:1.5rem;margin-bottom:1.25rem;max-width:680px">
+        <div class="form-row" style="margin-bottom:1rem">
+          <div class="form-group"><label>Rôle</label>
+            <select id="per-role">
+              <option value="admin">Administrateur</option>
+              <option value="responsable">Responsable Pédagogique</option>
+              <option value="infirmiere">Infirmière</option>
+              <option value="owner">Propriétaire</option>
+              <option value="comptable">Comptable</option>
+              <option value="bibliotheque">Bibliothécaire</option>
+            </select>
+          </div>
+          <div class="form-group"><label>Fonction / Section (optionnel)</label><input type="text" id="per-titre" placeholder="ex: Directeur, Section Cycle 2..."></div>
+        </div>
+        <div class="form-row" style="margin-bottom:1rem">
+          <div class="form-group"><label>Prénom</label><input type="text" id="per-prenom" placeholder="Prénom"></div>
+          <div class="form-group"><label>Nom</label><input type="text" id="per-nom" placeholder="Nom"></div>
+        </div>
+        <div class="form-row" style="margin-bottom:1rem">
+          <div class="form-group"><label>Identifiant</label><input type="text" id="per-id" placeholder="ex: prenom.nom"></div>
+          <div class="form-group"><label>Mot de passe</label><input type="text" id="per-pw" placeholder="Mot de passe"></div>
+        </div>
+        <button class="btn btn-primary" onclick="creerComptePersonnel()"><i class="ti ti-user-plus" aria-hidden="true"></i>Créer le compte</button>
+      </div>
+      <div class="section-hdr"><div class="section-hdr-title">Comptes Personnel &amp; Direction existants</div></div>
+      <div id="liste-comptes-personnel"></div>
     </div>
 
     <!-- ANNONCES -->
@@ -1031,7 +1063,7 @@ function exportData(){
 }
 
 // ─── UI ────────────────────────────────────────────────────
-var titles={dash:'Tableau de bord',eleves:'Gestion des élèves',profs:'Gestion des professeurs',parents:'Gestion des parents',classes:'Gestion des classes',matieres:'Gestion des matières',motsdepasse:'Mots de passe',annonces:'Annonces'};
+var titles={dash:'Tableau de bord',eleves:'Gestion des élèves',profs:'Gestion des professeurs',parents:'Gestion des parents',personnel:'Personnel & Direction',classes:'Gestion des classes',matieres:'Gestion des matières',motsdepasse:'Mots de passe',annonces:'Annonces'};
 function showPanel(id,el){
   document.querySelectorAll('.panel').forEach(function(p){p.classList.remove('active')});
   document.getElementById('panel-'+id).classList.add('active');
@@ -1096,7 +1128,7 @@ if("serviceWorker" in navigator){
 // ── Connexion Firebase pour Dashboard Admin ────────────────
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
 import {
-  getFirestore, collection, getDocs, addDoc, updateDoc, deleteDoc, doc, onSnapshot
+  getFirestore, collection, getDocs, addDoc, updateDoc, deleteDoc, doc, onSnapshot, query, where
 } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
 const firebaseConfig = {
@@ -1188,6 +1220,76 @@ window.saveProf = async function() {
 };
 
 console.log('✓ Dashboard Admin connecté à Firebase en temps réel');
+
+// ── GESTION DES COMPTES — PERSONNEL & DIRECTION ────────────
+var roleLabelsPersonnel = {
+  admin: 'Administrateur', responsable: 'Responsable Pédagogique',
+  infirmiere: 'Infirmière', owner: 'Propriétaire',
+  comptable: 'Comptable', bibliotheque: 'Bibliothécaire'
+};
+
+window.creerComptePersonnel = async function() {
+  var role = document.getElementById('per-role').value;
+  var titre = document.getElementById('per-titre').value.trim();
+  var prenom = document.getElementById('per-prenom').value.trim();
+  var nom = document.getElementById('per-nom').value.trim();
+  var identifiant = document.getElementById('per-id').value.trim();
+  var motDePasse = document.getElementById('per-pw').value.trim();
+
+  if (!prenom || !nom || !identifiant || !motDePasse) {
+    if (typeof showToast === 'function') showToast('Veuillez remplir tous les champs obligatoires');
+    return;
+  }
+
+  try {
+    var existant = await getDocs(query(collection(db, 'utilisateurs'), where('identifiant', '==', identifiant)));
+    if (!existant.empty) {
+      if (typeof showToast === 'function') showToast('Cet identifiant existe déjà');
+      return;
+    }
+    await addDoc(collection(db, 'utilisateurs'), {
+      prenom: prenom, nom: nom, identifiant: identifiant, motDePasse: motDePasse,
+      titre: titre || roleLabelsPersonnel[role], role: role,
+      dateCreation: new Date().toISOString()
+    });
+    document.getElementById('per-titre').value = '';
+    document.getElementById('per-prenom').value = '';
+    document.getElementById('per-nom').value = '';
+    document.getElementById('per-id').value = '';
+    document.getElementById('per-pw').value = '';
+    if (typeof showToast === 'function') showToast('Compte créé ✓');
+  } catch (e) {
+    console.error('Erreur création compte personnel:', e);
+    if (typeof showToast === 'function') showToast('Erreur lors de la création du compte');
+  }
+};
+
+window.supprimerComptePersonnel = async function(id) {
+  if (!confirm('Supprimer ce compte ?')) return;
+  try {
+    await deleteDoc(doc(db, 'utilisateurs', id));
+    if (typeof showToast === 'function') showToast('Compte supprimé');
+  } catch (e) { console.error(e); }
+};
+
+onSnapshot(collection(db, 'utilisateurs'), function(snap) {
+  var list = document.getElementById('liste-comptes-personnel');
+  if (!list) return;
+  list.innerHTML = '';
+  if (snap.empty) {
+    list.innerHTML = '<div style="font-size:12px;color:var(--muted);padding:12px 0">Aucun compte pour le moment.</div>';
+    return;
+  }
+  snap.forEach(function(d) {
+    var c = d.data();
+    var row = document.createElement('div');
+    row.style.cssText = 'display:flex;justify-content:space-between;align-items:center;padding:10px 12px;border:0.5px solid var(--border);margin-bottom:6px;font-size:12px;background:var(--white)';
+    var badge = '<span style="background:var(--gold-bg);color:var(--navy);font-size:10px;font-weight:700;padding:2px 8px;margin-left:8px">' + (roleLabelsPersonnel[c.role] || c.role) + '</span>';
+    row.innerHTML = '<span>' + c.prenom + ' ' + c.nom + ' <span style="color:var(--muted)">(' + c.identifiant + ')</span>' + badge + '</span>' +
+      '<button onclick="supprimerComptePersonnel(\'' + d.id + '\')" style="background:none;border:none;color:var(--red);cursor:pointer;font-size:11px">Supprimer</button>';
+    list.appendChild(row);
+  });
+});
 </script>
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";

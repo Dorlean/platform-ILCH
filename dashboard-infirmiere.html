@@ -176,6 +176,8 @@
     <div class="sb-item" onclick="showPanel('messages',this)"><i class="ti ti-message" aria-hidden="true"></i>Messages<span class="sb-count">2</span></div>
     <div class="sb-section">Rapports</div>
     <div class="sb-item" onclick="showPanel('rapports',this)"><i class="ti ti-file-analytics" aria-hidden="true"></i>Rapport médical</div>
+    <div class="sb-section">Mon compte</div>
+    <div class="sb-item" onclick="showPanel('comptes',this)"><i class="ti ti-user-plus" aria-hidden="true"></i>Gestion des comptes</div>
   </nav>
   <div class="sb-user">
     <div class="sb-user-row">
@@ -491,11 +493,26 @@
       </div>
     </div>
 
+    <!-- GESTION DES COMPTES -->
+    <div class="panel" id="panel-comptes">
+      <div class="section-hdr"><div class="section-hdr-title">Créer un compte Infirmerie</div></div>
+      <div style="background:var(--white);border:0.5px solid var(--border);padding:1.5rem;margin-bottom:1.25rem;max-width:640px">
+        <div class="form-group"><label>Prénom</label><input type="text" id="inf-prenom" placeholder="Prénom"></div>
+        <div class="form-group"><label>Nom</label><input type="text" id="inf-nom" placeholder="Nom"></div>
+        <div class="form-group"><label>Identifiant</label><input type="text" id="inf-id" placeholder="ex: prenom.nom"></div>
+        <div class="form-group"><label>Mot de passe</label><input type="text" id="inf-pw" placeholder="Mot de passe"></div>
+        <div class="form-group"><label>Téléphone (optionnel)</label><input type="text" id="inf-tel" placeholder="ex: +509 3X XX XX XX"></div>
+        <button class="btn-rose" onclick="creerCompteInfirmiere()"><i class="ti ti-user-plus" aria-hidden="true"></i>Créer le compte</button>
+      </div>
+      <div class="section-hdr"><div class="section-hdr-title">Comptes Infirmerie existants</div></div>
+      <div id="liste-comptes-infirmiere"></div>
+    </div>
+
   </div>
 </div>
 
 <script>
-  var titles={dash:'Tableau de bord — Infirmerie',consultations:'Historique des consultations',nouvelle:'Nouvelle consultation',fiches:'Fiches médicales des élèves',stock:'Stock de l\'infirmerie',messages:'Messages',rapports:'Rapport médical mensuel'};
+  var titles={dash:'Tableau de bord — Infirmerie',consultations:'Historique des consultations',nouvelle:'Nouvelle consultation',fiches:'Fiches médicales des élèves',stock:'Stock de l\'infirmerie',messages:'Messages',rapports:'Rapport médical mensuel',comptes:'Gestion des comptes'};
 
   function showPanel(id,el){
     document.querySelectorAll('.panel').forEach(function(p){p.classList.remove('active')});
@@ -650,4 +667,66 @@ window.updateMedicamentFirebase = async function(id, data) {
 };
 
 console.log('✓ Dashboard Infirmière connecté à Firebase');
+
+// ── GESTION DES COMPTES (Infirmerie) ───────────────────────
+window.creerCompteInfirmiere = async function() {
+  var prenom = document.getElementById('inf-prenom').value.trim();
+  var nom = document.getElementById('inf-nom').value.trim();
+  var identifiant = document.getElementById('inf-id').value.trim();
+  var motDePasse = document.getElementById('inf-pw').value.trim();
+  var tel = document.getElementById('inf-tel').value.trim();
+
+  if (!prenom || !nom || !identifiant || !motDePasse) {
+    if (typeof showToast === 'function') showToast('Veuillez remplir tous les champs obligatoires');
+    return;
+  }
+
+  try {
+    var existant = await getDocs(query(collection(db, 'utilisateurs'), where('identifiant', '==', identifiant)));
+    if (!existant.empty) {
+      if (typeof showToast === 'function') showToast('Cet identifiant existe déjà');
+      return;
+    }
+    await addDoc(collection(db, 'utilisateurs'), {
+      prenom: prenom, nom: nom, identifiant: identifiant, motDePasse: motDePasse,
+      tel: tel, titre: 'Infirmière', role: 'infirmiere',
+      dateCreation: new Date().toISOString()
+    });
+    document.getElementById('inf-prenom').value = '';
+    document.getElementById('inf-nom').value = '';
+    document.getElementById('inf-id').value = '';
+    document.getElementById('inf-pw').value = '';
+    document.getElementById('inf-tel').value = '';
+    if (typeof showToast === 'function') showToast('Compte créé ✓');
+  } catch (e) {
+    console.error('Erreur création compte:', e);
+    if (typeof showToast === 'function') showToast('Erreur lors de la création du compte');
+  }
+};
+
+window.supprimerCompteInfirmiere = async function(id) {
+  if (!confirm('Supprimer ce compte ?')) return;
+  try {
+    await deleteDoc(doc(db, 'utilisateurs', id));
+    if (typeof showToast === 'function') showToast('Compte supprimé');
+  } catch (e) { console.error(e); }
+};
+
+onSnapshot(query(collection(db, 'utilisateurs'), where('role', '==', 'infirmiere')), function(snap) {
+  var list = document.getElementById('liste-comptes-infirmiere');
+  if (!list) return;
+  list.innerHTML = '';
+  if (snap.empty) {
+    list.innerHTML = '<div style="font-size:12px;color:var(--muted);padding:12px 0">Aucun compte pour le moment.</div>';
+    return;
+  }
+  snap.forEach(function(d) {
+    var c = d.data();
+    var row = document.createElement('div');
+    row.style.cssText = 'display:flex;justify-content:space-between;align-items:center;padding:10px 12px;border:0.5px solid var(--border);margin-bottom:6px;font-size:12px;background:var(--white)';
+    row.innerHTML = '<span>' + c.prenom + ' ' + c.nom + ' <span style="color:var(--muted)">(' + c.identifiant + ')</span></span>' +
+      '<button onclick="supprimerCompteInfirmiere(\'' + d.id + '\')" style="background:none;border:none;color:var(--red);cursor:pointer;font-size:11px">Supprimer</button>';
+    list.appendChild(row);
+  });
+});
 </script>

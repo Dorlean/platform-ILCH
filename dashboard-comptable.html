@@ -324,6 +324,8 @@
     <div class="sb-item" onclick="showPanel('rapport',this)"><i class="ti ti-file-analytics" aria-hidden="true"></i>Rapport financier</div>
     <div class="sb-section">Communication</div>
     <div class="sb-item" onclick="showPanel('messages',this)"><i class="ti ti-message" aria-hidden="true"></i>Messages</div>
+    <div class="sb-section">Mon compte</div>
+    <div class="sb-item" onclick="showPanel('comptes',this)"><i class="ti ti-user-plus" aria-hidden="true"></i>Gestion des comptes</div>
   </nav>
   <div class="sb-user">
     <div class="sb-user-row">
@@ -488,6 +490,25 @@
       </div>
     </div>
 
+    <!-- GESTION DES COMPTES -->
+    <div class="panel" id="panel-comptes">
+      <div class="section-hdr"><div class="section-hdr-title">Créer un compte Comptabilité</div></div>
+      <div style="background:var(--white);border:0.5px solid var(--border);padding:1.5rem;margin-bottom:1.25rem;max-width:640px">
+        <div class="form-row">
+          <div class="form-group"><label>Prénom</label><input type="text" id="cpt-prenom" placeholder="Prénom"></div>
+          <div class="form-group"><label>Nom</label><input type="text" id="cpt-nom" placeholder="Nom"></div>
+        </div>
+        <div class="form-row">
+          <div class="form-group"><label>Identifiant</label><input type="text" id="cpt-id" placeholder="ex: prenom.nom"></div>
+          <div class="form-group"><label>Mot de passe</label><input type="text" id="cpt-pw" placeholder="Mot de passe"></div>
+        </div>
+        <div class="form-group"><label>Fonction / Téléphone (optionnel)</label><input type="text" id="cpt-tel" placeholder="ex: +509 3X XX XX XX"></div>
+        <button class="btn btn-purple" onclick="creerCompteComptable()"><i class="ti ti-user-plus" aria-hidden="true"></i>Créer le compte</button>
+      </div>
+      <div class="section-hdr"><div class="section-hdr-title">Comptes Comptabilité existants</div></div>
+      <div id="liste-comptes-comptable"></div>
+    </div>
+
   </div>
 </div>
 
@@ -522,7 +543,7 @@ function showPanel(id,el){
   document.getElementById('panel-'+id).classList.add('active');
   document.querySelectorAll('.sb-item').forEach(function(i){i.classList.remove('active')});
   if(el)el.classList.add('active');
-  var titles={dash:'Tableau de bord',dossiers:'Dossiers élèves',impayés:'Impayés',versements:'Historique des versements',depenses:'Dépenses',rapport:'Rapport financier',messages:'Messages'};
+  var titles={dash:'Tableau de bord',dossiers:'Dossiers élèves',impayés:'Impayés',versements:'Historique des versements',depenses:'Dépenses',rapport:'Rapport financier',messages:'Messages',comptes:'Gestion des comptes'};
   document.getElementById('topbar-title').textContent=titles[id]||id;
   renderAll();
 }
@@ -932,7 +953,7 @@ import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/fireba
 import {
   getFirestore, collection, doc,
   addDoc, getDocs, updateDoc, deleteDoc,
-  onSnapshot
+  onSnapshot, query, where
 } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
 const firebaseConfig = {
@@ -999,6 +1020,68 @@ window.saveDepenseFirebase = async function(data) {
     if (typeof showToast === 'function') showToast('Dépense enregistrée ✓');
   } catch(e) { console.error(e); }
 };
+
+// ── GESTION DES COMPTES (Comptabilité) ─────────────────────
+window.creerCompteComptable = async function() {
+  var prenom = document.getElementById('cpt-prenom').value.trim();
+  var nom = document.getElementById('cpt-nom').value.trim();
+  var identifiant = document.getElementById('cpt-id').value.trim();
+  var motDePasse = document.getElementById('cpt-pw').value.trim();
+  var tel = document.getElementById('cpt-tel').value.trim();
+
+  if (!prenom || !nom || !identifiant || !motDePasse) {
+    if (typeof showToast === 'function') showToast('Veuillez remplir tous les champs obligatoires');
+    return;
+  }
+
+  try {
+    var existant = await getDocs(query(collection(db, 'utilisateurs'), where('identifiant', '==', identifiant)));
+    if (!existant.empty) {
+      if (typeof showToast === 'function') showToast('Cet identifiant existe déjà');
+      return;
+    }
+    await addDoc(collection(db, 'utilisateurs'), {
+      prenom: prenom, nom: nom, identifiant: identifiant, motDePasse: motDePasse,
+      tel: tel, titre: 'Comptable', role: 'comptable',
+      dateCreation: new Date().toISOString()
+    });
+    document.getElementById('cpt-prenom').value = '';
+    document.getElementById('cpt-nom').value = '';
+    document.getElementById('cpt-id').value = '';
+    document.getElementById('cpt-pw').value = '';
+    document.getElementById('cpt-tel').value = '';
+    if (typeof showToast === 'function') showToast('Compte créé ✓');
+  } catch (e) {
+    console.error('Erreur création compte:', e);
+    if (typeof showToast === 'function') showToast('Erreur lors de la création du compte');
+  }
+};
+
+window.supprimerCompteComptable = async function(id) {
+  if (!confirm('Supprimer ce compte ?')) return;
+  try {
+    await deleteDoc(doc(db, 'utilisateurs', id));
+    if (typeof showToast === 'function') showToast('Compte supprimé');
+  } catch (e) { console.error(e); }
+};
+
+onSnapshot(query(collection(db, 'utilisateurs'), where('role', '==', 'comptable')), function(snap) {
+  var list = document.getElementById('liste-comptes-comptable');
+  if (!list) return;
+  list.innerHTML = '';
+  if (snap.empty) {
+    list.innerHTML = '<div style="font-size:12px;color:var(--muted);padding:12px 0">Aucun compte pour le moment.</div>';
+    return;
+  }
+  snap.forEach(function(d) {
+    var c = d.data();
+    var row = document.createElement('div');
+    row.style.cssText = 'display:flex;justify-content:space-between;align-items:center;padding:10px 12px;border:0.5px solid var(--border);margin-bottom:6px;font-size:12px;background:var(--white)';
+    row.innerHTML = '<span>' + c.prenom + ' ' + c.nom + ' <span style="color:var(--muted)">(' + c.identifiant + ')</span></span>' +
+      '<button onclick="supprimerCompteComptable(\'' + d.id + '\')" style="background:none;border:none;color:var(--red);cursor:pointer;font-size:11px">Supprimer</button>';
+    list.appendChild(row);
+  });
+});
 
 console.log('✓ Dashboard Comptable connecté à Firebase');
 </script>
