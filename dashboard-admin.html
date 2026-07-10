@@ -134,7 +134,6 @@
     .empty-state i{font-size:48px;display:block;margin-bottom:1rem;color:var(--border)}
     .empty-state p{font-size:14px}
   </style>
-  <script src="securite-ilch.js"></script>
 </head>
 <body>
 
@@ -540,7 +539,7 @@ window.onload = function(){
       {id:'c8',nom:'7ème Fondamentale',niveau:'Fondamental Cycle 3'},
       {id:'c9',nom:'8ème Fondamentale',niveau:'Fondamental Cycle 3'},
       {id:'c10',nom:'9ème Fondamentale',niveau:'Fondamental Cycle 3'},
-      {id:'c11',nom:'NSI','NSII','NSIII','NSIV',niveau:'Secondaire'},
+      {id:'c11',nom:'Nouveau Secondaire',niveau:'Secondaire'},
       {id:'c12',nom:'Rhétorique',niveau:'Secondaire'},
       {id:'c13',nom:'Terminale A',niveau:'Terminale'},
       {id:'c14',nom:'Terminale B',niveau:'Terminale'},
@@ -739,7 +738,7 @@ function getAbrClasse(classe) {
     'Préscolaire':'PS','1ère Fondamentale':'1F','2ème Fondamentale':'2F',
     '3ème Fondamentale':'3F','4ème Fondamentale':'4F','5ème Fondamentale':'5F',
     '6ème Fondamentale':'6F','7ème Fondamentale':'7F','8ème Fondamentale':'8F',
-    '9ème Fondamentale':'9F','NSI','NSII','NSIII','NSIV':'NS','Rhétorique':'RH',
+    '9ème Fondamentale':'9F','Nouveau Secondaire':'NS','Rhétorique':'RH',
     'Terminale A':'TA','Terminale B':'TB'
   };
   return abr[classe] || classe.replace(/[^a-zA-Z0-9]/g,'').slice(0,2).toUpperCase();
@@ -1400,28 +1399,4 @@ window.exportData = async function() {
 };
 
 console.log('✓ Dashboard Admin entièrement connecté à Firebase');
-</script>
-<script>
-// Déconnexion automatique après 30 min d'inactivité
-var _timer = null;
-function _resetTimer() {
-  if (_timer) clearTimeout(_timer);
-  _timer = setTimeout(function() {
-    sessionStorage.clear();
-    alert('Session expirée par inactivité. Veuillez vous reconnecter.');
-    window.location.href = 'login.html';
-  }, 30 * 60 * 1000); // 30 minutes
-}
-['click','keypress','scroll','mousemove','touchstart'].forEach(function(e) {
-  document.addEventListener(e, _resetTimer, { passive: true });
-});
-_resetTimer();
-
-// Vérifier session valide
-(function() {
-  var user = sessionStorage.getItem('ilch_user');
-  if (!user) {
-    window.location.href = 'login.html';
-  }
-})();
 </script>

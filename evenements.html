@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#0D2B4E">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="ILCH">
+  <link rel="apple-touch-icon" href="icon-192.png">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Événements · Institution Louis Chauvet (ILCH)</title>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<div class="dev-topbar">Développé par Dorlean Ricardo</div>
+<header>
+  <nav>
+    <div class="nav-inner">
+      <button class="nav-hamburger" id="nav-hamburger" onclick="toggleMobileMenu()" aria-label="Menu">
+        <span></span><span></span><span></span>
+      </button>
+      <div class="logo-mark">
+        <div class="logo-badge">ILCH</div>
+        <div>
+          <div class="logo-text">Institution Louis Chauvet</div>
+          <div class="logo-sub">Thomassin 25 · Pétion-Ville · Haïti</div>
+        </div>
+      </div>
+      <ul class="nav-links">
+        <li><a href="index.html">Accueil</a></li>
+        <li><a href="apropos.html">À propos</a></li>
+        <li><a href="vie-scolaire.html">Vie scolaire</a></li>
+        <li><a href="admissions.html">Admissions</a></li>
+        <li><a href="evenements.html" class="active">Événements</a></li>
+        <li><a href="plateforme.html">Plateforme</a></li>
+        <li><a href="login.html" class="nav-login-btn">Se connecter</a></li>
+      </ul>
+    </div>
+  </nav>
+
+  <!-- MENU MOBILE -->
+  <div class="mobile-menu" id="mobile-menu" style="display:none">
+    <a href="index.html" onclick="closeMobileMenu()">🏠 Accueil</a>
+    <a href="apropos.html" onclick="closeMobileMenu()">📖 À propos</a>
+    <a href="vie-scolaire.html" onclick="closeMobileMenu()">🎓 Vie scolaire</a>
+    <a href="admissions.html" onclick="closeMobileMenu()">✏️ Admissions</a>
+    <a href="evenements.html" class="active" onclick="closeMobileMenu()">🎉 Événements</a>
+    <a href="plateforme.html" onclick="closeMobileMenu()">💻 Plateforme</a>
+    <a href="login.html" class="mob-login">Se connecter →</a>
+  </div>
+</header>
+
+<main>
+
+  <section id="evenements" class="section events-bg">
+    <div class="container">
+      <div class="section-header">
+        <div class="section-label" style="color:var(--gold)">Événements</div>
+        <div class="gold-line"></div>
+        <h2 class="section-title" style="color:var(--white)">Moments marquants de l'année</h2>
+        <p class="section-body" style="color:rgba(255,255,255,0.5);margin-top:0.5rem">Des activités pensées pour enrichir l'expérience scolaire au-delà des cours.</p>
+      </div>
+      <div class="events-grid">
+        <div class="event-card">
+          <div class="event-img" style="overflow:hidden;position:relative">
+            <!-- Mini slider journée culturelle -->
+            <div class="mini-slide active" style="position:absolute;inset:0;transition:opacity 0.8s"><img src="cult1.jpg" alt="Journée culturelle 1" style="width:100%;height:100%;object-fit:cover"></div>
+            <div class="mini-slide" style="position:absolute;inset:0;opacity:0;transition:opacity 0.8s"><img src="cult2.jpg" alt="Journée culturelle 2" style="width:100%;height:100%;object-fit:cover"></div>
+            <div class="mini-slide" style="position:absolute;inset:0;opacity:0;transition:opacity 0.8s"><img src="cult3.jpg" alt="Journée culturelle 3" style="width:100%;height:100%;object-fit:cover"></div>
+            <div class="mini-slide" style="position:absolute;inset:0;opacity:0;transition:opacity 0.8s"><img src="cult4.jpg" alt="Journée culturelle 4" style="width:100%;height:100%;object-fit:cover"></div>
+            <!-- Dots mini slider -->
+            <div style="position:absolute;bottom:8px;left:50%;transform:translateX(-50%);display:flex;gap:5px;z-index:5">
+              <span class="mini-dot" style="width:6px;height:6px;border-radius:50%;background:var(--gold);display:inline-block;cursor:pointer" onclick="goMini(0)"></span>
+              <span class="mini-dot" style="width:6px;height:6px;border-radius:50%;background:rgba(255,255,255,0.5);display:inline-block;cursor:pointer" onclick="goMini(1)"></span>
+              <span class="mini-dot" style="width:6px;height:6px;border-radius:50%;background:rgba(255,255,255,0.5);display:inline-block;cursor:pointer" onclick="goMini(2)"></span>
+              <span class="mini-dot" style="width:6px;height:6px;border-radius:50%;background:rgba(255,255,255,0.5);display:inline-block;cursor:pointer" onclick="goMini(3)"></span>
+            </div>
+          </div>
+          <div class="event-dot"></div>
+          <div class="event-info"><h3>Journée culturelle</h3><p>Une journée riche en couleurs, créativité et valorisation des talents des élèves.</p></div>
+        </div>
+        <div class="event-card">
+          <div class="event-img" style="overflow:hidden"><img src="event3.jpg" alt="Activités & animation" style="width:100%;height:100%;object-fit:cover"></div>
+          <div class="event-dot"></div>
+          <div class="event-info"><h3>Activités & animation</h3><p>Des activités favorisant la cohésion, la joie et l'esprit de communauté.</p></div>
+        </div>
+        <div class="event-card">
+          <div class="event-img" style="overflow:hidden"><img src="event4.jpg" alt="Cérémonies scolaires" style="width:100%;height:100%;object-fit:cover"></div>
+          <div class="event-dot"></div>
+          <div class="event-info"><h3>Cérémonies scolaires</h3><p>Des moments de célébration et de valorisation de la vie académique.</p></div>
+        </div>
+        <div class="event-card">
+          <div class="event-img" style="overflow:hidden"><img src="event2.jpg" alt="Convivialité" style="width:100%;height:100%;object-fit:cover"></div>
+          <div class="event-dot"></div>
+          <div class="event-info"><h3>Collation et convivialité</h3><p>Des temps de partage et de convivialité entre élèves lors des activités.</p></div>
+        </div>
+        <div class="event-card">
+          <div class="event-img" style="overflow:hidden"><img src="event3.jpg" alt="Présentation culturelle" style="width:100%;height:100%;object-fit:cover"></div>
+          <div class="event-dot"></div>
+          <div class="event-info"><h3>Présentation culturelle</h3><p>Les élèves expriment leur créativité et leur fierté haïtienne.</p></div>
+        </div>
+        <div class="event-card">
+          <div class="event-img" style="overflow:hidden"><img src="photo3.jpg" alt="Rassemblement" style="width:100%;height:100%;object-fit:cover"></div>
+          <div class="event-dot"></div>
+          <div class="event-info"><h3>Rassemblements scolaires</h3><p>Des cérémonies qui marquent les grandes étapes du parcours scolaire.</p></div>
+        </div>
+        <div class="event-card">
+          <div class="event-img fw-slider fw-card" style="overflow:hidden;position:relative">
+            <div class="fw-slide active"><img src="sport1.jpg" alt="Activité sportive 1"></div>
+            <div class="fw-slide"><img src="sport2.jpg" alt="Activité sportive 2"></div>
+            <div class="fw-slide"><img src="sport3.jpg" alt="Activité sportive 3"></div>
+            <div class="fw-slide"><img src="sport4.jpg" alt="Activité sportive 4"></div>
+            <div class="fw-dots">
+              <button class="fw-dot active" onclick="fwGoTo(this,0)"></button>
+              <button class="fw-dot" onclick="fwGoTo(this,1)"></button>
+              <button class="fw-dot" onclick="fwGoTo(this,2)"></button>
+              <button class="fw-dot" onclick="fwGoTo(this,3)"></button>
+            </div>
+          </div>
+          <div class="event-dot"></div>
+          <div class="event-info"><h3>Activités sportives</h3><p>Le sport favorise le développement physique, la discipline et l'esprit d'équipe des élèves.</p></div>
+        </div>
+        <div class="event-card">
+          <div class="event-img fw-slider fw-card" style="overflow:hidden;position:relative">
+            <div class="fw-slide active"><img src="religion1.jpg" alt="Vie religieuse 1"></div>
+            <div class="fw-slide"><img src="religion2.jpg" alt="Vie religieuse 2"></div>
+            <div class="fw-slide"><img src="religion3.jpg" alt="Vie religieuse 3"></div>
+            <div class="fw-slide"><img src="religion4.jpg" alt="Vie religieuse 4"></div>
+            <div class="fw-dots">
+              <button class="fw-dot active" onclick="fwGoTo(this,0)"></button>
+              <button class="fw-dot" onclick="fwGoTo(this,1)"></button>
+              <button class="fw-dot" onclick="fwGoTo(this,2)"></button>
+              <button class="fw-dot" onclick="fwGoTo(this,3)"></button>
+            </div>
+          </div>
+          <div class="event-dot"></div>
+          <div class="event-info"><h3>Vie religieuse</h3><p>Des moments de recueillement et de spiritualité qui accompagnent le parcours éducatif des élèves.</p></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<footer id="contact">
+  <div class="footer-inner">
+    <div class="footer-brand">
+      <div class="logo-mark">
+        <div class="logo-badge">ILCH</div>
+        <div><div class="logo-text">Institution Louis Chauvet</div></div>
+      </div>
+      <p class="footer-desc">Excellence, discipline et valeurs au service de l'éducation haïtienne.</p>
+    </div>
+    <div class="footer-col">
+      <h4>Navigation</h4>
+      <ul>
+        <li><a href="index.html">Accueil</a></li>
+        <li><a href="apropos.html">À propos</a></li>
+        <li><a href="vie-scolaire.html">Vie scolaire</a></li>
+        <li><a href="admissions.html">Admissions</a></li>
+        <li><a href="evenements.html" class="active">Événements</a></li>
+        <li><a href="plateforme.html">Plateforme</a></li>
+      </ul>
+    </div>
+    <div class="footer-col footer-contact">
+      <h4>Contact</h4>
+      <p>Thomassin 25<br>Pétion-Ville, Haïti</p>
+      <p style="margin-top:0.75rem"><a href="mailto:institutionlouischauvet@gmail.com">institutionlouischauvet@gmail.com</a></p>
+    </div>
+  </div>
+  <div class="footer-bottom">
+    <span class="footer-copy">© 2026 Institution Louis Chauvet. Tous droits réservés. <span class="dev-credit">· Développé par Dorlean Ricardo</span></span>
+    <div class="footer-flag">
+      <div class="flag-stripe" style="background:#00209F"></div>
+      <div class="flag-stripe" style="background:#D21034"></div>
+    </div>
+  </div>
+</footer>
+
+<script src="script.js"></script>
+</body>
+</html>

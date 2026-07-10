@@ -9,7 +9,7 @@
   <meta name="apple-mobile-web-app-title" content="ILCH">
   <link rel="apple-touch-icon" href="icon-192.png">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Accueil · Institution Louis Chauvet (ILCH)</title>
+  <title>Admissions · Institution Louis Chauvet (ILCH)</title>
   <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="style.css">
 </head>
@@ -30,10 +30,10 @@
         </div>
       </div>
       <ul class="nav-links">
-        <li><a href="index.html" class="active">Accueil</a></li>
+        <li><a href="index.html">Accueil</a></li>
         <li><a href="apropos.html">À propos</a></li>
         <li><a href="vie-scolaire.html">Vie scolaire</a></li>
-        <li><a href="admissions.html">Admissions</a></li>
+        <li><a href="admissions.html" class="active">Admissions</a></li>
         <li><a href="evenements.html">Événements</a></li>
         <li><a href="plateforme.html">Plateforme</a></li>
         <li><a href="login.html" class="nav-login-btn">Se connecter</a></li>
@@ -43,10 +43,10 @@
 
   <!-- MENU MOBILE -->
   <div class="mobile-menu" id="mobile-menu" style="display:none">
-    <a href="index.html" class="active" onclick="closeMobileMenu()">🏠 Accueil</a>
+    <a href="index.html" onclick="closeMobileMenu()">🏠 Accueil</a>
     <a href="apropos.html" onclick="closeMobileMenu()">📖 À propos</a>
     <a href="vie-scolaire.html" onclick="closeMobileMenu()">🎓 Vie scolaire</a>
-    <a href="admissions.html" onclick="closeMobileMenu()">✏️ Admissions</a>
+    <a href="admissions.html" class="active" onclick="closeMobileMenu()">✏️ Admissions</a>
     <a href="evenements.html" onclick="closeMobileMenu()">🎉 Événements</a>
     <a href="plateforme.html" onclick="closeMobileMenu()">💻 Plateforme</a>
     <a href="login.html" class="mob-login">Se connecter →</a>
@@ -55,51 +55,53 @@
 
 <main>
 
-  <section id="accueil" class="hero">
-
-    <!-- SLIDES -->
-    <div class="slider">
-      <div class="slide active" style="background-image:url('photo1.jpg')">
-        <div class="slide-overlay"></div>
+  <section id="admissions" class="section admissions-bg">
+    <div class="container">
+      <div class="admissions-layout">
+        <div>
+          <div class="section-header">
+            <div class="section-label">Rejoindre l'institution</div>
+            <div class="gold-line"></div>
+            <h2 class="section-title">Processus d'admission</h2>
+          </div>
+          <p class="section-body" style="margin-top:0.5rem">L'ILCH accueille les candidatures de familles partageant nos valeurs d'excellence et de rigueur. Contactez l'administration pour toute information concernant les inscriptions et le calendrier scolaire.</p>
+          <a href="mailto:institutionlouischauvet@gmail.com" class="btn-primary" style="margin-top:2rem">Nous contacter</a>
+        </div>
+        <div>
+          <div class="admission-box">
+            <h3>Dossier de candidature</h3>
+            <ul class="admission-list">
+              <li>Acte de naissance de l'élève</li>
+              <li>Bulletins scolaires récents (dernière année)</li>
+              <li>Photos d'identité récentes</li>
+              <li>Coordonnées des parents ou responsables</li>
+            </ul>
+          </div>
+          <p style="font-size:12px;color:var(--gray);margin-top:1rem;font-style:italic">Les pièces exactes peuvent varier selon le niveau visé. Contactez l'administration pour confirmation.</p>
+        </div>
       </div>
-      <div class="slide" style="background-image:url('photo2.jpg')">
-        <div class="slide-overlay"></div>
-      </div>
-      <div class="slide" style="background-image:url('photo3.jpg')">
-        <div class="slide-overlay"></div>
-      </div>
-    </div>
 
-    <!-- COMPTEUR -->
-    <div class="slide-counter"><span id="slide-current">1</span> / 3</div>
-
-    <!-- FLÈCHES -->
-    <button class="slider-arrow prev" onclick="changeSlide(-1)" aria-label="Précédent">&#8592;</button>
-    <button class="slider-arrow next" onclick="changeSlide(1)" aria-label="Suivant">&#8594;</button>
-
-    <!-- DOTS -->
-    <div class="slider-dots">
-      <button class="slider-dot active" onclick="goToSlide(0)" aria-label="Slide 1"></button>
-      <button class="slider-dot" onclick="goToSlide(1)" aria-label="Slide 2"></button>
-      <button class="slider-dot" onclick="goToSlide(2)" aria-label="Slide 3"></button>
-    </div>
-
-    <!-- CONTENU -->
-    <div class="hero-content">
-      <div class="hero-eyebrow">
-        <div class="hero-eyebrow-dot"></div>
-        <span>Établissement d'enseignement · MENFP</span>
-      </div>
-      <h1 class="hero-title">Former les <em>esprits</em> qui bâtiront demain</h1>
-      <p class="hero-subtitle">L'Institution Louis Chauvet offre un enseignement conforme aux programmes haïtiens, dans un cadre structuré qui allie rigueur académique, discipline et épanouissement de l'élève.</p>
-      <div class="hero-actions">
-        <a href="admissions.html" class="btn-primary">Demander une inscription</a>
-        <a href="apropos.html" class="btn-ghost">Découvrir l'institution</a>
-      </div>
-      <div class="hero-stats">
-        <div><div class="stat-num">Préscolaire.</div><div class="stat-label">Petite enfance</div></div>
-        <div><div class="stat-num">Fond.</div><div class="stat-label">Enseignement fondamental</div></div>
-        <div><div class="stat-num">Sec.</div><div class="stat-label">Cycle secondaire</div></div>
+      <div class="fw-slider">
+        <div class="fw-slide active"><img src="admission1.jpg" alt="Admissions 1">
+          <div class="fw-caption"><h3>Journée portes ouvertes</h3><p>L'occasion pour les familles de découvrir l'institution et son fonctionnement.</p></div>
+        </div>
+        <div class="fw-slide"><img src="admission2.jpg" alt="Admissions 2">
+          <div class="fw-caption"><h3>Accueil des nouveaux élèves</h3><p>Un accompagnement dès les premiers jours pour faciliter l'intégration.</p></div>
+        </div>
+        <div class="fw-slide"><img src="admission3.jpg" alt="Admissions 3">
+          <div class="fw-caption"><h3>Bureau des admissions</h3><p>Une équipe disponible pour répondre à toutes vos questions.</p></div>
+        </div>
+        <div class="fw-slide"><img src="admission4.jpg" alt="Admissions 4">
+          <div class="fw-caption"><h3>Salles de classe</h3><p>Un environnement d'apprentissage préparé pour accueillir chaque élève.</p></div>
+        </div>
+        <div class="fw-arrow fw-prev" onclick="fwMove(this,-1)">&#8249;</div>
+        <div class="fw-arrow fw-next" onclick="fwMove(this,1)">&#8250;</div>
+        <div class="fw-dots">
+          <button class="fw-dot active" onclick="fwGoTo(this,0)"></button>
+          <button class="fw-dot" onclick="fwGoTo(this,1)"></button>
+          <button class="fw-dot" onclick="fwGoTo(this,2)"></button>
+          <button class="fw-dot" onclick="fwGoTo(this,3)"></button>
+        </div>
       </div>
     </div>
   </section>
@@ -118,10 +120,10 @@
     <div class="footer-col">
       <h4>Navigation</h4>
       <ul>
-        <li><a href="index.html" class="active">Accueil</a></li>
+        <li><a href="index.html">Accueil</a></li>
         <li><a href="apropos.html">À propos</a></li>
         <li><a href="vie-scolaire.html">Vie scolaire</a></li>
-        <li><a href="admissions.html">Admissions</a></li>
+        <li><a href="admissions.html" class="active">Admissions</a></li>
         <li><a href="evenements.html">Événements</a></li>
         <li><a href="plateforme.html">Plateforme</a></li>
       </ul>

@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#0D2B4E">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="ILCH">
+  <link rel="apple-touch-icon" href="icon-192.png">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Vie scolaire · Institution Louis Chauvet (ILCH)</title>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<div class="dev-topbar">Développé par Dorlean Ricardo</div>
+<header>
+  <nav>
+    <div class="nav-inner">
+      <button class="nav-hamburger" id="nav-hamburger" onclick="toggleMobileMenu()" aria-label="Menu">
+        <span></span><span></span><span></span>
+      </button>
+      <div class="logo-mark">
+        <div class="logo-badge">ILCH</div>
+        <div>
+          <div class="logo-text">Institution Louis Chauvet</div>
+          <div class="logo-sub">Thomassin 25 · Pétion-Ville · Haïti</div>
+        </div>
+      </div>
+      <ul class="nav-links">
+        <li><a href="index.html">Accueil</a></li>
+        <li><a href="apropos.html">À propos</a></li>
+        <li><a href="vie-scolaire.html" class="active">Vie scolaire</a></li>
+        <li><a href="admissions.html">Admissions</a></li>
+        <li><a href="evenements.html">Événements</a></li>
+        <li><a href="plateforme.html">Plateforme</a></li>
+        <li><a href="login.html" class="nav-login-btn">Se connecter</a></li>
+      </ul>
+    </div>
+  </nav>
+
+  <!-- MENU MOBILE -->
+  <div class="mobile-menu" id="mobile-menu" style="display:none">
+    <a href="index.html" onclick="closeMobileMenu()">🏠 Accueil</a>
+    <a href="apropos.html" onclick="closeMobileMenu()">📖 À propos</a>
+    <a href="vie-scolaire.html" class="active" onclick="closeMobileMenu()">🎓 Vie scolaire</a>
+    <a href="admissions.html" onclick="closeMobileMenu()">✏️ Admissions</a>
+    <a href="evenements.html" onclick="closeMobileMenu()">🎉 Événements</a>
+    <a href="plateforme.html" onclick="closeMobileMenu()">💻 Plateforme</a>
+    <a href="login.html" class="mob-login">Se connecter →</a>
+  </div>
+</header>
+
+<main>
+
+  <section id="vie-scolaire" class="section vie-bg">
+    <div class="container">
+      <div class="section-header">
+        <div class="section-label">Au quotidien</div>
+        <div class="gold-line"></div>
+        <h2 class="section-title">La vie à l'ILCH</h2>
+        <p class="section-body" style="margin-top:0.5rem">Un cadre harmonieux qui favorise la discipline, la participation et l'épanouissement de chaque élève.</p>
+      </div>
+      <div class="vie-grid">
+        <div class="vie-card">
+          <div class="vie-img" style="overflow:hidden">
+            <img src="" alt="Rassemblement scolaire" style="width:100%;height:100%;object-fit:cover">
+            <div class="vie-img-label">Rassemblement</div>
+          </div>
+          <div class="vie-text"><h3>Rassemblements scolaires</h3><p>Des moments de discipline, de communication et d'unité au sein de l'établissement.</p></div>
+        </div>
+        <div class="vie-card">
+          <div class="vie-img" style="overflow:hidden">
+            <img src="" alt="Vie en communauté" style="width:100%;height:100%;object-fit:cover">
+            <div class="vie-img-label">Communauté</div>
+          </div>
+          <div class="vie-text"><h3>Vie en communauté</h3><p>Les élèves évoluent dans un cadre harmonieux, structuré et éducatif.</p></div>
+        </div>
+        <div class="vie-card">
+          <div class="vie-img" style="overflow:hidden">
+            <img src="event3.jpg" alt="Présentation des élèves" style="width:100%;height:100%;object-fit:cover">
+            <div class="vie-img-label">Expression</div>
+          </div>
+          <div class="vie-text"><h3>Présentation des élèves</h3><p>Des activités qui permettent aux élèves de s'exprimer et de représenter leur école.</p></div>
+        </div>
+
+        <div class="vie-card">
+          <div class="vie-img fw-slider fw-card-lg" style="overflow:hidden;position:relative">
+            <div class="fw-slide active"><img src="staff1.jpg" alt="Staff administratif 1"></div>
+            <div class="fw-slide"><img src="staff2.jpg" alt="Staff administratif 2"></div>
+            <div class="fw-slide"><img src="staff3.jpg" alt="Staff administratif 3"></div>
+            <div class="fw-slide"><img src="staff4.jpg" alt="Staff administratif 4"></div>
+            <div class="vie-img-label">Administration</div>
+            <div class="fw-dots">
+              <button class="fw-dot active" onclick="fwGoTo(this,0)"></button>
+              <button class="fw-dot" onclick="fwGoTo(this,1)"></button>
+              <button class="fw-dot" onclick="fwGoTo(this,2)"></button>
+              <button class="fw-dot" onclick="fwGoTo(this,3)"></button>
+            </div>
+          </div>
+          <div class="vie-text"><h3>Staff administratif</h3><p>Une équipe dévouée qui assure le bon fonctionnement de l'institution au quotidien.</p></div>
+        </div>
+
+        <div class="vie-card">
+          <div class="vie-img fw-slider fw-card-lg" style="overflow:hidden;position:relative">
+            <div class="fw-slide active"><img src="prof1.jpg" alt="Corps professoral 1"></div>
+            <div class="fw-slide"><img src="prof2.jpg" alt="Corps professoral 2"></div>
+            <div class="fw-slide"><img src="prof3.jpg" alt="Corps professoral 3"></div>
+            <div class="fw-slide"><img src="prof4.jpg" alt="Corps professoral 4"></div>
+            <div class="vie-img-label">Enseignants</div>
+            <div class="fw-dots">
+              <button class="fw-dot active" onclick="fwGoTo(this,0)"></button>
+              <button class="fw-dot" onclick="fwGoTo(this,1)"></button>
+              <button class="fw-dot" onclick="fwGoTo(this,2)"></button>
+              <button class="fw-dot" onclick="fwGoTo(this,3)"></button>
+            </div>
+          </div>
+          <div class="vie-text"><h3>Corps professoral</h3><p>Des enseignants qualifiés, engagés dans la réussite et l'encadrement de chaque élève.</p></div>
+        </div>
+
+        <div class="vie-card">
+          <div class="vie-img fw-slider fw-card-lg" style="overflow:hidden;position:relative">
+            <div class="fw-slide active"><img src="grad1.jpg" alt="Photo des gradués 1"></div>
+            <div class="fw-slide"><img src="grad2.jpg" alt="Photo des gradués 2"></div>
+            <div class="fw-slide"><img src="grad3.jpg" alt="Photo des gradués 3"></div>
+            <div class="fw-slide"><img src="grad4.jpg" alt="Photo des gradués 4"></div>
+            <div class="vie-img-label">Promotion</div>
+            <div class="fw-dots">
+              <button class="fw-dot active" onclick="fwGoTo(this,0)"></button>
+              <button class="fw-dot" onclick="fwGoTo(this,1)"></button>
+              <button class="fw-dot" onclick="fwGoTo(this,2)"></button>
+              <button class="fw-dot" onclick="fwGoTo(this,3)"></button>
+            </div>
+          </div>
+          <div class="vie-text"><h3>Photos des gradués</h3><p>Des moments de fierté qui célèbrent la réussite et le parcours de nos finissants.</p></div>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<footer id="contact">
+  <div class="footer-inner">
+    <div class="footer-brand">
+      <div class="logo-mark">
+        <div class="logo-badge">ILCH</div>
+        <div><div class="logo-text">Institution Louis Chauvet</div></div>
+      </div>
+      <p class="footer-desc">Excellence, discipline et valeurs au service de l'éducation haïtienne.</p>
+    </div>
+    <div class="footer-col">
+      <h4>Navigation</h4>
+      <ul>
+        <li><a href="index.html">Accueil</a></li>
+        <li><a href="apropos.html">À propos</a></li>
+        <li><a href="vie-scolaire.html" class="active">Vie scolaire</a></li>
+        <li><a href="admissions.html">Admissions</a></li>
+        <li><a href="evenements.html">Événements</a></li>
+        <li><a href="plateforme.html">Plateforme</a></li>
+      </ul>
+    </div>
+    <div class="footer-col footer-contact">
+      <h4>Contact</h4>
+      <p>Thomassin 25<br>Pétion-Ville, Haïti</p>
+      <p style="margin-top:0.75rem"><a href="mailto:institutionlouischauvet@gmail.com">institutionlouischauvet@gmail.com</a></p>
+    </div>
+  </div>
+  <div class="footer-bottom">
+    <span class="footer-copy">© 2026 Institution Louis Chauvet. Tous droits réservés. <span class="dev-credit">· Développé par Dorlean Ricardo</span></span>
+    <div class="footer-flag">
+      <div class="flag-stripe" style="background:#00209F"></div>
+      <div class="flag-stripe" style="background:#D21034"></div>
+    </div>
+  </div>
+</footer>
+
+<script src="script.js"></script>
+</body>
+</html>

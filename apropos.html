@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#0D2B4E">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="ILCH">
+  <link rel="apple-touch-icon" href="icon-192.png">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>À propos · Institution Louis Chauvet (ILCH)</title>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<div class="dev-topbar">Développé par Dorlean Ricardo</div>
+<header>
+  <nav>
+    <div class="nav-inner">
+      <button class="nav-hamburger" id="nav-hamburger" onclick="toggleMobileMenu()" aria-label="Menu">
+        <span></span><span></span><span></span>
+      </button>
+      <div class="logo-mark">
+        <div class="logo-badge">ILCH</div>
+        <div>
+          <div class="logo-text">Institution Louis Chauvet</div>
+          <div class="logo-sub">Thomassin 25 · Pétion-Ville · Haïti</div>
+        </div>
+      </div>
+      <ul class="nav-links">
+        <li><a href="index.html">Accueil</a></li>
+        <li><a href="apropos.html" class="active">À propos</a></li>
+        <li><a href="vie-scolaire.html">Vie scolaire</a></li>
+        <li><a href="admissions.html">Admissions</a></li>
+        <li><a href="evenements.html">Événements</a></li>
+        <li><a href="plateforme.html">Plateforme</a></li>
+        <li><a href="login.html" class="nav-login-btn">Se connecter</a></li>
+      </ul>
+    </div>
+  </nav>
+
+  <!-- MENU MOBILE -->
+  <div class="mobile-menu" id="mobile-menu" style="display:none">
+    <a href="index.html" onclick="closeMobileMenu()">🏠 Accueil</a>
+    <a href="apropos.html" class="active" onclick="closeMobileMenu()">📖 À propos</a>
+    <a href="vie-scolaire.html" onclick="closeMobileMenu()">🎓 Vie scolaire</a>
+    <a href="admissions.html" onclick="closeMobileMenu()">✏️ Admissions</a>
+    <a href="evenements.html" onclick="closeMobileMenu()">🎉 Événements</a>
+    <a href="plateforme.html" onclick="closeMobileMenu()">💻 Plateforme</a>
+    <a href="login.html" class="mob-login">Se connecter →</a>
+  </div>
+</header>
+
+<main>
+
+  <section id="apropos" class="section about-bg">
+    <div class="container">
+      <div class="section-header">
+        <div class="section-label">L'institution</div>
+        <div class="gold-line"></div>
+        <h2 class="section-title">Une école ancrée dans ses valeurs</h2>
+      </div>
+      <div class="about-grid">
+        <div>
+          <p class="section-body">Située à Thomassin 25, Pétion-Ville, l'Institution Louis Chauvet est un établissement scolaire relevant du Ministère de l'Éducation Nationale et de la Formation Professionnelle. Elle accueille des élèves des deux sexes et prépare chacun aux examens nationaux dans un environnement exigeant et bienveillant.</p>
+          <ul class="values-list">
+            <li><div class="value-dot"></div> Respect et tolérance entre tous les membres</li>
+            <li><div class="value-dot"></div> Discipline et sens des responsabilités</li>
+            <li><div class="value-dot"></div> Égalité des chances pour chaque élève</li>
+            <li><div class="value-dot"></div> Refus ferme de toute forme de violence</li>
+            <li><div class="value-dot"></div> Encadrement sérieux et personnalisé</li>
+          </ul>
+          <a href="reglement.html" class="about-link">Lire le règlement intérieur →</a>
+        </div>
+        <div class="about-card">
+          <div class="about-card-title">Notre mission</div>
+          <p>Former des élèves intellectuellement compétents, moralement solides et socialement responsables. Chaque décision pédagogique est prise dans l'intérêt supérieur de l'enfant.</p>
+          <p style="margin-top:1rem">Notre corps enseignant qualifié, notre administration rigoureuse et notre environnement sécurisé créent les conditions optimales pour l'apprentissage et l'épanouissement.</p>
+        </div>
+      </div>
+
+      <div class="fw-slider">
+        <div class="fw-slide active"><img src="about1.jpg" alt="Institution 1">
+          <div class="fw-caption"><h3>Notre établissement</h3><p>Un campus pensé pour offrir un cadre d'apprentissage sûr et stimulant.</p></div>
+        </div>
+        <div class="fw-slide"><img src="about2.jpg" alt="Institution 2">
+          <div class="fw-caption"><h3>Nos infrastructures</h3><p>Des salles de classe et espaces adaptés aux besoins de chaque niveau.</p></div>
+        </div>
+        <div class="fw-slide"><img src="about3.jpg" alt="Institution 3">
+          <div class="fw-caption"><h3>Vie académique</h3><p>Un quotidien rythmé par l'exigence, la discipline et la bienveillance.</p></div>
+        </div>
+        <div class="fw-slide"><img src="about4.jpg" alt="Institution 4">
+          <div class="fw-caption"><h3>Notre communauté</h3><p>Élèves, enseignants et parents réunis autour des mêmes valeurs.</p></div>
+        </div>
+        <div class="fw-arrow fw-prev" onclick="fwMove(this,-1)">&#8249;</div>
+        <div class="fw-arrow fw-next" onclick="fwMove(this,1)">&#8250;</div>
+        <div class="fw-dots">
+          <button class="fw-dot active" onclick="fwGoTo(this,0)"></button>
+          <button class="fw-dot" onclick="fwGoTo(this,1)"></button>
+          <button class="fw-dot" onclick="fwGoTo(this,2)"></button>
+          <button class="fw-dot" onclick="fwGoTo(this,3)"></button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<footer id="contact">
+  <div class="footer-inner">
+    <div class="footer-brand">
+      <div class="logo-mark">
+        <div class="logo-badge">ILCH</div>
+        <div><div class="logo-text">Institution Louis Chauvet</div></div>
+      </div>
+      <p class="footer-desc">Excellence, discipline et valeurs au service de l'éducation haïtienne.</p>
+    </div>
+    <div class="footer-col">
+      <h4>Navigation</h4>
+      <ul>
+        <li><a href="index.html">Accueil</a></li>
+        <li><a href="apropos.html" class="active">À propos</a></li>
+        <li><a href="vie-scolaire.html">Vie scolaire</a></li>
+        <li><a href="admissions.html">Admissions</a></li>
+        <li><a href="evenements.html">Événements</a></li>
+        <li><a href="plateforme.html">Plateforme</a></li>
+      </ul>
+    </div>
+    <div class="footer-col footer-contact">
+      <h4>Contact</h4>
+      <p>Thomassin 25<br>Pétion-Ville, Haïti</p>
+      <p style="margin-top:0.75rem"><a href="mailto:institutionlouischauvet@gmail.com">institutionlouischauvet@gmail.com</a></p>
+    </div>
+  </div>
+  <div class="footer-bottom">
+    <span class="footer-copy">© 2026 Institution Louis Chauvet. Tous droits réservés. <span class="dev-credit">· Développé par Dorlean Ricardo</span></span>
+    <div class="footer-flag">
+      <div class="flag-stripe" style="background:#00209F"></div>
+      <div class="flag-stripe" style="background:#D21034"></div>
+    </div>
+  </div>
+</footer>
+
+<script src="script.js"></script>
+</body>
+</html>

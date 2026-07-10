@@ -8,17 +8,6 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="ILCH">
   <link rel="apple-touch-icon" href="icon-192.png">
-  <script src="securite-ilch.js"></script>
-  <script>
-    // Alias court pour utiliser le système de sécurité
-    var ILCH_SEC = window.ILCH_SECURITE || {
-      Tentatives: { estBloque: function(){return {bloque:false}}, echouer: function(){}, reinitialiser: function(){}, restantes: function(){return 5} },
-      Session: { creer: function(u,r){ sessionStorage.setItem('ilch_user',JSON.stringify(u)); sessionStorage.setItem('ilch_role',r); } },
-      Journal: { ajouter: function(){}, TYPES: { CONNEXION_OK:'✅', CONNEXION_ECHEC:'❌', BLOCAGE:'🔒' } },
-      Protection: { validerIdentifiant: function(){ return true; } },
-      Config: { BLOCAGE_MINUTES: 15 }
-    };
-  </script>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Connexion — Plateforme ILCH</title>
   <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
@@ -202,30 +191,15 @@ async function doLogin() {
   const pw  = document.getElementById('login-pw').value.trim();
   const btn = document.getElementById('login-btn');
   hideMsg();
-
   if (!currentRole) { showErr('Veuillez choisir un profil.'); return; }
   if (!id || !pw)   { showErr('Veuillez remplir tous les champs.'); return; }
-
-  // ── Vérification sécurité ──────────────────────────────
-  // 1. Vérifier si bloqué
-  var blocage = ILCH_SEC.Tentatives.estBloque(id);
-  if (blocage.bloque) {
-    showErr('Compte bloqué pendant ' + blocage.minutes + ' minute(s) suite à trop de tentatives échouées. Réessayez plus tard.');
-    ILCH_SEC.Journal.ajouter(ILCH_SEC.Journal.TYPES.BLOCAGE, 'Identifiant: ' + id);
-    return;
-  }
-
-  // 2. Valider le format
-  if (!ILCH_SEC.Protection.validerIdentifiant(id)) {
-    showErr('Format d\'identifiant invalide.');
-    return;
-  }
 
   btn.disabled = true;
   document.getElementById('btn-text').textContent = 'Connexion...';
   btn.insertAdjacentHTML('beforeend','<div class="spinner"></div>');
 
   try {
+    // Collections à vérifier selon le rôle
     const cols = currentRole==='eleve'  ? ['eleves'] :
                  currentRole==='prof'   ? ['professeurs'] :
                  currentRole==='parent' ? ['parents'] : ['utilisateurs'];
@@ -237,15 +211,8 @@ async function doLogin() {
       if (!snap.empty) {
         const user = {id: snap.docs[0].id, ...snap.docs[0].data(), role: currentRole};
         if (col==='utilisateurs' && user.role && user.role !== currentRole) continue;
-
-        // ✅ Connexion réussie
-        ILCH_SEC.Tentatives.reinitialiser(id);
-        ILCH_SEC.Session.creer(user, currentRole);
-        ILCH_SEC.Journal.ajouter(
-          ILCH_SEC.Journal.TYPES.CONNEXION_OK,
-          user.prenom + ' ' + user.nom + ' (' + currentRole + ')'
-        );
-
+        sessionStorage.setItem('ilch_user', JSON.stringify(user));
+        sessionStorage.setItem('ilch_role', currentRole);
         showOk('Connexion réussie ! Redirection...');
         setTimeout(() => window.location.href = roleConfig[currentRole].dest, 900);
         found = true; break;
@@ -262,30 +229,17 @@ async function doLogin() {
       ];
       const u = all.find(x => x.identifiant===id && x.motDePasse===pw);
       if (u) {
-        ILCH_SEC.Tentatives.reinitialiser(id);
-        ILCH_SEC.Session.creer({...u, role: currentRole}, currentRole);
-        ILCH_SEC.Journal.ajouter(ILCH_SEC.Journal.TYPES.CONNEXION_OK, id + ' (' + currentRole + ')');
+        sessionStorage.setItem('ilch_user', JSON.stringify({...u, role: currentRole}));
+        sessionStorage.setItem('ilch_role', currentRole);
         showOk('Connexion réussie ! Redirection...');
         setTimeout(() => window.location.href = roleConfig[currentRole].dest, 900);
       } else {
-        // ❌ Échec — enregistrer tentative
-        var tentData = ILCH_SEC.Tentatives.echouer(id);
-        var restantes = ILCH_SEC.Tentatives.restantes(id);
-        ILCH_SEC.Journal.ajouter(ILCH_SEC.Journal.TYPES.CONNEXION_ECHEC, 'Identifiant: ' + id);
-
-        if (restantes <= 0) {
-          showErr('Trop de tentatives ! Compte bloqué pendant ' + ILCH_SEC.Config.BLOCAGE_MINUTES + ' minutes.');
-        } else if (restantes <= 2) {
-          showErr('Identifiant ou mot de passe incorrect. ⚠️ ' + restantes + ' tentative(s) restante(s) avant blocage !');
-        } else {
-          showErr('Identifiant ou mot de passe incorrect.');
-        }
+        showErr('Identifiant ou mot de passe incorrect.');
         resetBtn();
       }
     }
   } catch(e) {
     showErr('Erreur de connexion. Vérifiez votre connexion internet.');
-    ILCH_SEC.Journal.ajouter('⚠️ Erreur système', e.message);
     resetBtn();
   }
 }

@@ -2,17 +2,12 @@
 <html lang="fr">
 <head>
   <meta charset="UTF-8">
-  <link rel="manifest" href="manifest.json">
-  <meta name="theme-color" content="#0D2B4E">
-  <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <meta name="apple-mobile-web-app-title" content="ILCH">
-  <link rel="apple-touch-icon" href="icon-192.png">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Espace Élève — ILCH</title>
   <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
   <link rel="stylesheet" href="mobile.css">
+  <script src="https://meet.jit.si/external_api.js"></script>
   <style>
     *{margin:0;padding:0;box-sizing:border-box}
     :root{
@@ -78,6 +73,38 @@
     .badge-new{background:var(--blue-bg);color:var(--blue)}
     .badge-done{background:var(--green-bg);color:var(--green)}
 
+    /* COURS EN DIRECT */
+    .live-banner{display:none;align-items:center;gap:12px;background:var(--navy);color:var(--white);padding:14px 20px;margin-bottom:1.5rem}
+    .live-banner.show{display:flex}
+    .live-dot{width:10px;height:10px;border-radius:50%;background:#EF4444;flex-shrink:0;animation:pulse-live 1.4s infinite}
+    @keyframes pulse-live{0%,100%{opacity:1}50%{opacity:0.35}}
+    .live-banner-text{font-size:13px;font-weight:600;flex:1}
+    .live-banner-text small{display:block;font-size:11px;font-weight:400;color:rgba(255,255,255,0.55);margin-top:2px}
+    .live-join-btn{background:var(--gold);color:var(--navy);border:none;padding:9px 18px;font-size:12px;font-weight:700;cursor:pointer;font-family:'Inter',sans-serif}
+    .live-join-btn:hover{background:#d4b57c}
+    .live-empty{background:var(--white);border:0.5px dashed var(--border);padding:2.5rem;text-align:center;color:var(--muted);font-size:13px}
+    .live-empty i{font-size:30px;display:block;margin-bottom:10px;color:var(--gold)}
+    .live-info-card{display:flex;align-items:center;gap:12px;background:var(--white);border:0.5px solid var(--border);padding:14px 18px;margin-bottom:1rem}
+    #jitsi-container-eleve{width:100%;min-height:480px;background:#000;border:0.5px solid var(--border);display:none}
+
+    /* EXAMENS EN DIRECT */
+    .exam-banner{display:none;align-items:center;gap:12px;background:#7C2D12;color:var(--white);padding:14px 20px;margin-bottom:1.5rem}
+    .exam-banner.show{display:flex}
+    .exam-banner-text{font-size:13px;font-weight:600;flex:1}
+    .exam-banner-text small{display:block;font-size:11px;font-weight:400;color:rgba(255,255,255,0.6);margin-top:2px}
+    .exam-timer{background:var(--white);border:0.5px solid var(--border);padding:12px 18px;display:flex;align-items:center;justify-content:space-between;margin-bottom:1.25rem;position:sticky;top:0;z-index:10}
+    .exam-timer-value{font-size:20px;font-weight:700;color:var(--navy);font-variant-numeric:tabular-nums}
+    .exam-timer-value.low{color:var(--red)}
+    .exam-q-view{background:var(--white);border:0.5px solid var(--border);padding:18px;margin-bottom:12px}
+    .exam-q-view .q-title{font-size:13px;font-weight:600;color:var(--navy);margin-bottom:12px}
+    .exam-opt-row{display:flex;align-items:center;gap:10px;padding:9px 10px;border:0.5px solid var(--border);margin-bottom:8px;cursor:pointer;font-size:12px}
+    .exam-opt-row:hover{border-color:var(--gold)}
+    .exam-opt-row input{cursor:pointer}
+    .exam-q-view textarea{width:100%;border:0.5px solid var(--border);padding:10px;font-size:12px;font-family:'Inter',sans-serif;min-height:80px;resize:vertical}
+    .exam-result-card{background:var(--white);border:0.5px solid var(--border);padding:2rem;text-align:center}
+    .exam-result-score{font-size:32px;font-weight:700;color:var(--gold);font-family:'Playfair Display',serif}
+    .exam-result-sub{font-size:12px;color:var(--muted);margin-top:6px}
+
     /* VIDEOS */
     .section-header-row{display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem}
     .filter-bar{display:flex;gap:8px;margin-bottom:1.25rem;flex-wrap:wrap}
@@ -142,7 +169,6 @@
     .toast.show{display:flex}
     .toast i{color:var(--gold);font-size:17px}
   </style>
-  <script src="securite-ilch.js"></script>
 </head>
 <body>
 
@@ -160,6 +186,8 @@
     <div class="sb-section">Principal</div>
     <div class="sb-item active" onclick="showPanel('dash',this)"><i class="ti ti-home" aria-hidden="true"></i>Tableau de bord</div>
     <div class="sb-item" onclick="showPanel('videos',this)"><i class="ti ti-video" aria-hidden="true"></i>Cours vidéo</div>
+    <div class="sb-item" onclick="showPanel('direct',this)"><i class="ti ti-broadcast" aria-hidden="true"></i>Cours en direct<span class="sb-badge-count" id="eleve-direct-count" style="display:none;background:var(--red)">●</span></div>
+    <div class="sb-item" onclick="showPanel('examens',this)"><i class="ti ti-clipboard-text" aria-hidden="true"></i>Examens en direct<span class="sb-badge-count" id="eleve-exam-count" style="display:none;background:#7C2D12">●</span></div>
     <div class="sb-item" onclick="showPanel('notes',this)"><i class="ti ti-chart-bar" aria-hidden="true"></i>Mes notes</div>
     <div class="sb-item" onclick="showPanel('devoirs',this)"><i class="ti ti-clipboard-text" aria-hidden="true"></i>Devoirs & Corrigés<span class="sb-badge-count" id="eleve-devoirs-count"></span></div>
     <div class="sb-section">Communication</div>
@@ -169,8 +197,8 @@
   </nav>
   <div class="sb-user">
     <div class="sb-user-row">
-      <div class="sb-avatar">JP</div>
-      <div><div class="sb-user-name">Jean Pierre</div><div class="sb-user-role">Élève · Terminale A</div></div>
+      <div class="sb-avatar" id="sb-user-avatar">JP</div>
+      <div><div class="sb-user-name" id="sb-user-name">Jean Pierre</div><div class="sb-user-role" id="sb-user-role">Élève · Terminale A</div></div>
     </div>
     <button class="logout-btn" onclick="window.location.href='login.html'"><i class="ti ti-logout" style="font-size:13px" aria-hidden="true"></i> Déconnexion</button>
   </div>
@@ -197,6 +225,16 @@
 
     <!-- DASHBOARD -->
     <div class="panel active" id="panel-dash">
+      <div class="live-banner" id="live-banner">
+        <div class="live-dot"></div>
+        <div class="live-banner-text" id="live-banner-text">Cours en direct<small>Cliquez pour rejoindre</small></div>
+        <button class="live-join-btn" onclick="ouvrirCoursDirectEleve()">Rejoindre le cours</button>
+      </div>
+      <div class="exam-banner" id="exam-banner">
+        <div class="live-dot"></div>
+        <div class="exam-banner-text" id="exam-banner-text">Examen en direct<small>Cliquez pour commencer</small></div>
+        <button class="live-join-btn" onclick="ouvrirExamenEleve()">Commencer l'examen</button>
+      </div>
       <div class="stats-row">
         <div class="stat-card">
           <div class="stat-label">Moyenne générale</div>
@@ -236,6 +274,55 @@
           <div class="recent-info"><p>Cours Histoire — La révolution haïtienne de 1804</p><span>Ajouté par Prof. Jean Luc · il y a 1 jour</span></div>
           <span class="badge badge-done">Vu</span>
         </div>
+      </div>
+    </div>
+
+    <!-- COURS EN DIRECT -->
+    <div class="panel" id="panel-direct">
+      <div id="live-empty-eleve" class="live-empty">
+        <i class="ti ti-broadcast-off" aria-hidden="true"></i>
+        Aucun cours en direct pour le moment.<br>Il apparaîtra ici dès qu'un professeur en démarrera un.
+      </div>
+      <div id="live-present-eleve" style="display:none">
+        <div class="live-info-card">
+          <div class="live-dot" style="animation:pulse-live 1.4s infinite;background:#EF4444"></div>
+          <div style="flex:1"><strong id="live-eleve-matiere" style="font-size:13px;color:var(--navy)"></strong><div style="font-size:11px;color:var(--muted)" id="live-eleve-prof"></div></div>
+          <button class="live-join-btn" onclick="ouvrirCoursDirectEleve()">Rejoindre le cours</button>
+        </div>
+        <div id="jitsi-container-eleve"></div>
+      </div>
+    </div>
+
+    <!-- EXAMENS EN DIRECT -->
+    <div class="panel" id="panel-examens">
+      <div id="exam-empty-eleve" class="live-empty">
+        <i class="ti ti-clipboard-off" aria-hidden="true"></i>
+        Aucun examen en direct pour le moment.<br>Il apparaîtra ici dès qu'un professeur en démarrera un.
+      </div>
+
+      <div id="exam-intro-eleve" style="display:none">
+        <div class="live-info-card">
+          <div class="live-dot" style="animation:pulse-live 1.4s infinite;background:#7C2D12"></div>
+          <div style="flex:1"><strong id="exam-eleve-titre" style="font-size:13px;color:var(--navy)"></strong><div style="font-size:11px;color:var(--muted)" id="exam-eleve-sub"></div></div>
+          <button class="live-join-btn" onclick="ouvrirExamenEleve()">Commencer l'examen</button>
+        </div>
+      </div>
+
+      <div id="exam-en-cours-eleve" style="display:none">
+        <div class="exam-timer">
+          <span style="font-size:12px;color:var(--muted)">Temps restant</span>
+          <span class="exam-timer-value" id="exam-timer-value">--:--</span>
+        </div>
+        <div id="exam-questions-eleve"></div>
+        <div class="form-actions">
+          <button class="form-submit" onclick="soumettreExamenEleve()">Soumettre l'examen</button>
+        </div>
+      </div>
+
+      <div id="exam-resultat-eleve" style="display:none" class="exam-result-card">
+        <div style="font-size:12px;color:var(--muted);margin-bottom:6px">Examen soumis</div>
+        <div class="exam-result-score" id="exam-resultat-score">—</div>
+        <div class="exam-result-sub" id="exam-resultat-sub">Les réponses libres seront corrigées par le professeur.</div>
       </div>
     </div>
 
@@ -542,6 +629,21 @@ const db  = getFirestore(app);
 
 const user = JSON.parse(sessionStorage.getItem('ilch_user') || '{}');
 
+// ── Afficher les vraies infos de l'élève connecté dans la barre latérale ──
+(function initSidebarUser() {
+  var classeLabels = { ta:'Terminale A', tb:'Terminale B', rhe:'Rhéto', sec1:'Secondaire 1' };
+  if (!user || !user.prenom) return;
+  var nomComplet = ((user.prenom || '') + ' ' + (user.nom || '')).trim();
+  var initiales = user.initiales || (((user.prenom || ' ')[0] || '') + ((user.nom || ' ')[0] || '')).toUpperCase();
+  var classeAffichee = classeLabels[user.classe] || user.classe || '';
+  var avatarEl = document.getElementById('sb-user-avatar');
+  var nameEl   = document.getElementById('sb-user-name');
+  var roleEl   = document.getElementById('sb-user-role');
+  if (avatarEl && initiales) avatarEl.textContent = initiales;
+  if (nameEl && nomComplet) nameEl.textContent = nomComplet;
+  if (roleEl) roleEl.textContent = 'Élève' + (classeAffichee ? ' · ' + classeAffichee : '');
+})();
+
 // ── DEVOIRS — écouter en temps réel ───────────────────────
 onSnapshot(collection(db, 'devoirs'), function(snap) {
   var devoirs = snap.docs.map(function(d) { return { id: d.id, ...d.data() }; });
@@ -586,38 +688,246 @@ if (user && user.id) {
   );
 }
 
-console.log('✓ Dashboard Élève connecté à Firebase');
-</script>
-<script>
-if("serviceWorker" in navigator){
-  window.addEventListener("load",function(){
-    navigator.serviceWorker.register("/sw.js").then(function(reg){
-      console.log("[ILCH] PWA Service Worker actif");
-    }).catch(function(err){console.log("[ILCH] SW erreur:",err);});
-  });
-}
-</script>
-<script>
-// Déconnexion automatique après 30 min d'inactivité
-var _timer = null;
-function _resetTimer() {
-  if (_timer) clearTimeout(_timer);
-  _timer = setTimeout(function() {
-    sessionStorage.clear();
-    alert('Session expirée par inactivité. Veuillez vous reconnecter.');
-    window.location.href = 'login.html';
-  }, 30 * 60 * 1000); // 30 minutes
-}
-['click','keypress','scroll','mousemove','touchstart'].forEach(function(e) {
-  document.addEventListener(e, _resetTimer, { passive: true });
-});
-_resetTimer();
+// ── COURS EN DIRECT — écouter les sessions actives ────────
+let coursDirectActif = null;
+let jitsiApiEleve = null;
 
-// Vérifier session valide
-(function() {
-  var user = sessionStorage.getItem('ilch_user');
-  if (!user) {
-    window.location.href = 'login.html';
+if (user && user.classe) {
+  onSnapshot(
+    query(
+      collection(db, 'coursDirect'),
+      where('classe', 'in', [user.classe, 'toutes']),
+      where('statut', '==', 'en_cours')
+    ),
+    function(snap) {
+      var sessions = snap.docs.map(function(d) { return { id: d.id, ...d.data() }; });
+      coursDirectActif = sessions.length ? sessions[0] : null;
+
+      var banner = document.getElementById('live-banner');
+      var badge = document.getElementById('eleve-direct-count');
+      var empty = document.getElementById('live-empty-eleve');
+      var present = document.getElementById('live-present-eleve');
+
+      if (coursDirectActif) {
+        if (banner) {
+          banner.classList.add('show');
+          document.getElementById('live-banner-text').innerHTML =
+            'Cours en direct — ' + coursDirectActif.matiere + '<small>Avec ' + coursDirectActif.profNom + ' · Cliquez pour rejoindre</small>';
+        }
+        if (badge) badge.style.display = 'inline-flex';
+        if (empty) empty.style.display = 'none';
+        if (present) present.style.display = 'block';
+        var matEl = document.getElementById('live-eleve-matiere');
+        var profEl = document.getElementById('live-eleve-prof');
+        if (matEl) matEl.textContent = coursDirectActif.matiere;
+        if (profEl) profEl.textContent = 'Avec ' + coursDirectActif.profNom;
+      } else {
+        if (banner) banner.classList.remove('show');
+        if (badge) badge.style.display = 'none';
+        if (empty) empty.style.display = 'block';
+        if (present) present.style.display = 'none';
+        if (jitsiApiEleve) { jitsiApiEleve.dispose(); jitsiApiEleve = null; }
+        var jc = document.getElementById('jitsi-container-eleve');
+        if (jc) { jc.style.display = 'none'; jc.innerHTML = ''; }
+      }
+    }
+  );
+}
+
+window.ouvrirCoursDirectEleve = function() {
+  if (!coursDirectActif || typeof JitsiMeetExternalAPI === 'undefined') return;
+  // Basculer vers le panneau "Cours en direct"
+  var item = Array.from(document.querySelectorAll('.sb-item')).find(function(el) {
+    return el.getAttribute('onclick') === "showPanel('direct',this)";
+  });
+  if (item && typeof showPanel === 'function') showPanel('direct', item);
+
+  var container = document.getElementById('jitsi-container-eleve');
+  if (!container) return;
+  container.style.display = 'block';
+  container.innerHTML = '';
+  jitsiApiEleve = new JitsiMeetExternalAPI('meet.jit.si', {
+    roomName: coursDirectActif.salle,
+    parentNode: container,
+    width: '100%',
+    height: 480,
+    userInfo: { displayName: (user.prenom || 'Élève') + ' ' + (user.nom || '') },
+    configOverwrite: { prejoinPageEnabled: true },
+    interfaceConfigOverwrite: { MOBILE_APP_PROMO: false }
+  });
+};
+
+// ── EXAMENS EN DIRECT — écouter les sessions actives ───────
+let examenActif = null;
+let dejaSoumisExamen = false;
+let examenTimerInterval = null;
+
+if (user && user.classe) {
+  onSnapshot(
+    query(
+      collection(db, 'examens'),
+      where('classe', 'in', [user.classe, 'toutes']),
+      where('statut', '==', 'en_cours')
+    ),
+    async function(snap) {
+      var sessions = snap.docs.map(function(d) { return { id: d.id, ...d.data() }; });
+      var nouvelExamen = sessions.length ? sessions[0] : null;
+
+      // Si un nouvel examen apparaît (différent du précédent), vérifier si déjà soumis
+      if (nouvelExamen && (!examenActif || examenActif.id !== nouvelExamen.id)) {
+        try {
+          var subSnap = await getDocs(query(
+            collection(db, 'reponsesExamen'),
+            where('examenId', '==', nouvelExamen.id),
+            where('eleveId', '==', user.id || '')
+          ));
+          dejaSoumisExamen = !subSnap.empty;
+          if (dejaSoumisExamen && !subSnap.empty) {
+            afficherResultatExamen(subSnap.docs[0].data());
+          }
+        } catch (e) { console.error(e); dejaSoumisExamen = false; }
+      }
+
+      examenActif = nouvelExamen;
+
+      var banner = document.getElementById('exam-banner');
+      var badge = document.getElementById('eleve-exam-count');
+      var empty = document.getElementById('exam-empty-eleve');
+      var intro = document.getElementById('exam-intro-eleve');
+
+      if (examenActif && !dejaSoumisExamen) {
+        if (banner) {
+          banner.classList.add('show');
+          document.getElementById('exam-banner-text').innerHTML =
+            'Examen en direct — ' + examenActif.titre + '<small>' + examenActif.dureeMinutes + ' minutes · Cliquez pour commencer</small>';
+        }
+        if (badge) badge.style.display = 'inline-flex';
+        if (empty) empty.style.display = 'none';
+        if (intro) intro.style.display = 'block';
+        document.getElementById('exam-eleve-titre').textContent = examenActif.titre;
+        document.getElementById('exam-eleve-sub').textContent = examenActif.matiere + ' · ' + examenActif.dureeMinutes + ' minutes · ' + examenActif.questions.length + ' question(s)';
+      } else if (!examenActif) {
+        if (banner) banner.classList.remove('show');
+        if (badge) badge.style.display = 'none';
+        if (empty) empty.style.display = 'block';
+        if (intro) intro.style.display = 'none';
+        document.getElementById('exam-en-cours-eleve').style.display = 'none';
+        document.getElementById('exam-resultat-eleve').style.display = 'none';
+        if (examenTimerInterval) { clearInterval(examenTimerInterval); examenTimerInterval = null; }
+      }
+    }
+  );
+}
+
+window.ouvrirExamenEleve = function() {
+  if (!examenActif || dejaSoumisExamen) return;
+  var item = Array.from(document.querySelectorAll('.sb-item')).find(function(el) {
+    return el.getAttribute('onclick') === "showPanel('examens',this)";
+  });
+  if (item && typeof showPanel === 'function') showPanel('examens', item);
+
+  document.getElementById('exam-intro-eleve').style.display = 'none';
+  document.getElementById('exam-en-cours-eleve').style.display = 'block';
+
+  var container = document.getElementById('exam-questions-eleve');
+  container.innerHTML = '';
+  examenActif.questions.forEach(function(q, i) {
+    var div = document.createElement('div');
+    div.className = 'exam-q-view';
+    if (q.type === 'qcm') {
+      div.innerHTML = '<div class="q-title">' + (i + 1) + '. ' + q.texte + '</div>' +
+        q.choix.map(function(c, k) {
+          return '<label class="exam-opt-row"><input type="radio" name="rep-' + i + '" value="' + k + '">' + c + '</label>';
+        }).join('');
+    } else {
+      div.innerHTML = '<div class="q-title">' + (i + 1) + '. ' + q.texte + '</div>' +
+        '<textarea id="rep-libre-' + i + '" placeholder="Votre réponse..."></textarea>';
+    }
+    container.appendChild(div);
+  });
+
+  demarrerMinuteurExamen(examenActif.demarreLe, examenActif.dureeMinutes);
+};
+
+function demarrerMinuteurExamen(demarreLe, dureeMinutes) {
+  if (examenTimerInterval) clearInterval(examenTimerInterval);
+  var finLe = new Date(demarreLe).getTime() + dureeMinutes * 60000;
+  var timerEl = document.getElementById('exam-timer-value');
+
+  function tick() {
+    var restant = Math.max(0, finLe - Date.now());
+    var min = Math.floor(restant / 60000);
+    var sec = Math.floor((restant % 60000) / 1000);
+    if (timerEl) {
+      timerEl.textContent = String(min).padStart(2, '0') + ':' + String(sec).padStart(2, '0');
+      timerEl.classList.toggle('low', restant < 60000);
+    }
+    if (restant <= 0) {
+      clearInterval(examenTimerInterval);
+      soumettreExamenEleve();
+    }
   }
-})();
+  tick();
+  examenTimerInterval = setInterval(tick, 1000);
+}
+
+window.soumettreExamenEleve = async function() {
+  if (!examenActif || dejaSoumisExamen) return;
+  if (examenTimerInterval) { clearInterval(examenTimerInterval); examenTimerInterval = null; }
+
+  var reponses = [];
+  var score = 0;
+  var totalQCM = 0;
+
+  examenActif.questions.forEach(function(q, i) {
+    if (q.type === 'qcm') {
+      totalQCM++;
+      var checked = document.querySelector('input[name="rep-' + i + '"]:checked');
+      var choisi = checked ? parseInt(checked.value, 10) : null;
+      if (choisi === q.correct) score++;
+      reponses.push({ question: q.texte, type: 'qcm', reponse: choisi });
+    } else {
+      var texte = document.getElementById('rep-libre-' + i);
+      reponses.push({ question: q.texte, type: 'libre', reponse: texte ? texte.value.trim() : '' });
+    }
+  });
+
+  var soumission = {
+    examenId: examenActif.id,
+    eleveId: user.id || '',
+    eleveNom: (user.prenom || 'Élève') + ' ' + (user.nom || ''),
+    classe: user.classe || '',
+    reponses: reponses,
+    score: score,
+    totalQCM: totalQCM,
+    soumisLe: new Date().toISOString()
+  };
+
+  try {
+    await addDoc(collection(db, 'reponsesExamen'), soumission);
+    dejaSoumisExamen = true;
+    afficherResultatExamen(soumission);
+    if (typeof showToast === 'function') showToast('Examen soumis ✓');
+  } catch (e) {
+    console.error('Erreur soumission examen:', e);
+    if (typeof showToast === 'function') showToast('Erreur lors de la soumission');
+  }
+};
+
+function afficherResultatExamen(soumission) {
+  document.getElementById('exam-intro-eleve').style.display = 'none';
+  document.getElementById('exam-en-cours-eleve').style.display = 'none';
+  document.getElementById('exam-resultat-eleve').style.display = 'block';
+  var scoreEl = document.getElementById('exam-resultat-score');
+  var subEl = document.getElementById('exam-resultat-sub');
+  if (soumission.totalQCM > 0) {
+    scoreEl.textContent = soumission.score + ' / ' + soumission.totalQCM;
+    subEl.textContent = 'Score sur les questions à choix multiple. Les réponses libres seront corrigées par le professeur.';
+  } else {
+    scoreEl.textContent = '✓';
+    subEl.textContent = 'Vos réponses ont été transmises au professeur pour correction.';
+  }
+}
+
+console.log('✓ Dashboard Élève connecté à Firebase');
 </script>

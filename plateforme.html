@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#0D2B4E">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="ILCH">
+  <link rel="apple-touch-icon" href="icon-192.png">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Plateforme · Institution Louis Chauvet (ILCH)</title>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<div class="dev-topbar">Développé par Dorlean Ricardo</div>
+<header>
+  <nav>
+    <div class="nav-inner">
+      <button class="nav-hamburger" id="nav-hamburger" onclick="toggleMobileMenu()" aria-label="Menu">
+        <span></span><span></span><span></span>
+      </button>
+      <div class="logo-mark">
+        <div class="logo-badge">ILCH</div>
+        <div>
+          <div class="logo-text">Institution Louis Chauvet</div>
+          <div class="logo-sub">Thomassin 25 · Pétion-Ville · Haïti</div>
+        </div>
+      </div>
+      <ul class="nav-links">
+        <li><a href="index.html">Accueil</a></li>
+        <li><a href="apropos.html">À propos</a></li>
+        <li><a href="vie-scolaire.html">Vie scolaire</a></li>
+        <li><a href="admissions.html">Admissions</a></li>
+        <li><a href="evenements.html">Événements</a></li>
+        <li><a href="plateforme.html" class="active">Plateforme</a></li>
+        <li><a href="login.html" class="nav-login-btn">Se connecter</a></li>
+      </ul>
+    </div>
+  </nav>
+
+  <!-- MENU MOBILE -->
+  <div class="mobile-menu" id="mobile-menu" style="display:none">
+    <a href="index.html" onclick="closeMobileMenu()">🏠 Accueil</a>
+    <a href="apropos.html" onclick="closeMobileMenu()">📖 À propos</a>
+    <a href="vie-scolaire.html" onclick="closeMobileMenu()">🎓 Vie scolaire</a>
+    <a href="admissions.html" onclick="closeMobileMenu()">✏️ Admissions</a>
+    <a href="evenements.html" onclick="closeMobileMenu()">🎉 Événements</a>
+    <a href="plateforme.html" class="active" onclick="closeMobileMenu()">💻 Plateforme</a>
+    <a href="login.html" class="mob-login">Se connecter →</a>
+  </div>
+</header>
+
+<main>
+
+  <section id="plateforme" class="section plateforme-bg">
+    <div class="container">
+      <div class="plateforme-inner">
+        <div>
+          <div class="section-label">Numérique</div>
+          <div class="gold-line"></div>
+          <h2 class="section-title">Plateforme élèves & professeurs</h2>
+          <p class="section-body" style="margin-top:0.5rem">Un espace en ligne sécurisé pour suivre les cours, consulter les notes et communiquer directement avec les enseignants — à tout moment, de n'importe où.</p>
+          <a href="login.html" class="btn-primary" style="margin-top:2rem">Accéder à la plateforme</a>
+        </div>
+        <div class="plateforme-cards">
+          <div class="pf-card">
+            <div class="pf-icon">🎥</div>
+            <h3>Cours vidéo</h3>
+            <p>Les professeurs publient des vidéos accessibles à tout moment.</p>
+          </div>
+          <div class="pf-card">
+            <div class="pf-icon">📊</div>
+            <h3>Notes & bulletins</h3>
+            <p>Consultez vos résultats et bulletins en temps réel.</p>
+          </div>
+          <div class="pf-card">
+            <div class="pf-icon">💬</div>
+            <h3>Messagerie</h3>
+            <p>Échangez directement avec vos professeurs.</p>
+          </div>
+          <div class="pf-card">
+            <div class="pf-icon">📅</div>
+            <h3>Suivi de présence</h3>
+            <p>Absences et ponctualité suivies par les parents.</p>
+          </div>
+          <div class="pf-card">
+            <div class="pf-icon">📡</div>
+            <h3>Cours en direct</h3>
+            <p>Les professeurs peuvent dispenser des cours en visioconférence, en temps réel.</p>
+          </div>
+          <div class="pf-card">
+            <div class="pf-icon">📝</div>
+            <h3>Examens en direct</h3>
+            <p>Interrogations chronométrées avec correction automatique et suivi en temps réel.</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="fw-slider">
+        <div class="fw-slide active"><img src="plateforme1.jpg" alt="Plateforme 1">
+          <div class="fw-caption"><h3>Espace élève</h3><p>Cours, notes et devoirs accessibles en un seul endroit.</p></div>
+        </div>
+        <div class="fw-slide"><img src="plateforme2.jpg" alt="Plateforme 2">
+          <div class="fw-caption"><h3>Espace professeur</h3><p>Publication de cours, saisie des notes et suivi des classes.</p></div>
+        </div>
+        <div class="fw-slide"><img src="plateforme3.jpg" alt="Plateforme 3">
+          <div class="fw-caption"><h3>Espace parent</h3><p>Un suivi complet de la scolarité de son enfant, à distance.</p></div>
+        </div>
+        <div class="fw-slide"><img src="plateforme4.jpg" alt="Plateforme 4">
+          <div class="fw-caption"><h3>Accessible partout</h3><p>Sur ordinateur, tablette ou téléphone, à tout moment.</p></div>
+        </div>
+        <div class="fw-arrow fw-prev" onclick="fwMove(this,-1)">&#8249;</div>
+        <div class="fw-arrow fw-next" onclick="fwMove(this,1)">&#8250;</div>
+        <div class="fw-dots">
+          <button class="fw-dot active" onclick="fwGoTo(this,0)"></button>
+          <button class="fw-dot" onclick="fwGoTo(this,1)"></button>
+          <button class="fw-dot" onclick="fwGoTo(this,2)"></button>
+          <button class="fw-dot" onclick="fwGoTo(this,3)"></button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<footer id="contact">
+  <div class="footer-inner">
+    <div class="footer-brand">
+      <div class="logo-mark">
+        <div class="logo-badge">ILCH</div>
+        <div><div class="logo-text">Institution Louis Chauvet</div></div>
+      </div>
+      <p class="footer-desc">Excellence, discipline et valeurs au service de l'éducation haïtienne.</p>
+    </div>
+    <div class="footer-col">
+      <h4>Navigation</h4>
+      <ul>
+        <li><a href="index.html">Accueil</a></li>
+        <li><a href="apropos.html">À propos</a></li>
+        <li><a href="vie-scolaire.html">Vie scolaire</a></li>
+        <li><a href="admissions.html">Admissions</a></li>
+        <li><a href="evenements.html">Événements</a></li>
+        <li><a href="plateforme.html" class="active">Plateforme</a></li>
+      </ul>
+    </div>
+    <div class="footer-col footer-contact">
+      <h4>Contact</h4>
+      <p>Thomassin 25<br>Pétion-Ville, Haïti</p>
+      <p style="margin-top:0.75rem"><a href="mailto:institutionlouischauvet@gmail.com">institutionlouischauvet@gmail.com</a></p>
+    </div>
+  </div>
+  <div class="footer-bottom">
+    <span class="footer-copy">© 2026 Institution Louis Chauvet. Tous droits réservés. <span class="dev-credit">· Développé par Dorlean Ricardo</span></span>
+    <div class="footer-flag">
+      <div class="flag-stripe" style="background:#00209F"></div>
+      <div class="flag-stripe" style="background:#D21034"></div>
+    </div>
+  </div>
+</footer>
+
+<script src="script.js"></script>
+</body>
+</html>

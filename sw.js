@@ -4,12 +4,19 @@
 
 // ⚠️ IMPORTANT : Changez ce numéro à chaque mise à jour !
 // Exemple : 'ilch-cache-v2', 'ilch-cache-v3', etc.
-const CACHE_VERSION = 'ilch-cache-v3';
+const CACHE_VERSION = 'ilch-cache-v4';
 const CACHE_NAME = CACHE_VERSION;
 
 const CACHE_URLS = [
   '/',
   '/index.html',
+  '/apropos.html',
+  '/vie-scolaire.html',
+  '/admissions.html',
+  '/evenements.html',
+  '/plateforme.html',
+  '/style.css',
+  '/script.js',
   '/login.html',
   '/dashboard-eleve.html',
   '/dashboard-prof.html',

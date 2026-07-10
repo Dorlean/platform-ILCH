@@ -2,17 +2,12 @@
 <html lang="fr">
 <head>
   <meta charset="UTF-8">
-  <link rel="manifest" href="manifest.json">
-  <meta name="theme-color" content="#0D2B4E">
-  <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <meta name="apple-mobile-web-app-title" content="ILCH">
-  <link rel="apple-touch-icon" href="icon-192.png">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Espace Professeur — ILCH</title>
   <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
   <link rel="stylesheet" href="mobile.css">
+  <script src="https://meet.jit.si/external_api.js"></script>
   <style>
     *{margin:0;padding:0;box-sizing:border-box}
     :root{
@@ -99,6 +94,35 @@
     .form-submit:hover{background:#d4b57c}
     .form-cancel{background:transparent;border:1px solid var(--border);padding:10px 20px;font-size:13px;color:var(--gray);cursor:pointer;font-family:'Inter',sans-serif;transition:border-color 0.15s}
     .form-cancel:hover{border-color:var(--navy)}
+
+    /* COURS EN DIRECT */
+    .live-setup{background:var(--white);border:0.5px solid var(--border);padding:1.5rem;max-width:560px}
+    .live-setup h3{font-size:14px;font-weight:600;color:var(--navy);margin-bottom:1rem}
+    .live-status{display:flex;align-items:center;gap:10px;background:var(--white);border:0.5px solid var(--border);padding:14px 18px;margin-bottom:1rem}
+    .live-dot{width:10px;height:10px;border-radius:50%;background:var(--red);flex-shrink:0;animation:pulse-live 1.4s infinite}
+    @keyframes pulse-live{0%,100%{opacity:1}50%{opacity:0.35}}
+    .live-status-text{font-size:13px;color:var(--navy);font-weight:600}
+    .live-status-sub{font-size:11px;color:var(--muted);margin-top:2px}
+    .live-end-btn{margin-left:auto;background:var(--red);color:var(--white);border:none;padding:9px 16px;font-size:12px;font-weight:600;cursor:pointer;font-family:'Inter',sans-serif}
+    .live-end-btn:hover{background:#B91C1C}
+    #jitsi-container{width:100%;min-height:480px;background:#000;border:0.5px solid var(--border)}
+    .live-empty{background:var(--white);border:0.5px dashed var(--border);padding:2.5rem;text-align:center;color:var(--muted);font-size:13px}
+    .live-empty i{font-size:30px;display:block;margin-bottom:10px;color:var(--gold)}
+
+    /* EXAMENS EN DIRECT */
+    .exam-q-card{border:0.5px solid var(--border);padding:14px;margin-bottom:10px;background:var(--white)}
+    .exam-q-card input[type="text"]{width:100%;padding:8px 10px;border:0.5px solid var(--border);font-size:12px;font-family:'Inter',sans-serif;margin-bottom:6px}
+    .exam-q-card select{padding:8px 10px;border:0.5px solid var(--border);font-size:12px;font-family:'Inter',sans-serif;margin-bottom:8px}
+    .q-num{font-size:11px;color:var(--gold);font-weight:700;margin-bottom:8px;display:flex;justify-content:space-between}
+    .exam-remove-q{background:none;border:none;color:var(--red);cursor:pointer;font-size:11px;font-family:'Inter',sans-serif}
+    .exam-choice-row{display:flex;align-items:center;gap:8px;margin-bottom:6px}
+    .exam-choice-row input[type="text"]{flex:1;margin-bottom:0}
+    .exam-add-q-btn{background:transparent;border:1px dashed var(--border);color:var(--navy);padding:10px;width:100%;font-size:12px;cursor:pointer;font-family:'Inter',sans-serif;margin-bottom:1rem}
+    .exam-add-q-btn:hover{border-color:var(--gold);color:var(--gold)}
+    .exam-live-monitor{background:var(--white);border:0.5px solid var(--border);padding:16px 18px;margin-top:1rem}
+    .exam-live-monitor h4{font-size:13px;color:var(--navy);margin-bottom:10px}
+    .exam-student-row{display:flex;justify-content:space-between;padding:8px 0;border-bottom:0.5px solid var(--border);font-size:12px;color:var(--text)}
+    .exam-score-badge{font-weight:700;color:var(--gold)}
 
     .videos-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:14px}
     .video-card{background:var(--white);border:0.5px solid var(--border);transition:transform 0.2s,border-color 0.2s}
@@ -215,7 +239,6 @@
     .toast.show{display:flex}
     .toast i{color:var(--gold);font-size:17px}
   </style>
-  <script src="securite-ilch.js"></script>
 </head>
 <body>
 
@@ -233,6 +256,8 @@
     <div class="sb-section">Principal</div>
     <div class="sb-item active" onclick="showPanel('dash',this)"><i class="ti ti-home" aria-hidden="true"></i>Tableau de bord</div>
     <div class="sb-item" onclick="showPanel('videos',this)"><i class="ti ti-video" aria-hidden="true"></i>Cours vidéo</div>
+    <div class="sb-item" onclick="showPanel('direct',this)"><i class="ti ti-broadcast" aria-hidden="true"></i>Cours en direct</div>
+    <div class="sb-item" onclick="showPanel('examens',this)"><i class="ti ti-clipboard-text" aria-hidden="true"></i>Examens en direct</div>
     <div class="sb-item" onclick="showPanel('notes',this)"><i class="ti ti-edit" aria-hidden="true"></i>Saisie des notes</div>
     <div class="sb-item" onclick="showPanel('devoirs',this)"><i class="ti ti-clipboard-text" aria-hidden="true"></i>Devoirs & Corrigés<span class="sb-badge-count" id="devoirs-count">0</span></div>
     <div class="sb-section">Communication</div>
@@ -242,8 +267,8 @@
   </nav>
   <div class="sb-user">
     <div class="sb-user-row">
-      <div class="sb-avatar">MC</div>
-      <div><div class="sb-user-name">Marie Céleste</div><div class="sb-user-role">Professeure · Maths</div></div>
+      <div class="sb-avatar" id="sb-user-avatar">MC</div>
+      <div><div class="sb-user-name" id="sb-user-name">Marie Céleste</div><div class="sb-user-role" id="sb-user-role">Professeure · Maths</div></div>
     </div>
     <button class="logout-btn" onclick="window.location.href='login.html'"><i class="ti ti-logout" style="font-size:13px" aria-hidden="true"></i> Déconnexion</button>
   </div>
@@ -349,6 +374,92 @@
           <div class="video-body"><div class="video-title">Les inégalités et intervalles</div><div class="video-meta"><i class="ti ti-users" aria-hidden="true"></i>42 élèves<i class="ti ti-clock" style="margin-left:6px" aria-hidden="true"></i>27 min<span class="video-status status-draft"><i class="ti ti-clock" style="font-size:12px" aria-hidden="true"></i>Brouillon</span></div></div>
         </div>
       </div>
+    </div>
+
+    <!-- COURS EN DIRECT -->
+    <div class="panel" id="panel-direct">
+
+      <div id="live-setup-block" class="live-setup">
+        <h3><i class="ti ti-broadcast" style="color:var(--gold);margin-right:6px" aria-hidden="true"></i>Démarrer un cours en direct</h3>
+        <div class="form-row">
+          <div class="form-group"><label>Matière</label>
+            <select id="direct-matiere"><option>Mathématiques</option><option>Français</option><option>Sciences</option><option>Histoire-Géographie</option><option>Anglais</option><option>Philosophie</option></select>
+          </div>
+          <div class="form-group"><label>Classe(s) ciblée(s)</label>
+            <select id="direct-classe">
+              <option value="ta">Terminale A</option>
+              <option value="tb">Terminale B</option>
+              <option value="toutes">Toutes les classes</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-actions">
+          <button class="form-submit" onclick="demarrerCoursDirectUI()"><i class="ti ti-video" style="margin-right:5px" aria-hidden="true"></i>Démarrer le cours en direct</button>
+        </div>
+      </div>
+
+      <div id="live-active-block" style="display:none">
+        <div class="live-status">
+          <div class="live-dot"></div>
+          <div>
+            <div class="live-status-text">En direct — <span id="live-matiere-label"></span> · <span id="live-classe-label"></span></div>
+            <div class="live-status-sub">Les élèves concernés peuvent rejoindre depuis leur tableau de bord</div>
+          </div>
+          <button class="live-end-btn" onclick="terminerCoursDirectUI()"><i class="ti ti-phone-off" style="margin-right:5px" aria-hidden="true"></i>Terminer le cours</button>
+        </div>
+        <div id="jitsi-container"></div>
+      </div>
+
+    </div>
+
+    <!-- EXAMENS EN DIRECT -->
+    <div class="panel" id="panel-examens">
+
+      <div id="exam-setup-block" class="live-setup" style="max-width:640px">
+        <h3><i class="ti ti-clipboard-text" style="color:var(--gold);margin-right:6px" aria-hidden="true"></i>Créer un examen en direct</h3>
+        <div class="form-group" style="margin-bottom:10px"><label>Titre de l'examen</label>
+          <input type="text" id="exam-titre" placeholder="Ex : Interrogation — Fonctions dérivées">
+        </div>
+        <div class="form-row">
+          <div class="form-group"><label>Matière</label>
+            <select id="exam-matiere"><option>Mathématiques</option><option>Français</option><option>Sciences</option><option>Histoire-Géographie</option><option>Anglais</option><option>Philosophie</option></select>
+          </div>
+          <div class="form-group"><label>Classe(s) ciblée(s)</label>
+            <select id="exam-classe">
+              <option value="ta">Terminale A</option>
+              <option value="tb">Terminale B</option>
+              <option value="toutes">Toutes les classes</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-group" style="max-width:180px;margin-bottom:1.25rem"><label>Durée (minutes)</label>
+          <input type="number" id="exam-duree" value="20" min="1" max="180">
+        </div>
+
+        <h3 style="margin-top:0.5rem">Questions</h3>
+        <div id="exam-questions-list"></div>
+        <button type="button" class="exam-add-q-btn" onclick="ajouterQuestionExamen()">+ Ajouter une question</button>
+
+        <div class="form-actions">
+          <button class="form-submit" onclick="demarrerExamenDirectUI()"><i class="ti ti-player-play" style="margin-right:5px" aria-hidden="true"></i>Démarrer l'examen en direct</button>
+        </div>
+      </div>
+
+      <div id="exam-live-block" style="display:none">
+        <div class="live-status">
+          <div class="live-dot"></div>
+          <div>
+            <div class="live-status-text" id="exam-live-titre">Examen en cours</div>
+            <div class="live-status-sub">Les élèves concernés peuvent commencer l'examen depuis leur tableau de bord</div>
+          </div>
+          <button class="live-end-btn" onclick="terminerExamenDirectUI()"><i class="ti ti-square-x" style="margin-right:5px" aria-hidden="true"></i>Terminer l'examen</button>
+        </div>
+        <div class="exam-live-monitor">
+          <h4>Soumissions en temps réel — <span id="exam-submit-count">0</span> élève(s)</h4>
+          <div id="exam-students-list"></div>
+        </div>
+      </div>
+
     </div>
 
     <!-- SAISIE DES NOTES -->
@@ -770,6 +881,24 @@ if (!user || !user.id) {
   console.log('Mode démo - pas de session Firebase');
 }
 
+// ── Afficher les vraies infos du prof connecté dans la barre latérale ──
+(function initSidebarUser() {
+  var matiereLabels = { math:'Mathématiques', fr:'Français', sc:'Sciences', hist:'Histoire-Géo', ang:'Anglais', philo:'Philosophie' };
+  if (!user || !user.prenom) return;
+  var nomComplet = ((user.prenom || '') + ' ' + (user.nom || '')).trim();
+  var initiales = user.initiales || (((user.prenom || ' ')[0] || '') + ((user.nom || ' ')[0] || '')).toUpperCase();
+  var matiereAffichee = '';
+  if (Array.isArray(user.matieres) && user.matieres.length) {
+    matiereAffichee = user.matieres.map(function(m) { return matiereLabels[m] || m; }).join(', ');
+  }
+  var avatarEl = document.getElementById('sb-user-avatar');
+  var nameEl   = document.getElementById('sb-user-name');
+  var roleEl   = document.getElementById('sb-user-role');
+  if (avatarEl && initiales) avatarEl.textContent = initiales;
+  if (nameEl && nomComplet) nameEl.textContent = nomComplet;
+  if (roleEl) roleEl.textContent = 'Professeur(e)' + (matiereAffichee ? ' · ' + matiereAffichee : '');
+})();
+
 // ── DEVOIRS Firebase ───────────────────────────────────────
 
 // Écouter les devoirs en temps réel
@@ -873,44 +1002,247 @@ window.publierAnnonceFirebase = async function(titre, contenu, destinataires) {
   } catch(e) { console.error(e); }
 };
 
+// ── COURS EN DIRECT (Jitsi Meet) ───────────────────────────
+let jitsiApi = null;
+let currentCoursDirectId = null;
+
+function lancerJitsi(roomName, displayName) {
+  var container = document.getElementById('jitsi-container');
+  if (!container || typeof JitsiMeetExternalAPI === 'undefined') return;
+  container.innerHTML = '';
+  jitsiApi = new JitsiMeetExternalAPI('meet.jit.si', {
+    roomName: roomName,
+    parentNode: container,
+    width: '100%',
+    height: 480,
+    userInfo: { displayName: displayName },
+    configOverwrite: { prejoinPageEnabled: true },
+    interfaceConfigOverwrite: { MOBILE_APP_PROMO: false }
+  });
+}
+
+window.demarrerCoursDirectUI = async function() {
+  var matiereEl = document.getElementById('direct-matiere');
+  var classeEl = document.getElementById('direct-classe');
+  var matiere = matiereEl.value;
+  var classe = classeEl.value;
+  var classeLabel = classeEl.options[classeEl.selectedIndex].textContent;
+  var salle = 'ILCH-' + classe + '-' + Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
+
+  try {
+    var ref = await addDoc(collection(db, 'coursDirect'), {
+      profId: user.id || 'demo',
+      profNom: (user.prenom || 'Professeur') + ' ' + (user.nom || ''),
+      matiere: matiere,
+      classe: classe,
+      salle: salle,
+      statut: 'en_cours',
+      demarreLe: new Date().toISOString()
+    });
+    currentCoursDirectId = ref.id;
+    document.getElementById('live-matiere-label').textContent = matiere;
+    document.getElementById('live-classe-label').textContent = classeLabel;
+    document.getElementById('live-setup-block').style.display = 'none';
+    document.getElementById('live-active-block').style.display = 'block';
+    lancerJitsi(salle, (user.prenom || 'Professeur') + ' ' + (user.nom || ''));
+    if (typeof showToast === 'function') showToast('Cours en direct démarré ✓');
+  } catch (e) {
+    console.error('Erreur démarrage cours direct:', e);
+    if (typeof showToast === 'function') showToast('Erreur au démarrage du cours');
+  }
+};
+
+window.terminerCoursDirectUI = async function() {
+  try {
+    if (currentCoursDirectId) {
+      await updateDoc(doc(db, 'coursDirect', currentCoursDirectId), {
+        statut: 'termine',
+        termineLe: new Date().toISOString()
+      });
+    }
+  } catch (e) { console.error(e); }
+  if (jitsiApi) { jitsiApi.dispose(); jitsiApi = null; }
+  currentCoursDirectId = null;
+  document.getElementById('live-active-block').style.display = 'none';
+  document.getElementById('live-setup-block').style.display = 'block';
+  if (typeof showToast === 'function') showToast('Cours en direct terminé');
+};
+
+// Reprendre un cours en direct déjà actif (ex: après rechargement de page)
+async function reprendreCoursDirectActif() {
+  if (!user || !user.id) return;
+  try {
+    var snap = await getDocs(query(
+      collection(db, 'coursDirect'),
+      where('profId', '==', user.id),
+      where('statut', '==', 'en_cours')
+    ));
+    if (!snap.empty) {
+      var d = snap.docs[0];
+      var data = d.data();
+      currentCoursDirectId = d.id;
+      document.getElementById('live-matiere-label').textContent = data.matiere;
+      document.getElementById('live-classe-label').textContent = data.classe === 'toutes' ? 'Toutes les classes' : (data.classe === 'ta' ? 'Terminale A' : 'Terminale B');
+      document.getElementById('live-setup-block').style.display = 'none';
+      document.getElementById('live-active-block').style.display = 'block';
+      lancerJitsi(data.salle, (user.prenom || 'Professeur') + ' ' + (user.nom || ''));
+    }
+  } catch (e) { console.error(e); }
+}
+
+// ── EXAMENS EN DIRECT ───────────────────────────────────────
+let examQuestionCount = 0;
+let currentExamenId = null;
+let examenUnsub = null;
+
+window.ajouterQuestionExamen = function() {
+  var i = examQuestionCount++;
+  var container = document.getElementById('exam-questions-list');
+  var div = document.createElement('div');
+  div.className = 'exam-q-card';
+  div.id = 'exam-q-' + i;
+  div.innerHTML =
+    '<div class="q-num"><span>Question ' + (i + 1) + '</span>' +
+    '<button type="button" class="exam-remove-q" onclick="document.getElementById(\'exam-q-' + i + '\').remove()">Supprimer</button></div>' +
+    '<input type="text" id="q-text-' + i + '" placeholder="Énoncé de la question">' +
+    '<select id="q-type-' + i + '" onchange="toggleQuestionType(' + i + ')">' +
+    '<option value="qcm">Choix multiple (QCM)</option><option value="libre">Réponse libre</option></select>' +
+    '<div id="q-choices-' + i + '">' +
+    [0, 1, 2, 3].map(function(k) {
+      var lettre = String.fromCharCode(65 + k);
+      return '<div class="exam-choice-row"><input type="radio" name="q-correct-' + i + '" value="' + k + '"' + (k === 0 ? ' checked' : '') + '>' +
+        '<input type="text" id="q-choice-' + i + '-' + k + '" placeholder="Choix ' + lettre + '"></div>';
+    }).join('') +
+    '</div>';
+  container.appendChild(div);
+};
+
+window.toggleQuestionType = function(i) {
+  var type = document.getElementById('q-type-' + i).value;
+  document.getElementById('q-choices-' + i).style.display = (type === 'qcm') ? 'block' : 'none';
+};
+
+function collecterQuestionsExamen() {
+  var questions = [];
+  var cards = document.querySelectorAll('#exam-questions-list .exam-q-card');
+  cards.forEach(function(card) {
+    var i = card.id.replace('exam-q-', '');
+    var texte = document.getElementById('q-text-' + i).value.trim();
+    if (!texte) return;
+    var type = document.getElementById('q-type-' + i).value;
+    if (type === 'qcm') {
+      var choix = [0, 1, 2, 3]
+        .map(function(k) { return document.getElementById('q-choice-' + i + '-' + k).value.trim(); })
+        .filter(function(c) { return c; });
+      var correctRadio = document.querySelector('input[name="q-correct-' + i + '"]:checked');
+      var correct = correctRadio ? parseInt(correctRadio.value, 10) : 0;
+      questions.push({ texte: texte, type: 'qcm', choix: choix, correct: correct });
+    } else {
+      questions.push({ texte: texte, type: 'libre' });
+    }
+  });
+  return questions;
+}
+
+window.demarrerExamenDirectUI = async function() {
+  var titre = document.getElementById('exam-titre').value.trim();
+  var matiere = document.getElementById('exam-matiere').value;
+  var classeEl = document.getElementById('exam-classe');
+  var classe = classeEl.value;
+  var classeLabel = classeEl.options[classeEl.selectedIndex].textContent;
+  var duree = parseInt(document.getElementById('exam-duree').value, 10) || 20;
+  var questions = collecterQuestionsExamen();
+
+  if (!titre) { if (typeof showToast === 'function') showToast('Ajoutez un titre à l\'examen'); return; }
+  if (!questions.length) { if (typeof showToast === 'function') showToast('Ajoutez au moins une question'); return; }
+
+  try {
+    var ref = await addDoc(collection(db, 'examens'), {
+      profId: user.id || 'demo',
+      profNom: (user.prenom || 'Professeur') + ' ' + (user.nom || ''),
+      titre: titre,
+      matiere: matiere,
+      classe: classe,
+      dureeMinutes: duree,
+      questions: questions,
+      statut: 'en_cours',
+      demarreLe: new Date().toISOString()
+    });
+    currentExamenId = ref.id;
+    document.getElementById('exam-setup-block').style.display = 'none';
+    document.getElementById('exam-live-block').style.display = 'block';
+    document.getElementById('exam-live-titre').textContent = titre + ' · ' + classeLabel;
+    ecouterReponsesExamen(ref.id);
+    if (typeof showToast === 'function') showToast('Examen en direct démarré ✓');
+  } catch (e) {
+    console.error('Erreur démarrage examen:', e);
+    if (typeof showToast === 'function') showToast('Erreur au démarrage de l\'examen');
+  }
+};
+
+function ecouterReponsesExamen(examenId) {
+  if (examenUnsub) examenUnsub();
+  examenUnsub = onSnapshot(query(collection(db, 'reponsesExamen'), where('examenId', '==', examenId)), function(snap) {
+    var list = document.getElementById('exam-students-list');
+    var countEl = document.getElementById('exam-submit-count');
+    if (!list) return;
+    list.innerHTML = '';
+    if (countEl) countEl.textContent = snap.size;
+    snap.forEach(function(d) {
+      var r = d.data();
+      var row = document.createElement('div');
+      row.className = 'exam-student-row';
+      var scoreTxt = (r.score != null && r.totalQCM) ? (r.score + '/' + r.totalQCM) : '—';
+      row.innerHTML = '<span>' + r.eleveNom + '</span><span class="exam-score-badge">' + scoreTxt + '</span>';
+      list.appendChild(row);
+    });
+  });
+}
+
+window.terminerExamenDirectUI = async function() {
+  try {
+    if (currentExamenId) {
+      await updateDoc(doc(db, 'examens', currentExamenId), { statut: 'termine', termineLe: new Date().toISOString() });
+    }
+  } catch (e) { console.error(e); }
+  if (examenUnsub) { examenUnsub(); examenUnsub = null; }
+  currentExamenId = null;
+  document.getElementById('exam-live-block').style.display = 'none';
+  document.getElementById('exam-setup-block').style.display = 'block';
+  document.getElementById('exam-questions-list').innerHTML = '';
+  examQuestionCount = 0;
+  if (typeof showToast === 'function') showToast('Examen terminé');
+};
+
+// Reprendre un examen déjà actif (ex: après rechargement de page)
+async function reprendreExamenActif() {
+  if (!user || !user.id) return;
+  try {
+    var snap = await getDocs(query(
+      collection(db, 'examens'),
+      where('profId', '==', user.id),
+      where('statut', '==', 'en_cours')
+    ));
+    if (!snap.empty) {
+      var d = snap.docs[0];
+      var data = d.data();
+      currentExamenId = d.id;
+      var classeLabel = data.classe === 'toutes' ? 'Toutes les classes' : (data.classe === 'ta' ? 'Terminale A' : 'Terminale B');
+      document.getElementById('exam-setup-block').style.display = 'none';
+      document.getElementById('exam-live-block').style.display = 'block';
+      document.getElementById('exam-live-titre').textContent = data.titre + ' · ' + classeLabel;
+      ecouterReponsesExamen(d.id);
+    }
+  } catch (e) { console.error(e); }
+}
+
 // ── Initialiser ────────────────────────────────────────────
 try {
   ecouterDevoirsFirebase();
+  reprendreCoursDirectActif();
+  reprendreExamenActif();
   console.log('✓ Dashboard Professeur connecté à Firebase');
 } catch(e) {
   console.log('Mode hors ligne - Firebase non disponible');
 }
-</script>
-<script>
-if("serviceWorker" in navigator){
-  window.addEventListener("load",function(){
-    navigator.serviceWorker.register("/sw.js").then(function(reg){
-      console.log("[ILCH] PWA Service Worker actif");
-    }).catch(function(err){console.log("[ILCH] SW erreur:",err);});
-  });
-}
-</script>
-<script>
-// Déconnexion automatique après 30 min d'inactivité
-var _timer = null;
-function _resetTimer() {
-  if (_timer) clearTimeout(_timer);
-  _timer = setTimeout(function() {
-    sessionStorage.clear();
-    alert('Session expirée par inactivité. Veuillez vous reconnecter.');
-    window.location.href = 'login.html';
-  }, 30 * 60 * 1000); // 30 minutes
-}
-['click','keypress','scroll','mousemove','touchstart'].forEach(function(e) {
-  document.addEventListener(e, _resetTimer, { passive: true });
-});
-_resetTimer();
-
-// Vérifier session valide
-(function() {
-  var user = sessionStorage.getItem('ilch_user');
-  if (!user) {
-    window.location.href = 'login.html';
-  }
-})();
 </script>
