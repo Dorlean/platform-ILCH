@@ -1107,7 +1107,7 @@ async function reprendreCoursDirectActif() {
       var data = d.data();
       currentCoursDirectId = d.id;
       document.getElementById('live-matiere-label').textContent = data.matiere;
-      document.getElementById('live-classe-label').textContent = data.classe === 'toutes' ? 'Toutes les classes' : (data.classe === 'ta' ? 'Terminale A' : 'Terminale B');
+      document.getElementById('live-classe-label').textContent = data.classe === 'toutes' ? 'Toutes les classes' : data.classe;
       document.getElementById('live-setup-block').style.display = 'none';
       document.getElementById('live-active-block').style.display = 'block';
       lancerJitsi(data.salle, (user.prenom || 'Professeur') + ' ' + (user.nom || ''));
@@ -1252,7 +1252,7 @@ async function reprendreExamenActif() {
       var d = snap.docs[0];
       var data = d.data();
       currentExamenId = d.id;
-      var classeLabel = data.classe === 'toutes' ? 'Toutes les classes' : (data.classe === 'ta' ? 'Terminale A' : 'Terminale B');
+      var classeLabel = data.classe === 'toutes' ? 'Toutes les classes' : data.classe;
       document.getElementById('exam-setup-block').style.display = 'none';
       document.getElementById('exam-live-block').style.display = 'block';
       document.getElementById('exam-live-titre').textContent = data.titre + ' · ' + classeLabel;
@@ -1310,6 +1310,18 @@ function tempsEcouleNotif(dateStr) {
   if (h < 24) return 'Il y a ' + h + 'h';
   return 'Il y a ' + Math.floor(h / 24) + 'j';
 }
+
+// ── CLASSES — source unique partagée depuis Firebase ────────
+onSnapshot(collection(db, 'classes'), function(snap) {
+  var classes = snap.docs.map(function(d) { return { id: d.id, ...d.data() }; });
+  localStorage.setItem('ilch_classes', JSON.stringify(classes));
+  var opts = classes.map(function(c) { return '<option value="' + c.nom + '">' + c.nom + '</option>'; }).join('') +
+    '<option value="toutes">Toutes les classes</option>';
+  var directSel = document.getElementById('direct-classe');
+  var examSel = document.getElementById('exam-classe');
+  if (directSel && classes.length) directSel.innerHTML = opts;
+  if (examSel && classes.length) examSel.innerHTML = opts;
+});
 
 onSnapshot(query(collection(db, 'notifications'), where('destinataireRole', 'in', [MON_ROLE_NOTIF, 'tous'])), function(snap) {
   var items = snap.docs.map(function(d) { return { id: d.id, ...d.data() }; });

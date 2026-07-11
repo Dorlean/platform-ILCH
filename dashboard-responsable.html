@@ -625,13 +625,13 @@ function applySection(sid){
 
 // Filtre élèves/profs par section
 function getElevesSection(){
-  var s=sections[currentSection];
-  return DB.get('eleves').filter(function(e){return s.classes.indexOf(e.classe)>-1;});
+  var classesSection = window.getClassesForSection ? window.getClassesForSection(currentSection) : sections[currentSection].classes;
+  return DB.get('eleves').filter(function(e){return classesSection.indexOf(e.classe)>-1;});
 }
 function getProfsSection(){
-  var s=sections[currentSection];
+  var classesSection = window.getClassesForSection ? window.getClassesForSection(currentSection) : sections[currentSection].classes;
   return DB.get('profs').filter(function(p){
-    return (p.classes||[]).some(function(c){return s.classes.indexOf(c)>-1;});
+    return (p.classes||[]).some(function(c){return classesSection.indexOf(c)>-1;});
   });
 }
 function getAbsSection(){
@@ -754,8 +754,8 @@ function openModal(id){document.getElementById(id).classList.add('open');updateC
 function closeModal(id){document.getElementById(id).classList.remove('open');}
 
 function updateClasseSelects(){
-  var s=sections[currentSection];
-  var classeOpts=s.classes.map(function(c){return '<option value="'+c+'">'+c+'</option>';}).join('');
+  var classesSection = window.getClassesForSection ? window.getClassesForSection(currentSection) : sections[currentSection].classes;
+  var classeOpts=classesSection.map(function(c){return '<option value="'+c+'">'+c+'</option>';}).join('');
   ['e-classe','p-cl-sel','filter-classe','abs-eleve'].forEach(function(id){
     var el=document.getElementById(id);
     if(!el) return;
@@ -1037,6 +1037,19 @@ function tempsEcouleNotif(dateStr) {
   return 'Il y a ' + Math.floor(h / 24) + 'j';
 }
 
+// ── CLASSES — synchronisées depuis la source unique Firebase ──
+onSnapshot(collection(db, 'classes'), function(snap) {
+  var classes = snap.docs.map(function(d) { return { id: d.id, ...d.data() }; });
+  localStorage.setItem('ilch_classes', JSON.stringify(classes));
+  if (typeof remplirClassesPresence === 'function') remplirClassesPresence();
+});
+
+window.getClassesForSection = function(sid) {
+  var classes = JSON.parse(localStorage.getItem('ilch_classes') || '[]');
+  var filtered = classes.filter(function(c) { return c.section === sid; }).map(function(c) { return c.nom; });
+  return filtered.length ? filtered : (sections[sid] ? sections[sid].classes : []);
+};
+
 onSnapshot(query(collection(db, 'notifications'), where('destinataireRole', 'in', [MON_ROLE_NOTIF, 'tous'])), function(snap) {
   var items = snap.docs.map(function(d) { return { id: d.id, ...d.data() }; });
   var moi = user ? user.id : null;
@@ -1075,7 +1088,8 @@ function remplirClassesPresence() {
   var meSel = document.getElementById('me-classe');
   var meDate = document.getElementById('me-date');
   var s = sections[currentSection];
-  var options = s.classes.map(function(c) { return '<option value="' + c + '">' + c + '</option>'; }).join('');
+  var classesSection = window.getClassesForSection ? window.getClassesForSection(currentSection) : s.classes;
+  var options = classesSection.map(function(c) { return '<option value="' + c + '">' + c + '</option>'; }).join('');
   if (sel) sel.innerHTML = options;
   if (meSel) meSel.innerHTML = options;
   if (dateInp && !dateInp.value) dateInp.value = new Date().toISOString().slice(0, 10);
@@ -1197,7 +1211,7 @@ window.afficherEffectif = async function(mode) {
   document.getElementById('eff-btn-mois').classList.toggle('btn-primary', mode === 'mois');
 
   var s = sections[currentSection];
-  var classes = s.classes;
+  var classes = window.getClassesForSection ? window.getClassesForSection(currentSection) : s.classes;
 
   try {
     var today = new Date().toISOString().slice(0, 10);

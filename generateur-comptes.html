@@ -269,7 +269,7 @@
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-import { getFirestore, collection, addDoc, getDocs, query, where } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+import { getFirestore, collection, addDoc, getDocs, query, where, onSnapshot } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
 const firebaseConfig = {
   apiKey: "AIzaSyDjrBnsTu7CNWnqeqSm29-arbs8MPoTBJ0",
@@ -281,6 +281,18 @@ const firebaseConfig = {
 };
 const app = initializeApp(firebaseConfig);
 const db  = getFirestore(app);
+
+// ── CLASSES — source unique partagée depuis Firebase ────────
+onSnapshot(collection(db, 'classes'), function(snap) {
+  var classes = snap.docs.map(function(d) { return d.data(); });
+  if (!classes.length) return;
+  var opts = '<option value="">-- Choisir --</option>' + classes.map(function(c) { return '<option value="' + c.nom + '">' + c.nom + '</option>'; }).join('');
+  var optsBatch = '<option value="">-- Choisir classe par défaut --</option>' + classes.map(function(c) { return '<option value="' + c.nom + '">' + c.nom + '</option>'; }).join('');
+  var elInp = document.getElementById('inp-classe');
+  var elBatch = document.getElementById('batch-classe');
+  if (elInp) elInp.innerHTML = opts;
+  if (elBatch) elBatch.innerHTML = optsBatch;
+});
 
 window.envoyerFirebase = async function() {
   var comptes = JSON.parse(localStorage.getItem('ilch_gen_comptes') || '[]');

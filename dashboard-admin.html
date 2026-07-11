@@ -1236,6 +1236,87 @@ onSnapshot(collection(db, 'parents'), function(snap) {
   if (typeof renderParents === 'function') renderParents();
 });
 
+// ── CLASSES — source unique partagée pour tout le site ─────
+var NIVEAU_VERS_SECTION = {
+  'Préscolaire': 'prescolaire',
+  'Fondamental Cycle 1 (1→3)': 'cycle1',
+  'Fondamental Cycle 2 (4→6)': 'cycle2',
+  'Fondamental Cycle 3 (7→9)': 'cycle3',
+  'Secondaire': 'secondaire',
+  'Terminale': 'secondaire'
+};
+var CLASSES_SEED_DEFAUT = [
+  { nom: 'Préscolaire', niveau: 'Préscolaire' },
+  { nom: '1ère Fondamentale', niveau: 'Fondamental Cycle 1 (1→3)' },
+  { nom: '2ème Fondamentale', niveau: 'Fondamental Cycle 1 (1→3)' },
+  { nom: '3ème Fondamentale', niveau: 'Fondamental Cycle 1 (1→3)' },
+  { nom: '4ème Fondamentale', niveau: 'Fondamental Cycle 2 (4→6)' },
+  { nom: '5ème Fondamentale', niveau: 'Fondamental Cycle 2 (4→6)' },
+  { nom: '6ème Fondamentale', niveau: 'Fondamental Cycle 2 (4→6)' },
+  { nom: '7ème Fondamentale', niveau: 'Fondamental Cycle 3 (7→9)' },
+  { nom: '8ème Fondamentale', niveau: 'Fondamental Cycle 3 (7→9)' },
+  { nom: '9ème Fondamentale', niveau: 'Fondamental Cycle 3 (7→9)' },
+  { nom: 'Nouveau Secondaire', niveau: 'Fondamental Cycle 3 (7→9)' },
+  { nom: 'Rhétorique', niveau: 'Secondaire' },
+  { nom: 'Terminale A', niveau: 'Terminale' },
+  { nom: 'Terminale B', niveau: 'Terminale' }
+];
+var classesSeedTente = false;
+
+onSnapshot(collection(db, 'classes'), function(snap) {
+  if (snap.empty && !classesSeedTente) {
+    classesSeedTente = true;
+    CLASSES_SEED_DEFAUT.forEach(function(c) {
+      addDoc(collection(db, 'classes'), {
+        nom: c.nom, niveau: c.niveau, section: NIVEAU_VERS_SECTION[c.niveau] || '',
+        dateCreation: new Date().toISOString()
+      }).catch(function(e) { console.error('Erreur seed classe:', e); });
+    });
+    return; // le prochain snapshot contiendra les classes créées
+  }
+  var classes = snap.docs.map(function(d) { return { id: d.id, ...d.data() }; });
+  localStorage.setItem('ilch_classes', JSON.stringify(classes));
+  if (typeof renderClasses === 'function') renderClasses();
+  if (typeof updateClasseSelects === 'function') updateClasseSelects();
+  if (typeof updateDashboard === 'function') updateDashboard();
+  if (typeof remplirClassesEffectifAdmin === 'function') remplirClassesEffectifAdmin(true);
+});
+
+window.saveClasseFirebase = async function(nom, niveau) {
+  try {
+    await addDoc(collection(db, 'classes'), {
+      nom: nom, niveau: niveau, section: NIVEAU_VERS_SECTION[niveau] || '',
+      dateCreation: new Date().toISOString()
+    });
+  } catch (e) { console.error('Erreur création classe:', e); }
+};
+
+window.supprimerClasseFirebase = async function(id) {
+  try { await deleteDoc(doc(db, 'classes', id)); } catch (e) { console.error(e); }
+};
+
+var _origSaveClasse = window.saveClasse;
+window.saveClasse = function() {
+  var nom = document.getElementById('cl-nom').value.trim();
+  var niveau = document.getElementById('cl-niveau').value;
+  if (!nom) { if (typeof showToast === 'function') showToast('Veuillez saisir un nom de classe'); return; }
+  saveClasseFirebase(nom, niveau);
+  if (typeof closeModal === 'function') closeModal('modal-classe');
+  document.getElementById('cl-nom').value = '';
+  if (typeof showToast === 'function') showToast('Classe "' + nom + '" créée');
+};
+
+var _origDeleteItem = window.deleteItem;
+window.deleteItem = function(store, id, cb) {
+  if (store === 'classes') {
+    if (!confirm('Supprimer cette classe ?')) return;
+    supprimerClasseFirebase(id);
+    if (typeof showToast === 'function') showToast('Classe supprimée');
+    return;
+  }
+  if (_origDeleteItem) _origDeleteItem(store, id, cb);
+};
+
 // ── Sauvegarder dans Firebase aussi ───────────────────────
 var origSaveEleve = window.saveEleve;
 window.saveEleve = async function() {
@@ -1290,13 +1371,12 @@ window.saveProf = async function() {
 console.log('✓ Dashboard Admin connecté à Firebase en temps réel');
 
 // ── EFFECTIF GLOBAL (saisie manuelle, toutes classes) ───────
-var TOUTES_CLASSES_ILCH = ['Préscolaire','1ère Fondamentale','2ème Fondamentale','3ème Fondamentale','4ème Fondamentale','5ème Fondamentale','6ème Fondamentale','7ème Fondamentale','8ème Fondamentale','9ème Fondamentale','Nouveau Secondaire','Rhétorique','Terminale A','Terminale B'];
-
-function remplirClassesEffectifAdmin() {
+function remplirClassesEffectifAdmin(force) {
   var sel = document.getElementById('me-classe-admin');
   var dateInp = document.getElementById('me-date-admin');
-  if (sel && !sel.innerHTML) {
-    sel.innerHTML = TOUTES_CLASSES_ILCH.map(function(c) { return '<option value="' + c + '">' + c + '</option>'; }).join('');
+  var classes = JSON.parse(localStorage.getItem('ilch_classes') || '[]');
+  if (sel && (force || !sel.innerHTML) && classes.length) {
+    sel.innerHTML = classes.map(function(c) { return '<option value="' + c.nom + '">' + c.nom + '</option>'; }).join('');
   }
   if (dateInp && !dateInp.value) dateInp.value = new Date().toISOString().slice(0, 10);
 }
