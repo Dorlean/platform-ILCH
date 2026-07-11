@@ -1,4 +1,10 @@
 // ===== Menu mobile =====
+function positionMobileMenu(){
+  var menu=document.getElementById('mobile-menu');
+  var nav=document.querySelector('nav');
+  if(!menu||!nav) return;
+  menu.style.top = nav.getBoundingClientRect().bottom + 'px';
+}
 function toggleMobileMenu(){
   var menu=document.getElementById('mobile-menu');
   var btn=document.getElementById('nav-hamburger');
@@ -8,10 +14,12 @@ function toggleMobileMenu(){
     menu.style.display='none';
     btn.classList.remove('open');
   } else {
+    positionMobileMenu();
     menu.style.display='flex';
     btn.classList.add('open');
   }
 }
+window.addEventListener('resize', positionMobileMenu);
 function closeMobileMenu(){
   var menu=document.getElementById('mobile-menu');
   var btn=document.getElementById('nav-hamburger');

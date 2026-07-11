@@ -16,6 +16,12 @@
 <body>
 
 <div class="dev-topbar">Développé par Dorlean Ricardo</div>
+<div class="contact-topbar">
+  <div class="contact-topbar-inner">
+    <span>📍 Thomassin 25 · Pétion-Ville, Haïti</span>
+    <span><a href="mailto:institutionlouischauvet@gmail.com">✉ institutionlouischauvet@gmail.com</a></span>
+  </div>
+</div>
 <header>
   <nav>
     <div class="nav-inner">
@@ -103,6 +109,64 @@
       </div>
     </div>
   </section>
+
+  <section class="section news-home-section">
+    <div class="container">
+      <div class="news-home-grid">
+        <div class="news-home-list">
+          <div class="section-label">Actualités</div>
+          <div class="gold-line" style="margin-bottom:1.5rem"></div>
+          <div id="news-home-items">
+            <div class="news-home-loading">Chargement des actualités...</div>
+          </div>
+        </div>
+        <div class="news-home-photo">
+          <img src="IMG12.jpg" alt="Vie à l'ILCH">
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+    import { getFirestore, collection, getDocs } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
+    const firebaseConfig = {
+      apiKey: "AIzaSyDjrBnsTu7CNWnqeqSm29-arbs8MPoTBJ0",
+      authDomain: "ilch-plateforme.firebaseapp.com",
+      projectId: "ilch-plateforme",
+      storageBucket: "ilch-plateforme.firebasestorage.app",
+      messagingSenderId: "978336467476",
+      appId: "1:978336467476:web:1f716ca406469a0c62b501"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+
+    var iconesType = { info: '📢', urgent: '🚨', event: '🎉' };
+
+    getDocs(collection(db, 'annonces')).then(function(snap) {
+      var items = snap.docs.map(function(d) { return d.data(); });
+      items.sort(function(a, b) { return new Date(b.dateCreation || 0) - new Date(a.dateCreation || 0); });
+      items = items.slice(0, 4);
+
+      var container = document.getElementById('news-home-items');
+      if (!items.length) {
+        container.innerHTML = '<div class="news-home-empty">Aucune actualité publiée pour le moment.</div>';
+        return;
+      }
+      container.innerHTML = items.map(function(a) {
+        var date = a.dateCreation ? new Date(a.dateCreation).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' }) : '';
+        return '<div class="news-home-item">' +
+          '<div class="news-home-thumb">' + (iconesType[a.type] || '📢') + '</div>' +
+          '<div class="news-home-body"><h4>' + (a.titre || '') + '</h4><p>' + (a.contenu || '') + '</p><div class="news-home-date">' + date + '</div></div>' +
+        '</div>';
+      }).join('');
+    }).catch(function(e) {
+      console.error('Erreur chargement actualités:', e);
+      document.getElementById('news-home-items').innerHTML = '<div class="news-home-empty">Actualités indisponibles pour le moment.</div>';
+    });
+  </script>
 
 </main>
 
