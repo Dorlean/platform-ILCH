@@ -339,6 +339,8 @@
     <div class="sb-section">Suivi</div>
     <div class="sb-item" onclick="showPanel('notes',this)"><i class="ti ti-chart-bar" aria-hidden="true"></i>Notes & résultats</div>
     <div class="sb-item" onclick="showPanel('absences',this)"><i class="ti ti-calendar-x" aria-hidden="true"></i>Absences<span class="sb-count" id="abs-count">0</span></div>
+    <div class="sb-item" onclick="showPanel('presence',this)"><i class="ti ti-clipboard-check" aria-hidden="true"></i>Prise de présence</div>
+    <div class="sb-item" onclick="showPanel('effectif',this);afficherEffectif('jour')"><i class="ti ti-users-group" aria-hidden="true"></i>Effectif de section</div>
     <div class="sb-section">Communication</div>
     <div class="sb-item" onclick="showPanel('messages',this)"><i class="ti ti-message" aria-hidden="true"></i>Messages</div>
     <div class="sb-item" onclick="showPanel('annonces',this)"><i class="ti ti-speakerphone" aria-hidden="true"></i>Annonces</div>
@@ -449,6 +451,47 @@
       <table class="data-table" id="tbl-absences">
         <thead><tr><th>Date</th><th>Élève</th><th>Matière</th><th>Type</th><th>Remarque</th><th>Actions</th></tr></thead>
         <tbody id="tbody-absences"></tbody>
+      </table>
+    </div>
+
+    <!-- PRISE DE PRÉSENCE -->
+    <div class="panel" id="panel-presence">
+      <div class="section-hdr"><div class="section-hdr-title">Prise de présence — <span id="pres-section-label">Ma section</span></div></div>
+      <div style="background:var(--white);border:0.5px solid var(--border);padding:1.25rem;margin-bottom:1.25rem">
+        <div class="form-row" style="margin-bottom:1rem">
+          <div class="form-group"><label>Classe</label><select id="pres-classe"></select></div>
+          <div class="form-group"><label>Date</label><input type="date" id="pres-date"></div>
+        </div>
+        <button class="btn btn-teal" onclick="chargerClassePresence()"><i class="ti ti-refresh" aria-hidden="true"></i>Charger la classe</button>
+      </div>
+      <div id="pres-liste-eleves"></div>
+      <div id="pres-actions" style="display:none;margin-top:1rem">
+        <button class="btn btn-teal" onclick="enregistrerPresences()"><i class="ti ti-check" aria-hidden="true"></i>Enregistrer les présences</button>
+      </div>
+    </div>
+
+    <!-- EFFECTIF DE SECTION -->
+    <div class="panel" id="panel-effectif">
+      <div class="section-hdr">
+        <div class="section-hdr-title">Effectif — <span id="eff-section-label">Ma section</span></div>
+        <div style="display:flex;gap:8px">
+          <button class="btn btn-sm" id="eff-btn-jour" onclick="afficherEffectif('jour')">Aujourd'hui</button>
+          <button class="btn btn-sm" id="eff-btn-mois" onclick="afficherEffectif('mois')">Ce mois-ci</button>
+        </div>
+      </div>
+
+      <div class="stats-row" style="margin-bottom:1.25rem">
+        <div class="stat-card"><div class="stat-label">Total filles</div><div class="stat-val" id="eff-total-filles">0</div></div>
+        <div class="stat-card"><div class="stat-label">Total garçons</div><div class="stat-val" id="eff-total-garcons">0</div></div>
+        <div class="stat-card"><div class="stat-label">Présents</div><div class="stat-val" style="color:var(--green,#16A34A)" id="eff-total-presents">0</div></div>
+        <div class="stat-card"><div class="stat-label">Absents</div><div class="stat-val" style="color:var(--red)" id="eff-total-absents">0</div></div>
+      </div>
+
+      <table class="data-table">
+        <thead><tr>
+          <th>Classe</th><th>Filles présentes</th><th>Filles absentes</th><th>Garçons présents</th><th>Garçons absents</th><th>Total filles</th><th>Total garçons</th><th>Total présents/absents</th>
+        </tr></thead>
+        <tbody id="eff-tbody"></tbody>
       </table>
     </div>
 
@@ -888,7 +931,7 @@ function showPanel(id,el){
   document.getElementById('panel-'+id).classList.add('active');
   document.querySelectorAll('.sb-item').forEach(function(i){i.classList.remove('active')});
   if(el)el.classList.add('active');
-  var titles={dash:'Tableau de bord',eleves:'Mes élèves',profs:'Mes professeurs',affectations:'Affectations',notes:'Notes & résultats',absences:'Absences',messages:'Messages',annonces:'Annonces',rapports:'Rapport de section'};
+  var titles={dash:'Tableau de bord',eleves:'Mes élèves',profs:'Mes professeurs',affectations:'Affectations',notes:'Notes & résultats',absences:'Absences',presence:'Prise de présence',effectif:'Effectif de section',messages:'Messages',annonces:'Annonces',rapports:'Rapport de section'};
   document.getElementById('topbar-title').textContent=titles[id]||id;
   renderAll();
 }
@@ -921,7 +964,7 @@ window.onload=function(){
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
 import {
   getFirestore, collection, doc,
-  addDoc, updateDoc, onSnapshot, query, where
+  addDoc, updateDoc, onSnapshot, query, where, getDocs, setDoc
 } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
 const firebaseConfig = {
@@ -1007,6 +1050,164 @@ onSnapshot(query(collection(db, 'notifications'), where('destinataireRole', 'in'
 });
 
 console.log('✓ Notifications connectées à Firebase');
+
+// ── PRISE DE PRÉSENCE ───────────────────────────────────────
+function remplirClassesPresence() {
+  var sel = document.getElementById('pres-classe');
+  var dateInp = document.getElementById('pres-date');
+  if (!sel) return;
+  var s = sections[currentSection];
+  sel.innerHTML = s.classes.map(function(c) { return '<option value="' + c + '">' + c + '</option>'; }).join('');
+  if (dateInp && !dateInp.value) dateInp.value = new Date().toISOString().slice(0, 10);
+  var lbl1 = document.getElementById('pres-section-label');
+  var lbl2 = document.getElementById('eff-section-label');
+  if (lbl1) lbl1.textContent = s.name;
+  if (lbl2) lbl2.textContent = s.name;
+}
+
+window.chargerClassePresence = async function() {
+  var classe = document.getElementById('pres-classe').value;
+  var date = document.getElementById('pres-date').value || new Date().toISOString().slice(0, 10);
+  var container = document.getElementById('pres-liste-eleves');
+  container.innerHTML = '<div style="font-size:12px;color:var(--muted);padding:1rem 0">Chargement...</div>';
+
+  try {
+    var elevesSnap = await getDocs(query(collection(db, 'eleves'), where('classe', '==', classe)));
+    var eleves = elevesSnap.docs.map(function(d) { return { id: d.id, ...d.data() }; });
+
+    if (!eleves.length) {
+      container.innerHTML = '<div style="font-size:12px;color:var(--muted);padding:1rem 0">Aucun élève dans cette classe.</div>';
+      document.getElementById('pres-actions').style.display = 'none';
+      return;
+    }
+
+    // Charger les présences déjà enregistrées pour cette date/classe
+    var presSnap = await getDocs(query(collection(db, 'presences'), where('classe', '==', classe), where('date', '==', date)));
+    var existant = {};
+    presSnap.docs.forEach(function(d) { existant[d.data().eleveId] = d.data().statut; });
+
+    container.innerHTML = eleves.map(function(el) {
+      var statut = existant[el.id] || 'present';
+      return '<div class="pres-row" data-eleve-id="' + el.id + '" data-eleve-nom="' + (el.prenom + ' ' + el.nom) + '" data-sexe="' + (el.sexe || 'F') + '" ' +
+        'style="display:flex;justify-content:space-between;align-items:center;padding:10px 14px;border:0.5px solid var(--border);margin-bottom:6px;background:var(--white)">' +
+        '<span style="font-size:12px">' + el.prenom + ' ' + el.nom + ' <span style="color:var(--muted);font-size:10px">(' + (el.sexe === 'G' ? 'Garçon' : 'Fille') + ')</span></span>' +
+        '<div>' +
+        '<button type="button" class="pres-toggle-btn present' + (statut === 'present' ? ' active' : '') + '" onclick="togglePresence(this,\'present\')" style="border:1px solid var(--green,#16A34A);color:' + (statut === 'present' ? '#fff' : 'var(--green,#16A34A)') + ';background:' + (statut === 'present' ? 'var(--green,#16A34A)' : 'transparent') + ';padding:5px 12px;font-size:11px;cursor:pointer;margin-right:6px">Présent</button>' +
+        '<button type="button" class="pres-toggle-btn absent' + (statut === 'absent' ? ' active' : '') + '" onclick="togglePresence(this,\'absent\')" style="border:1px solid var(--red);color:' + (statut === 'absent' ? '#fff' : 'var(--red)') + ';background:' + (statut === 'absent' ? 'var(--red)' : 'transparent') + ';padding:5px 12px;font-size:11px;cursor:pointer">Absent</button>' +
+        '</div></div>';
+    }).join('');
+    document.getElementById('pres-actions').style.display = 'block';
+  } catch (e) {
+    console.error('Erreur chargement classe:', e);
+    container.innerHTML = '<div style="font-size:12px;color:var(--red)">Erreur de chargement.</div>';
+  }
+};
+
+window.togglePresence = function(btn, statut) {
+  var row = btn.closest('.pres-row');
+  row.querySelectorAll('.pres-toggle-btn').forEach(function(b) {
+    b.classList.remove('active');
+    var isGreen = b.classList.contains('present');
+    b.style.background = 'transparent';
+    b.style.color = isGreen ? 'var(--green,#16A34A)' : 'var(--red)';
+  });
+  btn.classList.add('active');
+  btn.style.background = statut === 'present' ? 'var(--green,#16A34A)' : 'var(--red)';
+  btn.style.color = '#fff';
+  row.setAttribute('data-statut', statut);
+};
+
+window.enregistrerPresences = async function() {
+  var classe = document.getElementById('pres-classe').value;
+  var date = document.getElementById('pres-date').value;
+  var rows = document.querySelectorAll('#pres-liste-eleves .pres-row');
+  if (!rows.length) return;
+
+  try {
+    var promesses = [];
+    rows.forEach(function(row) {
+      var eleveId = row.getAttribute('data-eleve-id');
+      var eleveNom = row.getAttribute('data-eleve-nom');
+      var sexe = row.getAttribute('data-sexe');
+      var statut = row.getAttribute('data-statut') || (row.querySelector('.pres-toggle-btn.active') && row.querySelector('.pres-toggle-btn.active').classList.contains('absent') ? 'absent' : 'present');
+      var docId = eleveId + '_' + date;
+      promesses.push(setDoc(doc(db, 'presences', docId), {
+        eleveId: eleveId, eleveNom: eleveNom, sexe: sexe, classe: classe, date: date,
+        statut: statut, section: currentSection, dateEnregistrement: new Date().toISOString()
+      }));
+    });
+    await Promise.all(promesses);
+    if (typeof showToast === 'function') showToast('Présences enregistrées ✓');
+  } catch (e) {
+    console.error('Erreur enregistrement présences:', e);
+    if (typeof showToast === 'function') showToast("Erreur lors de l'enregistrement");
+  }
+};
+
+// ── EFFECTIF DE SECTION ─────────────────────────────────────
+window.afficherEffectif = async function(mode) {
+  document.getElementById('eff-btn-jour').classList.toggle('btn-primary', mode === 'jour');
+  document.getElementById('eff-btn-mois').classList.toggle('btn-primary', mode === 'mois');
+
+  var s = sections[currentSection];
+  var classes = s.classes;
+
+  try {
+    // Total inscrits par classe (filles / garçons)
+    var elevesSnap = await getDocs(query(collection(db, 'eleves'), where('classe', 'in', classes)));
+    var eleves = elevesSnap.docs.map(function(d) { return d.data(); });
+
+    // Présences de la période
+    var today = new Date().toISOString().slice(0, 10);
+    var presSnap;
+    if (mode === 'jour') {
+      presSnap = await getDocs(query(collection(db, 'presences'), where('date', '==', today)));
+    } else {
+      var moisPrefix = today.slice(0, 7); // YYYY-MM
+      var debut = moisPrefix + '-01';
+      var fin = moisPrefix + '-31';
+      presSnap = await getDocs(query(collection(db, 'presences'), where('date', '>=', debut), where('date', '<=', fin)));
+    }
+    var presences = presSnap.docs.map(function(d) { return d.data(); }).filter(function(p) { return classes.indexOf(p.classe) !== -1; });
+
+    var tbody = document.getElementById('eff-tbody');
+    var totalFillesG = 0, totalGarconsG = 0, totalPresG = 0, totalAbsG = 0;
+    var rows = classes.map(function(c) {
+      var elevesClasse = eleves.filter(function(e) { return e.classe === c; });
+      var totalFilles = elevesClasse.filter(function(e) { return e.sexe === 'F'; }).length;
+      var totalGarcons = elevesClasse.filter(function(e) { return e.sexe === 'G'; }).length;
+
+      var presClasse = presences.filter(function(p) { return p.classe === c; });
+      var fillesPresentes = presClasse.filter(function(p) { return p.sexe === 'F' && p.statut === 'present'; }).length;
+      var fillesAbsentes = presClasse.filter(function(p) { return p.sexe === 'F' && p.statut === 'absent'; }).length;
+      var garconsPresents = presClasse.filter(function(p) { return p.sexe === 'G' && p.statut === 'present'; }).length;
+      var garconsAbsents = presClasse.filter(function(p) { return p.sexe === 'G' && p.statut === 'absent'; }).length;
+
+      totalFillesG += totalFilles; totalGarconsG += totalGarcons;
+      totalPresG += fillesPresentes + garconsPresents;
+      totalAbsG += fillesAbsentes + garconsAbsents;
+
+      return '<tr><td>' + c + '</td><td>' + fillesPresentes + '</td><td>' + fillesAbsentes + '</td><td>' + garconsPresents + '</td><td>' + garconsAbsents + '</td>' +
+        '<td>' + totalFilles + '</td><td>' + totalGarcons + '</td><td>' + (fillesPresentes + garconsPresents) + ' / ' + (fillesAbsentes + garconsAbsents) + '</td></tr>';
+    });
+
+    tbody.innerHTML = rows.join('');
+    document.getElementById('eff-total-filles').textContent = totalFillesG;
+    document.getElementById('eff-total-garcons').textContent = totalGarconsG;
+    document.getElementById('eff-total-presents').textContent = totalPresG;
+    document.getElementById('eff-total-absents').textContent = totalAbsG;
+  } catch (e) {
+    console.error('Erreur chargement effectif:', e);
+  }
+};
+
+// Initialiser les classes du sélecteur de présence au chargement et au changement de section
+var _origApplySection = window.applySection;
+window.applySection = function(sid) {
+  if (_origApplySection) _origApplySection(sid);
+  remplirClassesPresence();
+};
+setTimeout(remplirClassesPresence, 300);
 </script>
 
 </body>
