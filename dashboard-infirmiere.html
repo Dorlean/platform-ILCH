@@ -47,6 +47,19 @@
     .main{flex:1;margin-left:230px;display:flex;flex-direction:column;min-height:100vh}
     .topbar{background:var(--white);border-bottom:1px solid var(--border);padding:0.75rem 1.75rem;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:40}
     .topbar-title{font-family:'Playfair Display',serif;font-size:16px;font-weight:700;color:var(--navy)}
+    .notif-bell-wrap{position:relative}
+    .notif-bell-btn{background:none;border:none;cursor:pointer;position:relative;padding:6px;color:var(--navy);font-size:19px;display:flex;align-items:center}
+    .notif-badge{position:absolute;top:0;right:0;background:var(--red,#DC2626);color:#fff;font-size:9px;font-weight:700;min-width:15px;height:15px;border-radius:50%;display:none;align-items:center;justify-content:center;padding:0 3px}
+    .notif-dropdown{display:none;position:absolute;top:36px;right:0;width:320px;max-height:400px;overflow-y:auto;background:#fff;border:0.5px solid var(--border,#E5E7EB);box-shadow:0 8px 24px rgba(0,0,0,0.12);z-index:200}
+    .notif-dropdown.show{display:block}
+    .notif-dropdown-header{padding:12px 16px;font-size:12px;font-weight:700;color:var(--navy);border-bottom:0.5px solid var(--border,#E5E7EB)}
+    .notif-item{padding:12px 16px;border-bottom:0.5px solid var(--gray-light,#F3F4F6);cursor:pointer;font-size:12px}
+    .notif-item:hover{background:var(--gray-light,#F3F4F6)}
+    .notif-item.unread{background:var(--gold-bg,#FAF3E8)}
+    .notif-item-title{font-weight:600;color:var(--navy);margin-bottom:2px}
+    .notif-item-msg{color:var(--gray,#6B7280);font-size:11px}
+    .notif-item-time{color:var(--muted,#9CA3AF);font-size:10px;margin-top:4px}
+    .notif-empty{padding:2rem 1rem;text-align:center;color:var(--muted,#9CA3AF);font-size:12px}
     .nurse-pill{background:var(--rose-bg);border:1px solid rgba(225,29,72,0.2);color:var(--rose);font-size:11px;font-weight:600;padding:5px 12px;display:flex;align-items:center;gap:5px}
     .content{flex:1;padding:1.5rem;background:var(--cream)}
     .panel{display:none}
@@ -171,7 +184,7 @@
     <div class="sb-item" onclick="showPanel('consultations',this)"><i class="ti ti-stethoscope" aria-hidden="true"></i>Consultations<span class="sb-count">3</span></div>
     <div class="sb-item" onclick="showPanel('nouvelle',this)"><i class="ti ti-plus" aria-hidden="true"></i>Nouvelle consultation</div>
     <div class="sb-item" onclick="showPanel('fiches',this)"><i class="ti ti-file-text" aria-hidden="true"></i>Fiches élèves</div>
-    <div class="sb-item" onclick="showPanel('stock',this)"><i class="ti ti-medicine-syrup" aria-hidden="true"></i>Stock médicaments</div>
+    <div class="sb-item" onclick="showPanel('stock',this)"><i class="ti ti-medicine-syrup" aria-hidden="true"></i>Stock médicaments<span class="sb-count" id="stock-alert" style="display:none"></span></div>
     <div class="sb-section">Communication</div>
     <div class="sb-item" onclick="showPanel('messages',this)"><i class="ti ti-message" aria-hidden="true"></i>Messages<span class="sb-count">2</span></div>
     <div class="sb-section">Rapports</div>
@@ -194,6 +207,13 @@
   <div class="topbar">
     <button class="hamburger" id="hamburger" onclick="toggleSidebar()" aria-label="Menu"><span></span><span></span><span></span></button><div class="topbar-title" id="topbar-title">Tableau de bord — Infirmerie</div>
     <div class="nurse-pill"><i class="ti ti-heart-rate-monitor" aria-hidden="true"></i>Service médical scolaire</div>
+    <div class="notif-bell-wrap">
+      <button class="notif-bell-btn" onclick="toggleNotifPanel()"><i class="ti ti-bell" aria-hidden="true"></i><span class="notif-badge" id="notif-badge">0</span></button>
+      <div class="notif-dropdown" id="notif-dropdown">
+        <div class="notif-dropdown-header">Notifications</div>
+        <div id="notif-list"></div>
+      </div>
+    </div>
   </div>
 
   <div class="content">
@@ -359,71 +379,17 @@
         <div class="section-hdr-title">Stock de l'infirmerie</div>
         <button class="btn-rose" onclick="showToast('Demande de réapprovisionnement envoyée')"><i class="ti ti-truck" aria-hidden="true"></i>Demander réapprovisionnement</button>
       </div>
-      <div class="stock-grid">
-        <div class="stock-card">
-          <div class="stock-name">Paracétamol 500mg</div>
-          <div class="stock-qty empty">3</div>
-          <div class="stock-unit">comprimés restants</div>
-          <div class="stock-bar-wrap"><div class="stock-bar" style="width:5%;background:var(--red)"></div></div>
-          <div style="font-size:10px;color:var(--red);margin-top:6px;font-weight:600">⚠️ Stock critique</div>
-        </div>
-        <div class="stock-card">
-          <div class="stock-name">Ibuprofène 200mg</div>
-          <div class="stock-qty ok">24</div>
-          <div class="stock-unit">comprimés restants</div>
-          <div class="stock-bar-wrap"><div class="stock-bar" style="width:60%;background:var(--green)"></div></div>
-          <div style="font-size:10px;color:var(--green);margin-top:6px">✓ Stock suffisant</div>
-        </div>
-        <div class="stock-card">
-          <div class="stock-name">Compresses stériles</div>
-          <div class="stock-qty low">8</div>
-          <div class="stock-unit">unités restantes</div>
-          <div class="stock-bar-wrap"><div class="stock-bar" style="width:20%;background:var(--orange)"></div></div>
-          <div style="font-size:10px;color:var(--orange);margin-top:6px;font-weight:600">⚡ Stock faible</div>
-        </div>
-        <div class="stock-card">
-          <div class="stock-name">Antiseptique (Bétadine)</div>
-          <div class="stock-qty low">1</div>
-          <div class="stock-unit">flacon restant</div>
-          <div class="stock-bar-wrap"><div class="stock-bar" style="width:10%;background:var(--orange)"></div></div>
-          <div style="font-size:10px;color:var(--orange);margin-top:6px;font-weight:600">⚡ Stock faible</div>
-        </div>
-        <div class="stock-card">
-          <div class="stock-name">Bandages élastiques</div>
-          <div class="stock-qty ok">12</div>
-          <div class="stock-unit">rouleaux restants</div>
-          <div class="stock-bar-wrap"><div class="stock-bar" style="width:60%;background:var(--green)"></div></div>
-          <div style="font-size:10px;color:var(--green);margin-top:6px">✓ Stock suffisant</div>
-        </div>
-        <div class="stock-card">
-          <div class="stock-name">Antihistaminique</div>
-          <div class="stock-qty ok">18</div>
-          <div class="stock-unit">comprimés restants</div>
-          <div class="stock-bar-wrap"><div class="stock-bar" style="width:45%;background:var(--green)"></div></div>
-          <div style="font-size:10px;color:var(--green);margin-top:6px">✓ Stock suffisant</div>
-        </div>
-        <div class="stock-card">
-          <div class="stock-name">Thermomètre</div>
-          <div class="stock-qty ok">2</div>
-          <div class="stock-unit">disponibles</div>
-          <div class="stock-bar-wrap"><div class="stock-bar" style="width:100%;background:var(--green)"></div></div>
-          <div style="font-size:10px;color:var(--green);margin-top:6px">✓ Disponible</div>
-        </div>
-        <div class="stock-card">
-          <div class="stock-name">Sérum physiologique</div>
-          <div class="stock-qty ok">6</div>
-          <div class="stock-unit">flacons restants</div>
-          <div class="stock-bar-wrap"><div class="stock-bar" style="width:40%;background:var(--green)"></div></div>
-          <div style="font-size:10px;color:var(--green);margin-top:6px">✓ Stock suffisant</div>
-        </div>
-        <div class="stock-card">
-          <div class="stock-name">Sparadraps</div>
-          <div class="stock-qty ok">30</div>
-          <div class="stock-unit">unités restantes</div>
-          <div class="stock-bar-wrap"><div class="stock-bar" style="width:75%;background:var(--green)"></div></div>
-          <div style="font-size:10px;color:var(--green);margin-top:6px">✓ Stock suffisant</div>
-        </div>
+
+      <div style="background:var(--white);border:0.5px solid var(--border);padding:1.25rem;margin-bottom:1.25rem;max-width:640px">
+        <div style="font-size:12px;font-weight:600;color:var(--navy);margin-bottom:10px">Ajouter un médicament / article</div>
+        <div class="form-group"><label>Nom</label><input type="text" id="med-nom" placeholder="ex: Paracétamol 500mg"></div>
+        <div class="form-group"><label>Quantité en stock</label><input type="number" id="med-qte" min="0" placeholder="ex: 20"></div>
+        <div class="form-group"><label>Unité</label><input type="text" id="med-unite" placeholder="ex: comprimés, flacons, rouleaux"></div>
+        <div class="form-group"><label>Seuil d'alerte (stock faible en dessous de)</label><input type="number" id="med-seuil" min="0" value="5"></div>
+        <button class="btn-rose" onclick="ajouterMedicamentUI()"><i class="ti ti-plus" aria-hidden="true"></i>Ajouter au stock</button>
       </div>
+
+      <div class="stock-grid" id="stock-grid-dynamic"></div>
     </div>
 
     <!-- MESSAGES -->
@@ -647,19 +613,98 @@ window.saveConsultationFirebase = async function(data) {
       ...data, createdAt: new Date().toISOString()
     });
     if (typeof showToast === 'function') showToast('Consultation enregistrée dans Firebase ✓');
+    if (typeof envoyerNotification === 'function') {
+      var nomEleve = data.eleveNom || data.nomEleve || 'Un élève';
+      envoyerNotification('admin', null, 'Nouvelle consultation', nomEleve + ' a été vu(e) à l\'infirmerie.', 'info');
+    }
     return ref.id;
   } catch(e) { console.error(e); return null; }
 };
 
 // ── MÉDICAMENTS en temps réel ─────────────────────────────
+var medsDejaNotifies = {};
+
 onSnapshot(collection(db, 'medicaments'), function(snap) {
   var meds = snap.docs.map(function(d) { return { id: d.id, ...d.data() }; });
   localStorage.setItem('ilch_inf_medicaments', JSON.stringify(meds));
-  // Alertes stock critique
-  var critiques = meds.filter(function(m) { return Number(m.stock) <= 5; });
+
+  // Alertes stock critique / faible
+  var critiques = meds.filter(function(m) { return Number(m.stock) <= Number(m.seuil || 5); });
   var badge = document.getElementById('stock-alert');
-  if (badge) badge.textContent = critiques.length || '';
+  if (badge) {
+    if (critiques.length) { badge.style.display = 'inline-flex'; badge.textContent = critiques.length; }
+    else { badge.style.display = 'none'; }
+  }
+
+  // Notification automatique (une seule fois par médicament tant que le stock reste bas)
+  critiques.forEach(function(m) {
+    if (!medsDejaNotifies[m.id]) {
+      medsDejaNotifies[m.id] = true;
+      var msg = m.nom + ' — ' + m.stock + ' ' + (m.unite || 'unité(s)') + ' restant(es)';
+      if (typeof envoyerNotification === 'function') {
+        envoyerNotification('infirmiere', null, 'Stock faible', msg, 'urgent');
+        envoyerNotification('admin', null, 'Stock infirmerie faible', msg, 'urgent');
+      }
+    }
+  });
+  // Réinitialiser le flag si le stock est remonté au-dessus du seuil
+  meds.forEach(function(m) {
+    if (Number(m.stock) > Number(m.seuil || 5) && medsDejaNotifies[m.id]) {
+      delete medsDejaNotifies[m.id];
+    }
+  });
+
+  // Rendu de la grille
+  var grid = document.getElementById('stock-grid-dynamic');
+  if (!grid) return;
+  if (!meds.length) {
+    grid.innerHTML = '<div style="grid-column:1/-1;font-size:12px;color:var(--muted);padding:1.5rem 0;text-align:center">Aucun médicament enregistré pour le moment.</div>';
+    return;
+  }
+  grid.innerHTML = meds.map(function(m) {
+    var seuil = Number(m.seuil || 5);
+    var stock = Number(m.stock);
+    var pct = Math.min(100, Math.round((stock / Math.max(seuil * 4, 1)) * 100));
+    var cls = 'ok', color = 'var(--green)', txt = '✓ Stock suffisant', txtColor = 'var(--green)';
+    if (stock <= 0) { cls = 'empty'; color = 'var(--red)'; txt = '⚠️ Stock épuisé'; txtColor = 'var(--red)'; }
+    else if (stock <= seuil) { cls = 'empty'; color = 'var(--red)'; txt = '⚠️ Stock critique'; txtColor = 'var(--red)'; }
+    else if (stock <= seuil * 2) { cls = 'low'; color = 'var(--orange)'; txt = '⚡ Stock faible'; txtColor = 'var(--orange)'; }
+    return '<div class="stock-card">' +
+      '<div class="stock-name">' + m.nom + '</div>' +
+      '<div class="stock-qty ' + cls + '">' + stock + '</div>' +
+      '<div class="stock-unit">' + (m.unite || 'unités') + ' restant(es)</div>' +
+      '<div class="stock-bar-wrap"><div class="stock-bar" style="width:' + pct + '%;background:' + color + '"></div></div>' +
+      '<div style="font-size:10px;color:' + txtColor + ';margin-top:6px;font-weight:600">' + txt + '</div>' +
+    '</div>';
+  }).join('');
 });
+
+window.ajouterMedicamentUI = async function() {
+  var nom = document.getElementById('med-nom').value.trim();
+  var qte = document.getElementById('med-qte').value;
+  var unite = document.getElementById('med-unite').value.trim();
+  var seuil = document.getElementById('med-seuil').value;
+
+  if (!nom || qte === '') {
+    if (typeof showToast === 'function') showToast('Veuillez indiquer au moins le nom et la quantité');
+    return;
+  }
+
+  try {
+    await addDoc(collection(db, 'medicaments'), {
+      nom: nom, stock: Number(qte), unite: unite || 'unités', seuil: Number(seuil || 5),
+      dateAjout: new Date().toISOString()
+    });
+    document.getElementById('med-nom').value = '';
+    document.getElementById('med-qte').value = '';
+    document.getElementById('med-unite').value = '';
+    document.getElementById('med-seuil').value = '5';
+    if (typeof showToast === 'function') showToast('Médicament ajouté au stock ✓');
+  } catch (e) {
+    console.error('Erreur ajout médicament:', e);
+    if (typeof showToast === 'function') showToast("Erreur lors de l'ajout");
+  }
+};
 
 window.updateMedicamentFirebase = async function(id, data) {
   try { await updateDoc(doc(db, 'medicaments', id), data); }
@@ -729,4 +774,74 @@ onSnapshot(query(collection(db, 'utilisateurs'), where('role', '==', 'infirmiere
     list.appendChild(row);
   });
 });
+
+// ── NOTIFICATIONS AUTOMATIQUES ──────────────────────────────
+var MON_ROLE_NOTIF = 'infirmiere';
+
+window.toggleNotifPanel = function() {
+  var dd = document.getElementById('notif-dropdown');
+  if (dd) dd.classList.toggle('show');
+};
+document.addEventListener('click', function(e) {
+  var wrap = document.querySelector('.notif-bell-wrap');
+  if (wrap && !wrap.contains(e.target)) {
+    var dd = document.getElementById('notif-dropdown');
+    if (dd) dd.classList.remove('show');
+  }
+});
+
+window.envoyerNotification = async function(destRole, destId, titre, message, type) {
+  try {
+    await addDoc(collection(db, 'notifications'), {
+      destinataireRole: destRole || null,
+      destinataireId: destId || null,
+      titre: titre, message: message, type: type || 'info',
+      lu: false, dateCreation: new Date().toISOString()
+    });
+  } catch (e) { console.error('Erreur notification:', e); }
+};
+
+window.marquerNotifLue = async function(id) {
+  try { await updateDoc(doc(db, 'notifications', id), { lu: true }); } catch (e) { console.error(e); }
+};
+
+function tempsEcouleNotif(dateStr) {
+  var diff = Date.now() - new Date(dateStr).getTime();
+  var min = Math.floor(diff / 60000);
+  if (min < 1) return "À l'instant";
+  if (min < 60) return 'Il y a ' + min + ' min';
+  var h = Math.floor(min / 60);
+  if (h < 24) return 'Il y a ' + h + 'h';
+  return 'Il y a ' + Math.floor(h / 24) + 'j';
+}
+
+onSnapshot(query(collection(db, 'notifications'), where('destinataireRole', 'in', [MON_ROLE_NOTIF, 'tous'])), function(snap) {
+  var items = snap.docs.map(function(d) { return { id: d.id, ...d.data() }; });
+  var moi = (typeof user !== 'undefined' && user) ? user.id : null;
+  var mine = items.filter(function(n) { return !n.destinataireId || n.destinataireId === moi; });
+  mine.sort(function(a, b) { return new Date(b.dateCreation) - new Date(a.dateCreation); });
+  mine = mine.slice(0, 30);
+
+  var nonLues = mine.filter(function(n) { return !n.lu; }).length;
+  var badge = document.getElementById('notif-badge');
+  if (badge) {
+    if (nonLues > 0) { badge.style.display = 'flex'; badge.textContent = nonLues > 9 ? '9+' : nonLues; }
+    else { badge.style.display = 'none'; }
+  }
+
+  var list = document.getElementById('notif-list');
+  if (!list) return;
+  if (!mine.length) {
+    list.innerHTML = '<div class="notif-empty">Aucune notification pour le moment.</div>';
+    return;
+  }
+  list.innerHTML = mine.map(function(n) {
+    return '<div class="notif-item' + (n.lu ? '' : ' unread') + '" onclick="marquerNotifLue(\'' + n.id + '\')">' +
+      '<div class="notif-item-title">' + n.titre + '</div>' +
+      '<div class="notif-item-msg">' + n.message + '</div>' +
+      '<div class="notif-item-time">' + tempsEcouleNotif(n.dateCreation) + '</div>' +
+    '</div>';
+  }).join('');
+});
+
 </script>

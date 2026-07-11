@@ -44,6 +44,19 @@
     .main{flex:1;margin-left:230px;display:flex;flex-direction:column;min-height:100vh}
     .topbar{background:var(--white);border-bottom:1px solid var(--border);padding:0.875rem 1.75rem;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:40}
     .topbar-title{font-family:'Playfair Display',serif;font-size:17px;font-weight:600;color:var(--navy)}
+    .notif-bell-wrap{position:relative}
+    .notif-bell-btn{background:none;border:none;cursor:pointer;position:relative;padding:6px;color:var(--navy);font-size:19px;display:flex;align-items:center}
+    .notif-badge{position:absolute;top:0;right:0;background:var(--red,#DC2626);color:#fff;font-size:9px;font-weight:700;min-width:15px;height:15px;border-radius:50%;display:none;align-items:center;justify-content:center;padding:0 3px}
+    .notif-dropdown{display:none;position:absolute;top:36px;right:0;width:320px;max-height:400px;overflow-y:auto;background:#fff;border:0.5px solid var(--border,#E5E7EB);box-shadow:0 8px 24px rgba(0,0,0,0.12);z-index:200}
+    .notif-dropdown.show{display:block}
+    .notif-dropdown-header{padding:12px 16px;font-size:12px;font-weight:700;color:var(--navy);border-bottom:0.5px solid var(--border,#E5E7EB)}
+    .notif-item{padding:12px 16px;border-bottom:0.5px solid var(--gray-light,#F3F4F6);cursor:pointer;font-size:12px}
+    .notif-item:hover{background:var(--gray-light,#F3F4F6)}
+    .notif-item.unread{background:var(--gold-bg,#FAF3E8)}
+    .notif-item-title{font-weight:600;color:var(--navy);margin-bottom:2px}
+    .notif-item-msg{color:var(--gray,#6B7280);font-size:11px}
+    .notif-item-time{color:var(--muted,#9CA3AF);font-size:10px;margin-top:4px}
+    .notif-empty{padding:2rem 1rem;text-align:center;color:var(--muted,#9CA3AF);font-size:12px}
     .notif-pill{display:flex;align-items:center;gap:6px;background:var(--gold-bg);border:1px solid var(--gold-light);padding:5px 12px}
     .notif-dot{width:7px;height:7px;background:var(--gold);border-radius:50%}
     .notif-text{font-size:12px;color:var(--navy);font-weight:500}
@@ -196,6 +209,13 @@
   <div class="topbar">
     <button class="hamburger" id="hamburger" onclick="toggleSidebar()" aria-label="Menu"><span></span><span></span><span></span></button><div class="topbar-title" id="topbar-title">Tableau de bord</div>
     <div class="notif-pill"><div class="notif-dot"></div><span class="notif-text">2 nouvelles annonces</span></div>
+    <div class="notif-bell-wrap">
+      <button class="notif-bell-btn" onclick="toggleNotifPanel()"><i class="ti ti-bell" aria-hidden="true"></i><span class="notif-badge" id="notif-badge">0</span></button>
+      <div class="notif-dropdown" id="notif-dropdown">
+        <div class="notif-dropdown-header">Notifications</div>
+        <div id="notif-list"></div>
+      </div>
+    </div>
   </div>
 
   <div class="content">
@@ -472,7 +492,7 @@ document.addEventListener("DOMContentLoaded",function(){
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
 import {
   getFirestore, collection, doc,
-  getDocs, onSnapshot, query, where
+  getDocs, onSnapshot, query, where, addDoc, updateDoc
 } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
 const firebaseConfig = {
@@ -567,4 +587,74 @@ if (user && user.id) {
 ecouterNotesEnfants();
 ecouterAbsencesEnfants();
 console.log('✓ Dashboard Parent connecté à Firebase');
+
+// ── NOTIFICATIONS AUTOMATIQUES ──────────────────────────────
+var MON_ROLE_NOTIF = 'parent';
+
+window.toggleNotifPanel = function() {
+  var dd = document.getElementById('notif-dropdown');
+  if (dd) dd.classList.toggle('show');
+};
+document.addEventListener('click', function(e) {
+  var wrap = document.querySelector('.notif-bell-wrap');
+  if (wrap && !wrap.contains(e.target)) {
+    var dd = document.getElementById('notif-dropdown');
+    if (dd) dd.classList.remove('show');
+  }
+});
+
+window.envoyerNotification = async function(destRole, destId, titre, message, type) {
+  try {
+    await addDoc(collection(db, 'notifications'), {
+      destinataireRole: destRole || null,
+      destinataireId: destId || null,
+      titre: titre, message: message, type: type || 'info',
+      lu: false, dateCreation: new Date().toISOString()
+    });
+  } catch (e) { console.error('Erreur notification:', e); }
+};
+
+window.marquerNotifLue = async function(id) {
+  try { await updateDoc(doc(db, 'notifications', id), { lu: true }); } catch (e) { console.error(e); }
+};
+
+function tempsEcouleNotif(dateStr) {
+  var diff = Date.now() - new Date(dateStr).getTime();
+  var min = Math.floor(diff / 60000);
+  if (min < 1) return "À l'instant";
+  if (min < 60) return 'Il y a ' + min + ' min';
+  var h = Math.floor(min / 60);
+  if (h < 24) return 'Il y a ' + h + 'h';
+  return 'Il y a ' + Math.floor(h / 24) + 'j';
+}
+
+onSnapshot(query(collection(db, 'notifications'), where('destinataireRole', 'in', [MON_ROLE_NOTIF, 'tous'])), function(snap) {
+  var items = snap.docs.map(function(d) { return { id: d.id, ...d.data() }; });
+  var moi = (typeof user !== 'undefined' && user) ? user.id : null;
+  var mine = items.filter(function(n) { return !n.destinataireId || n.destinataireId === moi; });
+  mine.sort(function(a, b) { return new Date(b.dateCreation) - new Date(a.dateCreation); });
+  mine = mine.slice(0, 30);
+
+  var nonLues = mine.filter(function(n) { return !n.lu; }).length;
+  var badge = document.getElementById('notif-badge');
+  if (badge) {
+    if (nonLues > 0) { badge.style.display = 'flex'; badge.textContent = nonLues > 9 ? '9+' : nonLues; }
+    else { badge.style.display = 'none'; }
+  }
+
+  var list = document.getElementById('notif-list');
+  if (!list) return;
+  if (!mine.length) {
+    list.innerHTML = '<div class="notif-empty">Aucune notification pour le moment.</div>';
+    return;
+  }
+  list.innerHTML = mine.map(function(n) {
+    return '<div class="notif-item' + (n.lu ? '' : ' unread') + '" onclick="marquerNotifLue(\'' + n.id + '\')">' +
+      '<div class="notif-item-title">' + n.titre + '</div>' +
+      '<div class="notif-item-msg">' + n.message + '</div>' +
+      '<div class="notif-item-time">' + tempsEcouleNotif(n.dateCreation) + '</div>' +
+    '</div>';
+  }).join('');
+});
+
 </script>
