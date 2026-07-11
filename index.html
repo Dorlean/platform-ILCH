@@ -127,6 +127,16 @@
     </div>
   </section>
 
+  <section class="history-immersive" style="background-image:url('IMG14.jpg')">
+    <div class="history-overlay"></div>
+    <div class="history-content">
+      <div class="section-label" style="color:var(--gold)">Notre histoire</div>
+      <h2>Une institution ancrée dans ses valeurs</h2>
+      <p>Former des élèves intellectuellement compétents, moralement solides et socialement responsables. Chaque décision pédagogique est prise dans l'intérêt supérieur de l'enfant.</p>
+      <a href="apropos.html" class="btn-primary">Découvrir notre histoire</a>
+    </div>
+  </section>
+
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
     import { getFirestore, collection, getDocs } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
@@ -148,7 +158,7 @@
     getDocs(collection(db, 'annonces')).then(function(snap) {
       var items = snap.docs.map(function(d) { return d.data(); });
       items.sort(function(a, b) { return new Date(b.dateCreation || 0) - new Date(a.dateCreation || 0); });
-      items = items.slice(0, 4);
+      items = items.slice(0, 8);
 
       var container = document.getElementById('news-home-items');
       if (!items.length) {
