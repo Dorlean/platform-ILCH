@@ -480,6 +480,23 @@
         </div>
       </div>
 
+      <div style="background:var(--white);border:0.5px solid var(--border);padding:1.25rem;margin-bottom:1.25rem">
+        <div style="font-size:12px;font-weight:600;color:var(--navy);margin-bottom:12px">Saisir l'effectif manuellement</div>
+        <div class="form-row" style="margin-bottom:10px">
+          <div class="form-group"><label>Classe</label><select id="me-classe"></select></div>
+          <div class="form-group"><label>Date</label><input type="date" id="me-date"></div>
+        </div>
+        <div class="form-row" style="margin-bottom:10px">
+          <div class="form-group"><label>Filles présentes</label><input type="number" id="me-fp" min="0" value="0"></div>
+          <div class="form-group"><label>Filles absentes</label><input type="number" id="me-fa" min="0" value="0"></div>
+        </div>
+        <div class="form-row" style="margin-bottom:10px">
+          <div class="form-group"><label>Garçons présents</label><input type="number" id="me-gp" min="0" value="0"></div>
+          <div class="form-group"><label>Garçons absents</label><input type="number" id="me-ga" min="0" value="0"></div>
+        </div>
+        <button class="btn btn-teal" onclick="enregistrerEffectifManuel()"><i class="ti ti-check" aria-hidden="true"></i>Enregistrer l'effectif</button>
+      </div>
+
       <div class="stats-row" style="margin-bottom:1.25rem">
         <div class="stat-card"><div class="stat-label">Total filles</div><div class="stat-val" id="eff-total-filles">0</div></div>
         <div class="stat-card"><div class="stat-label">Total garçons</div><div class="stat-val" id="eff-total-garcons">0</div></div>
@@ -1055,15 +1072,45 @@ console.log('✓ Notifications connectées à Firebase');
 function remplirClassesPresence() {
   var sel = document.getElementById('pres-classe');
   var dateInp = document.getElementById('pres-date');
-  if (!sel) return;
+  var meSel = document.getElementById('me-classe');
+  var meDate = document.getElementById('me-date');
   var s = sections[currentSection];
-  sel.innerHTML = s.classes.map(function(c) { return '<option value="' + c + '">' + c + '</option>'; }).join('');
+  var options = s.classes.map(function(c) { return '<option value="' + c + '">' + c + '</option>'; }).join('');
+  if (sel) sel.innerHTML = options;
+  if (meSel) meSel.innerHTML = options;
   if (dateInp && !dateInp.value) dateInp.value = new Date().toISOString().slice(0, 10);
+  if (meDate && !meDate.value) meDate.value = new Date().toISOString().slice(0, 10);
   var lbl1 = document.getElementById('pres-section-label');
   var lbl2 = document.getElementById('eff-section-label');
   if (lbl1) lbl1.textContent = s.name;
   if (lbl2) lbl2.textContent = s.name;
 }
+
+window.enregistrerEffectifManuel = async function() {
+  var classe = document.getElementById('me-classe').value;
+  var date = document.getElementById('me-date').value || new Date().toISOString().slice(0, 10);
+  var fp = Number(document.getElementById('me-fp').value || 0);
+  var fa = Number(document.getElementById('me-fa').value || 0);
+  var gp = Number(document.getElementById('me-gp').value || 0);
+  var ga = Number(document.getElementById('me-ga').value || 0);
+
+  if (!classe) { if (typeof showToast === 'function') showToast('Veuillez choisir une classe'); return; }
+
+  try {
+    var docId = classe.replace(/\s+/g, '_') + '_' + date;
+    await setDoc(doc(db, 'effectifManuel', docId), {
+      classe: classe, date: date, section: currentSection,
+      fillesPresentes: fp, fillesAbsentes: fa, garconsPresents: gp, garconsAbsents: ga,
+      dateEnregistrement: new Date().toISOString()
+    });
+    if (typeof showToast === 'function') showToast('Effectif enregistré ✓');
+    var modeActif = (document.getElementById('eff-btn-mois').classList.contains('btn-primary')) ? 'mois' : 'jour';
+    afficherEffectif(modeActif);
+  } catch (e) {
+    console.error('Erreur enregistrement effectif:', e);
+    if (typeof showToast === 'function') showToast("Erreur lors de l'enregistrement");
+  }
+};
 
 window.chargerClassePresence = async function() {
   var classe = document.getElementById('pres-classe').value;
@@ -1144,7 +1191,7 @@ window.enregistrerPresences = async function() {
   }
 };
 
-// ── EFFECTIF DE SECTION ─────────────────────────────────────
+// ── EFFECTIF DE SECTION (saisie manuelle) ───────────────────
 window.afficherEffectif = async function(mode) {
   document.getElementById('eff-btn-jour').classList.toggle('btn-primary', mode === 'jour');
   document.getElementById('eff-btn-mois').classList.toggle('btn-primary', mode === 'mois');
@@ -1153,35 +1200,27 @@ window.afficherEffectif = async function(mode) {
   var classes = s.classes;
 
   try {
-    // Total inscrits par classe (filles / garçons)
-    var elevesSnap = await getDocs(query(collection(db, 'eleves'), where('classe', 'in', classes)));
-    var eleves = elevesSnap.docs.map(function(d) { return d.data(); });
-
-    // Présences de la période
     var today = new Date().toISOString().slice(0, 10);
-    var presSnap;
+    var effSnap;
     if (mode === 'jour') {
-      presSnap = await getDocs(query(collection(db, 'presences'), where('date', '==', today)));
+      effSnap = await getDocs(query(collection(db, 'effectifManuel'), where('date', '==', today)));
     } else {
-      var moisPrefix = today.slice(0, 7); // YYYY-MM
-      var debut = moisPrefix + '-01';
-      var fin = moisPrefix + '-31';
-      presSnap = await getDocs(query(collection(db, 'presences'), where('date', '>=', debut), where('date', '<=', fin)));
+      var moisPrefix = today.slice(0, 7);
+      effSnap = await getDocs(query(collection(db, 'effectifManuel'), where('date', '>=', moisPrefix + '-01'), where('date', '<=', moisPrefix + '-31')));
     }
-    var presences = presSnap.docs.map(function(d) { return d.data(); }).filter(function(p) { return classes.indexOf(p.classe) !== -1; });
+    var entries = effSnap.docs.map(function(d) { return d.data(); }).filter(function(e) { return classes.indexOf(e.classe) !== -1; });
 
     var tbody = document.getElementById('eff-tbody');
     var totalFillesG = 0, totalGarconsG = 0, totalPresG = 0, totalAbsG = 0;
     var rows = classes.map(function(c) {
-      var elevesClasse = eleves.filter(function(e) { return e.classe === c; });
-      var totalFilles = elevesClasse.filter(function(e) { return e.sexe === 'F'; }).length;
-      var totalGarcons = elevesClasse.filter(function(e) { return e.sexe === 'G'; }).length;
-
-      var presClasse = presences.filter(function(p) { return p.classe === c; });
-      var fillesPresentes = presClasse.filter(function(p) { return p.sexe === 'F' && p.statut === 'present'; }).length;
-      var fillesAbsentes = presClasse.filter(function(p) { return p.sexe === 'F' && p.statut === 'absent'; }).length;
-      var garconsPresents = presClasse.filter(function(p) { return p.sexe === 'G' && p.statut === 'present'; }).length;
-      var garconsAbsents = presClasse.filter(function(p) { return p.sexe === 'G' && p.statut === 'absent'; }).length;
+      var entreesClasse = entries.filter(function(e) { return e.classe === c; });
+      // Pour le mode "mois", on additionne toutes les saisies du mois ; pour "jour", il n'y a qu'une entrée
+      var fillesPresentes = entreesClasse.reduce(function(s, e) { return s + Number(e.fillesPresentes || 0); }, 0);
+      var fillesAbsentes = entreesClasse.reduce(function(s, e) { return s + Number(e.fillesAbsentes || 0); }, 0);
+      var garconsPresents = entreesClasse.reduce(function(s, e) { return s + Number(e.garconsPresents || 0); }, 0);
+      var garconsAbsents = entreesClasse.reduce(function(s, e) { return s + Number(e.garconsAbsents || 0); }, 0);
+      var totalFilles = fillesPresentes + fillesAbsentes;
+      var totalGarcons = garconsPresents + garconsAbsents;
 
       totalFillesG += totalFilles; totalGarconsG += totalGarcons;
       totalPresG += fillesPresentes + garconsPresents;
@@ -1191,7 +1230,7 @@ window.afficherEffectif = async function(mode) {
         '<td>' + totalFilles + '</td><td>' + totalGarcons + '</td><td>' + (fillesPresentes + garconsPresents) + ' / ' + (fillesAbsentes + garconsAbsents) + '</td></tr>';
     });
 
-    tbody.innerHTML = rows.join('');
+    tbody.innerHTML = rows.join('') || '<tr><td colspan="8" style="text-align:center;color:var(--muted);padding:1.5rem">Aucune donnée saisie pour cette période.</td></tr>';
     document.getElementById('eff-total-filles').textContent = totalFillesG;
     document.getElementById('eff-total-garcons').textContent = totalGarconsG;
     document.getElementById('eff-total-presents').textContent = totalPresG;

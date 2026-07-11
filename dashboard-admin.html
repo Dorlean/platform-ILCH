@@ -513,6 +513,23 @@
         </div>
       </div>
 
+      <div style="background:var(--white);border:0.5px solid var(--border);padding:1.25rem;margin-bottom:1.25rem">
+        <div style="font-size:12px;font-weight:600;color:var(--navy);margin-bottom:12px">Saisir l'effectif manuellement</div>
+        <div class="form-row" style="margin-bottom:10px">
+          <div class="form-group"><label>Classe</label><select id="me-classe-admin"></select></div>
+          <div class="form-group"><label>Date</label><input type="date" id="me-date-admin"></div>
+        </div>
+        <div class="form-row" style="margin-bottom:10px">
+          <div class="form-group"><label>Filles présentes</label><input type="number" id="me-fp-admin" min="0" value="0"></div>
+          <div class="form-group"><label>Filles absentes</label><input type="number" id="me-fa-admin" min="0" value="0"></div>
+        </div>
+        <div class="form-row" style="margin-bottom:10px">
+          <div class="form-group"><label>Garçons présents</label><input type="number" id="me-gp-admin" min="0" value="0"></div>
+          <div class="form-group"><label>Garçons absents</label><input type="number" id="me-ga-admin" min="0" value="0"></div>
+        </div>
+        <button class="btn btn-gold" onclick="enregistrerEffectifManuelAdmin()"><i class="ti ti-check" aria-hidden="true"></i>Enregistrer l'effectif</button>
+      </div>
+
       <div class="stats-row" style="margin-bottom:1.25rem">
         <div class="stat-card"><div class="stat-label">Total filles</div><div class="stat-val" id="eff-total-filles">0</div></div>
         <div class="stat-card"><div class="stat-label">Total garçons</div><div class="stat-val" id="eff-total-garcons">0</div></div>
@@ -1178,7 +1195,7 @@ if("serviceWorker" in navigator){
 // ── Connexion Firebase pour Dashboard Admin ────────────────
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
 import {
-  getFirestore, collection, getDocs, addDoc, updateDoc, deleteDoc, doc, onSnapshot, query, where
+  getFirestore, collection, getDocs, addDoc, updateDoc, deleteDoc, doc, onSnapshot, query, where, setDoc
 } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
 const firebaseConfig = {
@@ -1272,38 +1289,71 @@ window.saveProf = async function() {
 
 console.log('✓ Dashboard Admin connecté à Firebase en temps réel');
 
-// ── EFFECTIF GLOBAL (toutes classes) ────────────────────────
+// ── EFFECTIF GLOBAL (saisie manuelle, toutes classes) ───────
+var TOUTES_CLASSES_ILCH = ['Préscolaire','1ère Fondamentale','2ème Fondamentale','3ème Fondamentale','4ème Fondamentale','5ème Fondamentale','6ème Fondamentale','7ème Fondamentale','8ème Fondamentale','9ème Fondamentale','Nouveau Secondaire','Rhétorique','Terminale A','Terminale B'];
+
+function remplirClassesEffectifAdmin() {
+  var sel = document.getElementById('me-classe-admin');
+  var dateInp = document.getElementById('me-date-admin');
+  if (sel && !sel.innerHTML) {
+    sel.innerHTML = TOUTES_CLASSES_ILCH.map(function(c) { return '<option value="' + c + '">' + c + '</option>'; }).join('');
+  }
+  if (dateInp && !dateInp.value) dateInp.value = new Date().toISOString().slice(0, 10);
+}
+setTimeout(remplirClassesEffectifAdmin, 300);
+
+window.enregistrerEffectifManuelAdmin = async function() {
+  var classe = document.getElementById('me-classe-admin').value;
+  var date = document.getElementById('me-date-admin').value || new Date().toISOString().slice(0, 10);
+  var fp = Number(document.getElementById('me-fp-admin').value || 0);
+  var fa = Number(document.getElementById('me-fa-admin').value || 0);
+  var gp = Number(document.getElementById('me-gp-admin').value || 0);
+  var ga = Number(document.getElementById('me-ga-admin').value || 0);
+
+  if (!classe) { if (typeof showToast === 'function') showToast('Veuillez choisir une classe'); return; }
+
+  try {
+    var docId = classe.replace(/\s+/g, '_') + '_' + date;
+    await setDoc(doc(db, 'effectifManuel', docId), {
+      classe: classe, date: date, section: 'admin',
+      fillesPresentes: fp, fillesAbsentes: fa, garconsPresents: gp, garconsAbsents: ga,
+      dateEnregistrement: new Date().toISOString()
+    });
+    if (typeof showToast === 'function') showToast('Effectif enregistré ✓');
+    var modeActif = document.getElementById('eff-btn-mois').classList.contains('btn-primary') ? 'mois' : 'jour';
+    afficherEffectifGlobal(modeActif);
+  } catch (e) {
+    console.error('Erreur enregistrement effectif:', e);
+    if (typeof showToast === 'function') showToast("Erreur lors de l'enregistrement");
+  }
+};
+
 window.afficherEffectifGlobal = async function(mode) {
   document.getElementById('eff-btn-jour').classList.toggle('btn-primary', mode === 'jour');
   document.getElementById('eff-btn-mois').classList.toggle('btn-primary', mode === 'mois');
 
   try {
-    var elevesSnap = await getDocs(collection(db, 'eleves'));
-    var eleves = elevesSnap.docs.map(function(d) { return d.data(); });
-    var classes = Array.from(new Set(eleves.map(function(e) { return e.classe; }))).filter(Boolean).sort();
-
     var today = new Date().toISOString().slice(0, 10);
-    var presSnap;
+    var effSnap;
     if (mode === 'jour') {
-      presSnap = await getDocs(query(collection(db, 'presences'), where('date', '==', today)));
+      effSnap = await getDocs(query(collection(db, 'effectifManuel'), where('date', '==', today)));
     } else {
       var moisPrefix = today.slice(0, 7);
-      presSnap = await getDocs(query(collection(db, 'presences'), where('date', '>=', moisPrefix + '-01'), where('date', '<=', moisPrefix + '-31')));
+      effSnap = await getDocs(query(collection(db, 'effectifManuel'), where('date', '>=', moisPrefix + '-01'), where('date', '<=', moisPrefix + '-31')));
     }
-    var presences = presSnap.docs.map(function(d) { return d.data(); });
+    var entries = effSnap.docs.map(function(d) { return d.data(); });
+    var classesAvecDonnees = Array.from(new Set(entries.map(function(e) { return e.classe; }))).sort();
 
     var tbody = document.getElementById('eff-tbody');
     var totalFillesG = 0, totalGarconsG = 0, totalPresG = 0, totalAbsG = 0;
-    var rows = classes.map(function(c) {
-      var elevesClasse = eleves.filter(function(e) { return e.classe === c; });
-      var totalFilles = elevesClasse.filter(function(e) { return e.sexe === 'F'; }).length;
-      var totalGarcons = elevesClasse.filter(function(e) { return e.sexe === 'G'; }).length;
-
-      var presClasse = presences.filter(function(p) { return p.classe === c; });
-      var fillesPresentes = presClasse.filter(function(p) { return p.sexe === 'F' && p.statut === 'present'; }).length;
-      var fillesAbsentes = presClasse.filter(function(p) { return p.sexe === 'F' && p.statut === 'absent'; }).length;
-      var garconsPresents = presClasse.filter(function(p) { return p.sexe === 'G' && p.statut === 'present'; }).length;
-      var garconsAbsents = presClasse.filter(function(p) { return p.sexe === 'G' && p.statut === 'absent'; }).length;
+    var rows = classesAvecDonnees.map(function(c) {
+      var entreesClasse = entries.filter(function(e) { return e.classe === c; });
+      var fillesPresentes = entreesClasse.reduce(function(s, e) { return s + Number(e.fillesPresentes || 0); }, 0);
+      var fillesAbsentes = entreesClasse.reduce(function(s, e) { return s + Number(e.fillesAbsentes || 0); }, 0);
+      var garconsPresents = entreesClasse.reduce(function(s, e) { return s + Number(e.garconsPresents || 0); }, 0);
+      var garconsAbsents = entreesClasse.reduce(function(s, e) { return s + Number(e.garconsAbsents || 0); }, 0);
+      var totalFilles = fillesPresentes + fillesAbsentes;
+      var totalGarcons = garconsPresents + garconsAbsents;
 
       totalFillesG += totalFilles; totalGarconsG += totalGarcons;
       totalPresG += fillesPresentes + garconsPresents;
@@ -1313,7 +1363,7 @@ window.afficherEffectifGlobal = async function(mode) {
         '<td>' + totalFilles + '</td><td>' + totalGarcons + '</td><td>' + (fillesPresentes + garconsPresents) + ' / ' + (fillesAbsentes + garconsAbsents) + '</td></tr>';
     });
 
-    tbody.innerHTML = rows.join('') || '<tr><td colspan="8" style="text-align:center;color:var(--muted);padding:1.5rem">Aucune donnée disponible.</td></tr>';
+    tbody.innerHTML = rows.join('') || '<tr><td colspan="8" style="text-align:center;color:var(--muted);padding:1.5rem">Aucune donnée saisie pour cette période.</td></tr>';
     document.getElementById('eff-total-filles').textContent = totalFillesG;
     document.getElementById('eff-total-garcons').textContent = totalGarconsG;
     document.getElementById('eff-total-presents').textContent = totalPresG;
