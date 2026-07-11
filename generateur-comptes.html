@@ -270,6 +270,7 @@
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
 import { getFirestore, collection, addDoc, getDocs, query, where, onSnapshot } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+import { getAuth, createUserWithEmailAndPassword, signOut } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
 
 const firebaseConfig = {
   apiKey: "AIzaSyDjrBnsTu7CNWnqeqSm29-arbs8MPoTBJ0",
@@ -281,6 +282,17 @@ const firebaseConfig = {
 };
 const app = initializeApp(firebaseConfig);
 const db  = getFirestore(app);
+function identifiantVersEmail(id) {
+  return id.trim().toLowerCase().replace(/[^a-z0-9.]/g, '') + '@ilch.local';
+}
+async function creerCompteAuthSansDeconnexion(email, password) {
+  var secondaryApp = initializeApp(firebaseConfig, 'Secondary-' + Date.now() + '-' + Math.random().toString(36).slice(2));
+  var secondaryAuth = getAuth(secondaryApp);
+  var cred = await createUserWithEmailAndPassword(secondaryAuth, email, password);
+  var uid = cred.user.uid;
+  await signOut(secondaryAuth);
+  return uid;
+}
 
 // ── CLASSES — source unique partagée depuis Firebase ────────
 onSnapshot(collection(db, 'classes'), function(snap) {
@@ -332,6 +344,12 @@ window.envoyerFirebase = async function() {
       if (!existing.empty) {
         addLog('⚠️ Déjà existant : ' + c.prenom + ' ' + c.nom, '#FCD34D');
       } else {
+        var authUid = null;
+        try {
+          authUid = await creerCompteAuthSansDeconnexion(identifiantVersEmail(c.identifiant), c.motDePasse);
+        } catch (authErr) {
+          addLog('⚠️ Compte sécurisé non créé pour ' + c.identifiant + ' (' + authErr.code + ')', '#FCD34D');
+        }
         await addDoc(collection(db, col), {
           prenom: c.prenom,
           nom: c.nom,
@@ -340,11 +358,12 @@ window.envoyerFirebase = async function() {
           identifiant: c.identifiant,
           motDePasse: c.motDePasse,
           role: c.role,
+          authUid: authUid,
           createdAt: new Date().toISOString()
         });
         ok++;
         document.getElementById('fb-cnt-ok').textContent = ok;
-        addLog('✅ Compte créé : ' + c.prenom + ' ' + c.nom + ' (' + c.identifiant + ')', '#4ADE80');
+        addLog('✅ Compte créé et sécurisé : ' + c.prenom + ' ' + c.nom + ' (' + c.identifiant + ')', '#4ADE80');
       }
     } catch(e) {
       errors++;

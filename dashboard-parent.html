@@ -490,6 +490,7 @@ document.addEventListener("DOMContentLoaded",function(){
 <!-- Script Firebase pour Dashboard Parent -->
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
 import {
   getFirestore, collection, doc,
   getDocs, onSnapshot, query, where, addDoc, updateDoc
@@ -506,6 +507,16 @@ const firebaseConfig = {
 
 const app = initializeApp(firebaseConfig);
 const db  = getFirestore(app);
+
+// ── VERROU DE SÉCURITÉ — session Firebase Auth obligatoire ──
+const auth = getAuth(app);
+onAuthStateChanged(auth, function(fbUser) {
+  if (!fbUser) {
+    sessionStorage.removeItem('ilch_user');
+    sessionStorage.removeItem('ilch_role');
+    window.location.href = 'login.html';
+  }
+});
 const user = JSON.parse(sessionStorage.getItem('ilch_user') || '{}');
 
 // ── Récupérer les enfants du parent ──────────────────────

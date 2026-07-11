@@ -132,6 +132,7 @@
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
 import { getFirestore, collection, getDocs, query, where } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+import { getAuth, signInWithEmailAndPassword, signOut } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
 
 const firebaseConfig = {
   apiKey: "AIzaSyDjrBnsTu7CNWnqeqSm29-arbs8MPoTBJ0",
@@ -144,6 +145,12 @@ const firebaseConfig = {
 
 const app = initializeApp(firebaseConfig);
 const db  = getFirestore(app);
+const auth = getAuth(app);
+
+// ── Domaine synthétique pour transformer un identifiant en email Firebase Auth
+function identifiantVersEmail(id) {
+  return id.trim().toLowerCase().replace(/[^a-z0-9.]/g, '') + '@ilch.local';
+}
 
 // Test connexion Firebase
 try {
@@ -199,14 +206,18 @@ async function doLogin() {
   btn.insertAdjacentHTML('beforeend','<div class="spinner"></div>');
 
   try {
-    // Collections à vérifier selon le rôle
+    // 1. Authentification réelle via Firebase Auth
+    const email = identifiantVersEmail(id);
+    await signInWithEmailAndPassword(auth, email, pw);
+
+    // 2. Récupérer le profil correspondant (nom, classe, rôle, etc.)
     const cols = currentRole==='eleve'  ? ['eleves'] :
                  currentRole==='prof'   ? ['professeurs'] :
                  currentRole==='parent' ? ['parents'] : ['utilisateurs'];
 
     let found = false;
     for (const col of cols) {
-      const q    = query(collection(db, col), where('identifiant','==',id), where('motDePasse','==',pw));
+      const q    = query(collection(db, col), where('identifiant','==',id));
       const snap = await getDocs(q);
       if (!snap.empty) {
         const user = {id: snap.docs[0].id, ...snap.docs[0].data(), role: currentRole};
@@ -220,26 +231,20 @@ async function doLogin() {
     }
 
     if (!found) {
-      // Fallback localStorage
-      const all = [
-        ...JSON.parse(localStorage.getItem('ilch_eleves')||'[]'),
-        ...JSON.parse(localStorage.getItem('ilch_profs')||'[]'),
-        ...JSON.parse(localStorage.getItem('ilch_parents')||'[]'),
-        ...JSON.parse(localStorage.getItem('ilch_utilisateurs')||'[]'),
-      ];
-      const u = all.find(x => x.identifiant===id && x.motDePasse===pw);
-      if (u) {
-        sessionStorage.setItem('ilch_user', JSON.stringify({...u, role: currentRole}));
-        sessionStorage.setItem('ilch_role', currentRole);
-        showOk('Connexion réussie ! Redirection...');
-        setTimeout(() => window.location.href = roleConfig[currentRole].dest, 900);
-      } else {
-        showErr('Identifiant ou mot de passe incorrect.');
-        resetBtn();
-      }
+      // Compte authentifié mais profil introuvable pour ce rôle → déconnexion
+      await signOut(auth);
+      showErr("Ce compte n'a pas de profil pour le rôle sélectionné.");
+      resetBtn();
     }
   } catch(e) {
-    showErr('Erreur de connexion. Vérifiez votre connexion internet.');
+    console.error('Erreur de connexion:', e.code || e);
+    if (e.code === 'auth/user-not-found' || e.code === 'auth/invalid-credential' || e.code === 'auth/wrong-password') {
+      showErr('Identifiant ou mot de passe incorrect.');
+    } else if (e.code === 'auth/too-many-requests') {
+      showErr('Trop de tentatives. Veuillez réessayer dans quelques minutes.');
+    } else {
+      showErr('Erreur de connexion. Vérifiez votre connexion internet.');
+    }
     resetBtn();
   }
 }

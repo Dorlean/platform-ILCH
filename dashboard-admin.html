@@ -1194,6 +1194,7 @@ if("serviceWorker" in navigator){
 <script type="module">
 // ── Connexion Firebase pour Dashboard Admin ────────────────
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import { getAuth, onAuthStateChanged, createUserWithEmailAndPassword, signOut } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
 import {
   getFirestore, collection, getDocs, addDoc, updateDoc, deleteDoc, doc, onSnapshot, query, where, setDoc
 } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
@@ -1209,6 +1210,28 @@ const firebaseConfig = {
 
 const app = initializeApp(firebaseConfig);
 const db  = getFirestore(app);
+
+// ── VERROU DE SÉCURITÉ — session Firebase Auth obligatoire ──
+const auth = getAuth(app);
+onAuthStateChanged(auth, function(fbUser) {
+  if (!fbUser) {
+    sessionStorage.removeItem('ilch_user');
+    sessionStorage.removeItem('ilch_role');
+    window.location.href = 'login.html';
+  }
+});
+function identifiantVersEmail(id) {
+  return id.trim().toLowerCase().replace(/[^a-z0-9.]/g, '') + '@ilch.local';
+}
+// Crée un compte Auth SANS déconnecter la session en cours (app Firebase secondaire isolée)
+async function creerCompteAuthSansDeconnexion(email, password) {
+  var secondaryApp = initializeApp(firebaseConfig, 'Secondary-' + Date.now() + '-' + Math.random().toString(36).slice(2));
+  var secondaryAuth = getAuth(secondaryApp);
+  var cred = await createUserWithEmailAndPassword(secondaryAuth, email, password);
+  var uid = cred.user.uid;
+  await signOut(secondaryAuth);
+  return uid;
+}
 
 // ── Écouter les données en temps réel ─────────────────────
 onSnapshot(collection(db, 'eleves'), function(snap) {
@@ -1541,9 +1564,15 @@ window.creerComptePersonnel = async function() {
       if (typeof showToast === 'function') showToast('Cet identifiant existe déjà');
       return;
     }
+    var authUid = null;
+    try {
+      authUid = await creerCompteAuthSansDeconnexion(identifiantVersEmail(identifiant), motDePasse);
+    } catch (authErr) {
+      console.error('Erreur création compte sécurisé personnel:', authErr);
+    }
     await addDoc(collection(db, 'utilisateurs'), {
       prenom: prenom, nom: nom, identifiant: identifiant, motDePasse: motDePasse,
-      titre: titre || roleLabelsPersonnel[role], role: role,
+      titre: titre || roleLabelsPersonnel[role], role: role, authUid: authUid,
       dateCreation: new Date().toISOString()
     });
     document.getElementById('per-titre').value = '';
@@ -1591,6 +1620,7 @@ import {
   getFirestore, collection, doc,
   addDoc, getDocs, updateDoc, deleteDoc, onSnapshot
 } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+import { getAuth, createUserWithEmailAndPassword, signOut } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
 
 const firebaseConfig = {
   apiKey: "AIzaSyDjrBnsTu7CNWnqeqSm29-arbs8MPoTBJ0",
@@ -1603,6 +1633,18 @@ const firebaseConfig = {
 
 const app = initializeApp(firebaseConfig);
 const db  = getFirestore(app);
+function identifiantVersEmail(id) {
+  return id.trim().toLowerCase().replace(/[^a-z0-9.]/g, '') + '@ilch.local';
+}
+// Crée un compte Auth SANS déconnecter la session en cours (app Firebase secondaire isolée)
+async function creerCompteAuthSansDeconnexion(email, password) {
+  var secondaryApp = initializeApp(firebaseConfig, 'Secondary-' + Date.now() + '-' + Math.random().toString(36).slice(2));
+  var secondaryAuth = getAuth(secondaryApp);
+  var cred = await createUserWithEmailAndPassword(secondaryAuth, email, password);
+  var uid = cred.user.uid;
+  await signOut(secondaryAuth);
+  return uid;
+}
 
 // ── Synchroniser Firebase → localStorage → Dashboard ──────
 function syncCollection(fbCol, lsKey, renderFn, statId) {
@@ -1653,6 +1695,11 @@ window.saveEleve = async function() {
     if (editId) {
       await updateDoc(doc(db, 'eleves', editId), data);
     } else {
+      try {
+        data.authUid = await creerCompteAuthSansDeconnexion(identifiantVersEmail(data.identifiant), data.motDePasse);
+      } catch (authErr) {
+        console.error('Erreur création compte sécurisé élève:', authErr);
+      }
       data.createdAt = new Date().toISOString();
       await addDoc(collection(db, 'eleves'), data);
     }
@@ -1687,6 +1734,11 @@ window.saveProf = async function() {
     if (editId) {
       await updateDoc(doc(db, 'professeurs', editId), data);
     } else {
+      try {
+        data.authUid = await creerCompteAuthSansDeconnexion(identifiantVersEmail(data.identifiant), data.motDePasse);
+      } catch (authErr) {
+        console.error('Erreur création compte sécurisé professeur:', authErr);
+      }
       data.createdAt = new Date().toISOString();
       await addDoc(collection(db, 'professeurs'), data);
     }
@@ -1723,6 +1775,11 @@ window.saveParent = async function() {
     if (editId) {
       await updateDoc(doc(db, 'parents', editId), data);
     } else {
+      try {
+        data.authUid = await creerCompteAuthSansDeconnexion(identifiantVersEmail(data.identifiant), data.motDePasse);
+      } catch (authErr) {
+        console.error('Erreur création compte sécurisé parent:', authErr);
+      }
       data.createdAt = new Date().toISOString();
       await addDoc(collection(db, 'parents'), data);
     }
