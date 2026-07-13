@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Migration vers Firebase Authentication — ILCH</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    *{margin:0;padding:0;box-sizing:border-box}
+    body{font-family:'Inter',sans-serif;background:#0D2B4E;min-height:100vh;display:flex;align-items:center;justify-content:center;padding:2rem}
+    .card{background:#fff;max-width:700px;width:100%;padding:2rem}
+    h1{font-size:1.4rem;color:#0D2B4E;margin-bottom:0.5rem}
+    p{font-size:13px;color:#6B7280;margin-bottom:1.5rem}
+    .btn{background:#C9A96E;color:#0D2B4E;border:none;padding:12px 24px;font-size:14px;font-weight:700;cursor:pointer;font-family:'Inter',sans-serif;width:100%;margin-bottom:1rem;transition:background 0.15s}
+    .btn:hover{background:#d4b57c}
+    .btn:disabled{background:#E5E7EB;color:#9CA3AF;cursor:not-allowed}
+    .log{background:#0D2B4E;color:#C9A96E;padding:1rem;font-family:monospace;font-size:12px;height:340px;overflow-y:auto;margin-top:1rem}
+    .log-line{padding:2px 0;border-bottom:1px solid rgba(255,255,255,0.05)}
+    .log-line.ok{color:#4ADE80}
+    .log-line.err{color:#F87171}
+    .log-line.info{color:#60A5FA}
+    .log-line.skip{color:#9CA3AF}
+    .progress{height:6px;background:#E5E7EB;margin-bottom:1rem}
+    .progress-bar{height:100%;background:#C9A96E;width:0%;transition:width 0.3s}
+    .stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:1rem}
+    .stat{background:#F3F4F6;padding:10px;text-align:center}
+    .stat-val{font-size:1.5rem;font-weight:700;color:#0D2B4E}
+    .stat-label{font-size:10px;color:#9CA3AF;text-transform:uppercase;letter-spacing:0.05em}
+    .warning{background:#FEF3C7;border:1px solid #FDE68A;padding:10px 14px;font-size:12px;color:#92400E;margin-bottom:1rem}
+    .info-box{background:#EFF6FF;border:1px solid #BFDBFE;padding:10px 14px;font-size:12px;color:#1E40AF;margin-bottom:1rem}
+    .success-banner{background:#F0FDF4;border:1px solid #BBF7D0;padding:14px;font-size:13px;color:#16A34A;display:none;margin-top:1rem;text-align:center;font-weight:600}
+  </style>
+</head>
+<body>
+<div class="card">
+  <h1>🔐 Migration vers Firebase Authentication</h1>
+  <p>Cet outil transforme tous les comptes existants (élèves, professeurs, parents, personnel) en vrais comptes sécurisés Firebase Authentication, sans changer leur identifiant ni leur mot de passe actuel.</p>
+
+  <div class="info-box">
+    ℹ️ Cet outil est <strong>sûr à relancer plusieurs fois</strong> : les comptes déjà migrés sont automatiquement ignorés.
+  </div>
+
+  <div class="warning">
+    ⚠️ Avant de continuer, active bien la méthode "Email/mot de passe" dans Firebase Console → Authentication → Sign-in method.
+  </div>
+
+  <div class="stats">
+    <div class="stat"><div class="stat-val" id="cnt-migres">0</div><div class="stat-label">Migrés</div></div>
+    <div class="stat"><div class="stat-val" id="cnt-deja">0</div><div class="stat-label">Déjà migrés</div></div>
+    <div class="stat"><div class="stat-val" id="cnt-erreurs">0</div><div class="stat-label">Erreurs</div></div>
+  </div>
+
+  <div class="progress"><div class="progress-bar" id="progress-bar"></div></div>
+
+  <button class="btn" id="migrate-btn" onclick="migrerTout()">▶ Lancer la migration</button>
+  <button class="btn" style="background:#0D2B4E;color:#fff" onclick="window.location.href='login.html'">← Retour à la connexion</button>
+
+  <div class="log" id="log"></div>
+  <div class="success-banner" id="success-banner">
+    ✅ Migration terminée ! Tous les comptes utilisent maintenant Firebase Authentication.
+  </div>
+</div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import { getFirestore, collection, getDocs, doc, updateDoc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+import { getAuth, createUserWithEmailAndPassword, signOut } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyDjrBnsTu7CNWnqeqSm29-arbs8MPoTBJ0",
+  authDomain: "ilch-plateforme.firebaseapp.com",
+  projectId: "ilch-plateforme",
+  storageBucket: "ilch-plateforme.firebasestorage.app",
+  messagingSenderId: "978336467476",
+  appId: "1:978336467476:web:1f716ca406469a0c62b501"
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+const auth = getAuth(app);
+
+const COLLECTIONS = ['utilisateurs', 'professeurs', 'eleves', 'parents'];
+
+function identifiantVersEmail(id) {
+  return id.trim().toLowerCase().replace(/[^a-z0-9.]/g, '') + '@ilch.local';
+}
+
+function log(msg, type = 'info') {
+  const div = document.getElementById('log');
+  const line = document.createElement('div');
+  line.className = 'log-line ' + type;
+  line.textContent = new Date().toLocaleTimeString('fr-FR') + ' — ' + msg;
+  div.appendChild(line);
+  div.scrollTop = div.scrollHeight;
+}
+
+function setProgress(pct) {
+  document.getElementById('progress-bar').style.width = pct + '%';
+}
+
+let compteMigres = 0, compteDeja = 0, compteErreurs = 0;
+
+function majCompteurs() {
+  document.getElementById('cnt-migres').textContent = compteMigres;
+  document.getElementById('cnt-deja').textContent = compteDeja;
+  document.getElementById('cnt-erreurs').textContent = compteErreurs;
+}
+
+window.migrerTout = async function() {
+  const btn = document.getElementById('migrate-btn');
+  btn.disabled = true;
+  btn.textContent = '⏳ Migration en cours...';
+  compteMigres = 0; compteDeja = 0; compteErreurs = 0;
+
+  log('🚀 Démarrage de la migration vers Firebase Authentication...', 'info');
+
+  try {
+    // Étape 1 — collecter tous les comptes à traiter
+    let tousLesComptes = [];
+    for (const col of COLLECTIONS) {
+      const snap = await getDocs(collection(db, col));
+      snap.forEach(d => tousLesComptes.push({ col, id: d.id, ...d.data() }));
+    }
+    log('📋 ' + tousLesComptes.length + ' compte(s) trouvé(s) au total.', 'info');
+
+    let traites = 0;
+    for (const compte of tousLesComptes) {
+      traites++;
+      setProgress(Math.round((traites / tousLesComptes.length) * 100));
+
+      if (!compte.identifiant || !compte.motDePasse) {
+        log('⏭️  Ignoré (identifiant/mot de passe manquant) — doc ' + compte.id, 'skip');
+        continue;
+      }
+      if (compte.authUid) {
+        compteDeja++;
+        log('✓ Déjà migré : ' + compte.identifiant, 'skip');
+        majCompteurs();
+        continue;
+      }
+
+      const email = identifiantVersEmail(compte.identifiant);
+      try {
+        const cred = await createUserWithEmailAndPassword(auth, email, compte.motDePasse);
+        await updateDoc(doc(db, compte.col, compte.id), { authUid: cred.user.uid });
+        compteMigres++;
+        log('✅ Migré : ' + compte.identifiant + ' (' + compte.col + ')', 'ok');
+      } catch (e) {
+        if (e.code === 'auth/email-already-in-use') {
+          // Le compte Auth existe déjà mais le lien authUid manquait sur ce document
+          compteDeja++;
+          log('✓ Compte Auth déjà existant pour : ' + compte.identifiant, 'skip');
+        } else {
+          compteErreurs++;
+          log('❌ Erreur pour ' + compte.identifiant + ' : ' + e.message, 'err');
+        }
+      }
+      majCompteurs();
+    }
+
+    await signOut(auth);
+    setProgress(100);
+
+    log('', 'info');
+    log('════════════════════════════════════════', 'info');
+    log('🎉 MIGRATION TERMINÉE', 'ok');
+    log('════════════════════════════════════════', 'info');
+    log(compteMigres + ' compte(s) migré(s), ' + compteDeja + ' déjà en règle, ' + compteErreurs + ' erreur(s).', 'info');
+
+    document.getElementById('success-banner').style.display = 'block';
+    btn.textContent = '✅ Terminé !';
+  } catch (e) {
+    log('❌ Erreur fatale : ' + e.message, 'err');
+    btn.disabled = false;
+    btn.textContent = '▶ Réessayer';
+  }
+};
+</script>
+</body>
+</html>
