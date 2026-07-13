@@ -453,17 +453,17 @@
     <div class="panel" id="panel-profil">
       <div style="background:var(--white);border:0.5px solid var(--border);max-width:520px;padding:2rem">
         <div style="display:flex;align-items:center;gap:16px;margin-bottom:1.5rem;padding-bottom:1.5rem;border-bottom:1px solid var(--border)">
-          <div style="width:56px;height:56px;border-radius:50%;background:var(--gold-bg);display:flex;align-items:center;justify-content:center;font-size:20px;font-weight:700;color:var(--navy)">JP</div>
+          <div id="profil-avatar" style="width:56px;height:56px;border-radius:50%;background:var(--gold-bg);display:flex;align-items:center;justify-content:center;font-size:20px;font-weight:700;color:var(--navy)">--</div>
           <div>
-            <div style="font-family:'Playfair Display',serif;font-size:18px;font-weight:700;color:var(--navy)">Jean Pierre</div>
-            <div style="font-size:12px;color:var(--gray);margin-top:2px">Élève · Terminale A · Année 2025–2026</div>
+            <div id="profil-nom" style="font-family:'Playfair Display',serif;font-size:18px;font-weight:700;color:var(--navy)">—</div>
+            <div id="profil-sous-titre" style="font-size:12px;color:var(--gray);margin-top:2px">—</div>
           </div>
         </div>
         <table style="width:100%;font-size:13px;border-collapse:collapse">
-          <tr><td style="color:var(--muted);padding:8px 0;width:140px;vertical-align:top">Identifiant</td><td style="color:var(--text);font-weight:500">jean.pierre</td></tr>
-          <tr><td style="color:var(--muted);padding:8px 0">Classe</td><td style="font-weight:500">Terminale A</td></tr>
+          <tr><td style="color:var(--muted);padding:8px 0;width:140px;vertical-align:top">Identifiant</td><td id="profil-identifiant" style="color:var(--text);font-weight:500">—</td></tr>
+          <tr><td style="color:var(--muted);padding:8px 0">Classe</td><td id="profil-classe" style="font-weight:500">—</td></tr>
           <tr><td style="color:var(--muted);padding:8px 0">Année scolaire</td><td style="font-weight:500">2025 – 2026</td></tr>
-          <tr><td style="color:var(--muted);padding:8px 0">Moyenne générale</td><td><span class="grade-good">14.2 / 20</span></td></tr>
+          <tr><td style="color:var(--muted);padding:8px 0">Parent / Responsable</td><td id="profil-parent" style="font-weight:500">—</td></tr>
         </table>
         <div style="margin-top:1.5rem;padding-top:1.5rem;border-top:1px solid var(--border);font-size:12px;color:var(--gray)">Pour modifier vos informations, contactez l'administration à <a href="mailto:institutionlouischauvet@gmail.com" style="color:var(--navy);font-weight:500">institutionlouischauvet@gmail.com</a>.</div>
       </div>
@@ -675,6 +675,19 @@ const user = JSON.parse(sessionStorage.getItem('ilch_user') || '{}');
   if (avatarEl && initiales) avatarEl.textContent = initiales;
   if (nameEl && nomComplet) nameEl.textContent = nomComplet;
   if (roleEl) roleEl.textContent = 'Élève' + (classeAffichee ? ' · ' + classeAffichee : '');
+
+  var profilAvatar = document.getElementById('profil-avatar');
+  var profilNom = document.getElementById('profil-nom');
+  var profilSousTitre = document.getElementById('profil-sous-titre');
+  var profilIdentifiant = document.getElementById('profil-identifiant');
+  var profilClasse = document.getElementById('profil-classe');
+  var profilParent = document.getElementById('profil-parent');
+  if (profilAvatar && initiales) profilAvatar.textContent = initiales;
+  if (profilNom && nomComplet) profilNom.textContent = nomComplet;
+  if (profilSousTitre) profilSousTitre.textContent = 'Élève' + (classeAffichee ? ' · ' + classeAffichee : '') + ' · Année 2025–2026';
+  if (profilIdentifiant) profilIdentifiant.textContent = user.identifiant || '—';
+  if (profilClasse) profilClasse.textContent = classeAffichee || '—';
+  if (profilParent) profilParent.textContent = user.parentNom || '—';
 })();
 
 // ── DEVOIRS — écouter en temps réel ───────────────────────

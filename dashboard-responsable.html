@@ -347,6 +347,7 @@
     <div class="sb-item" onclick="showPanel('annonces',this)"><i class="ti ti-speakerphone" aria-hidden="true"></i>Annonces</div>
     <div class="sb-section">Rapports</div>
     <div class="sb-item" onclick="showPanel('rapports',this)"><i class="ti ti-file-analytics" aria-hidden="true"></i>Rapport de section</div>
+    <div class="sb-item" onclick="showPanel('profil',this)"><i class="ti ti-user" aria-hidden="true"></i>Mon profil</div>
   </nav>
   <div class="sb-user">
     <div class="sb-user-row">
@@ -587,6 +588,24 @@
           <h4>Matières enseignées</h4>
           <div id="rp-matieres" style="font-size:12px;color:var(--gray)">Aucune matière enregistrée</div>
         </div>
+      </div>
+    </div>
+
+    <!-- MON PROFIL -->
+    <div class="panel" id="panel-profil">
+      <div style="background:var(--white);border:0.5px solid var(--border);max-width:520px;padding:2rem">
+        <div style="display:flex;align-items:center;gap:16px;margin-bottom:1.5rem;padding-bottom:1.5rem;border-bottom:1px solid var(--border)">
+          <div id="profil-avatar" style="width:56px;height:56px;border-radius:50%;background:var(--gold-bg);display:flex;align-items:center;justify-content:center;font-size:20px;font-weight:700;color:var(--navy)">--</div>
+          <div>
+            <div id="profil-nom" style="font-family:'Playfair Display',serif;font-size:18px;font-weight:700;color:var(--navy)">—</div>
+            <div id="profil-sous-titre" style="font-size:12px;color:var(--gray);margin-top:2px">—</div>
+          </div>
+        </div>
+        <table style="width:100%;font-size:13px;border-collapse:collapse">
+          <tr><td style="color:var(--muted);padding:8px 0;width:160px">Identifiant</td><td id="profil-identifiant" style="font-weight:500">—</td></tr>
+          <tr><td style="color:var(--muted);padding:8px 0">Section suivie</td><td id="profil-section" style="font-weight:500">—</td></tr>
+        </table>
+        <div style="margin-top:1.5rem;padding-top:1.5rem;border-top:1px solid var(--border);font-size:12px;color:var(--gray)">Pour modifier vos informations, contactez l'administration à <a href="mailto:institutionlouischauvet@gmail.com" style="color:var(--navy);font-weight:500">institutionlouischauvet@gmail.com</a>.</div>
       </div>
     </div>
 
@@ -949,7 +968,7 @@ function showPanel(id,el){
   document.getElementById('panel-'+id).classList.add('active');
   document.querySelectorAll('.sb-item').forEach(function(i){i.classList.remove('active')});
   if(el)el.classList.add('active');
-  var titles={dash:'Tableau de bord',eleves:'Mes élèves',profs:'Mes professeurs',affectations:'Affectations',notes:'Notes & résultats',absences:'Absences',presence:'Prise de présence',effectif:'Effectif de section',messages:'Messages',annonces:'Annonces',rapports:'Rapport de section'};
+  var titles={dash:'Tableau de bord',eleves:'Mes élèves',profs:'Mes professeurs',affectations:'Affectations',notes:'Notes & résultats',absences:'Absences',presence:'Prise de présence',effectif:'Effectif de section',messages:'Messages',annonces:'Annonces',rapports:'Rapport de section',profil:'Mon profil'};
   document.getElementById('topbar-title').textContent=titles[id]||id;
   renderAll();
 }
@@ -1008,6 +1027,30 @@ onAuthStateChanged(auth, function(fbUser) {
   }
 });
 const user = JSON.parse(sessionStorage.getItem('ilch_user') || '{}');
+
+// ── Afficher les vraies infos du responsable connecté ───────
+(function initProfilResponsable() {
+  var nomComplet = ((user.prenom || '') + ' ' + (user.nom || '')).trim();
+  var profilAvatar = document.getElementById('profil-avatar');
+  var profilNom = document.getElementById('profil-nom');
+  var profilSousTitre = document.getElementById('profil-sous-titre');
+  var profilIdentifiant = document.getElementById('profil-identifiant');
+  var profilSection = document.getElementById('profil-section');
+  var initiales = (((user.prenom || ' ')[0] || '') + ((user.nom || ' ')[0] || '')).toUpperCase();
+  if (profilAvatar && nomComplet) profilAvatar.textContent = initiales;
+  if (profilNom) profilNom.textContent = nomComplet || 'Responsable Pédagogique';
+  var s = (typeof sections !== 'undefined' && typeof currentSection !== 'undefined') ? sections[currentSection] : null;
+  if (profilSousTitre) profilSousTitre.textContent = 'Responsable Pédagogique · ILCH';
+  if (profilIdentifiant) profilIdentifiant.textContent = user.identifiant || '—';
+  if (profilSection) profilSection.textContent = s ? s.name : '—';
+  // Mettre à jour la section affichée si elle change via le sélecteur
+  var _origApplySectionProfil = window.applySection;
+  window.applySection = function(sid) {
+    if (_origApplySectionProfil) _origApplySectionProfil(sid);
+    var s2 = (typeof sections !== 'undefined') ? sections[sid] : null;
+    if (profilSection && s2) profilSection.textContent = s2.name;
+  };
+})();
 
 // ── NOTIFICATIONS AUTOMATIQUES ──────────────────────────────
 var MON_ROLE_NOTIF = 'responsable';
