@@ -378,14 +378,14 @@
     <div class="sb-item" onclick="showPanel('eleves',this)"><i class="ti ti-users" aria-hidden="true"></i>Élèves</div>
     <div class="sb-item" onclick="showPanel('profs',this)"><i class="ti ti-chalkboard" aria-hidden="true"></i>Professeurs</div>
     <div class="sb-item" onclick="showPanel('parents',this)"><i class="ti ti-heart" aria-hidden="true"></i>Parents</div>
-    <div class="sb-item" onclick="showPanel('personnel',this)"><i class="ti ti-user-plus" aria-hidden="true"></i>Personnel &amp; Direction</div>
+    <div class="sb-item" id="sb-item-personnel" onclick="showPanel('personnel',this)"><i class="ti ti-user-plus" aria-hidden="true"></i>Personnel &amp; Direction</div>
     <div class="sb-section">Structure scolaire</div>
     <div class="sb-item" onclick="showPanel('classes',this)"><i class="ti ti-door" aria-hidden="true"></i>Classes</div>
     <div class="sb-item" onclick="showPanel('matieres',this)"><i class="ti ti-book" aria-hidden="true"></i>Matières</div>
     <div class="sb-item" onclick="showPanel('effectif',this);afficherEffectifGlobal('jour')"><i class="ti ti-users-group" aria-hidden="true"></i>Effectif global</div>
-    <div class="sb-item" onclick="showPanel('journal',this)"><i class="ti ti-history" aria-hidden="true"></i>Journal d'activité</div>
+    <div class="sb-item" id="sb-item-journal" onclick="showPanel('journal',this)"><i class="ti ti-history" aria-hidden="true"></i>Journal d'activité</div>
     <div class="sb-section">Sécurité</div>
-    <div class="sb-item" onclick="showPanel('motsdepasse',this)"><i class="ti ti-key" aria-hidden="true"></i>Mots de passe</div>
+    <div class="sb-item" id="sb-item-motsdepasse" onclick="showPanel('motsdepasse',this)"><i class="ti ti-key" aria-hidden="true"></i>Mots de passe</div>
     <div class="sb-section">Communication</div>
     <div class="sb-item" onclick="showPanel('annonces',this)"><i class="ti ti-speakerphone" aria-hidden="true"></i>Annonces</div>
     <div class="sb-section">Mon compte</div>
@@ -585,7 +585,7 @@
       <div style="background:var(--white);border:0.5px solid var(--border);padding:1.5rem;margin-bottom:1.25rem;max-width:680px">
         <div class="form-row" style="margin-bottom:1rem">
           <div class="form-group"><label>Rôle</label>
-            <select id="per-role">
+            <select id="per-role" onchange="toggleNiveauAccesAdmin()">
               <option value="admin">Administrateur</option>
               <option value="responsable">Responsable Pédagogique</option>
               <option value="infirmiere">Infirmière</option>
@@ -595,6 +595,15 @@
             </select>
           </div>
           <div class="form-group"><label>Fonction / Section (optionnel)</label><input type="text" id="per-titre" placeholder="ex: Directeur, Section Cycle 2..."></div>
+        </div>
+        <div class="form-row" style="margin-bottom:1rem" id="per-niveau-row">
+          <div class="form-group"><label>Niveau d'accès</label>
+            <select id="per-niveau-admin">
+              <option value="Direction">Direction (accès complet)</option>
+              <option value="Secrétariat">Secrétariat (accès limité)</option>
+            </select>
+          </div>
+          <div class="form-group"></div>
         </div>
         <div class="form-row" style="margin-bottom:1rem">
           <div class="form-group"><label>Prénom</label><input type="text" id="per-prenom" placeholder="Prénom"></div>
@@ -1166,6 +1175,16 @@ function exportData(){
 // ─── UI ────────────────────────────────────────────────────
 var titles={dash:'Tableau de bord',eleves:'Gestion des élèves',profs:'Gestion des professeurs',parents:'Gestion des parents',personnel:'Personnel & Direction',classes:'Gestion des classes',matieres:'Gestion des matières',effectif:'Effectif global',journal:"Journal d'activité",motsdepasse:'Mots de passe',annonces:'Annonces',profil:'Mon profil'};
 function showPanel(id,el){
+  var restreints = ['personnel','journal','motsdepasse'];
+  if (restreints.indexOf(id) !== -1) {
+    try {
+      var u = JSON.parse(sessionStorage.getItem('ilch_user') || '{}');
+      if (u.fonction === 'Secrétariat') {
+        if (typeof showToast === 'function') showToast("Accès réservé à la Direction");
+        id = 'dash'; el = null;
+      }
+    } catch (e) {}
+  }
   document.querySelectorAll('.panel').forEach(function(p){p.classList.remove('active')});
   document.getElementById('panel-'+id).classList.add('active');
   document.querySelectorAll('.sb-item').forEach(function(i){i.classList.remove('active')});
@@ -1270,6 +1289,14 @@ var adminUser = JSON.parse(sessionStorage.getItem('ilch_user') || '{}');
   if (profilSousTitre) profilSousTitre.textContent = fonction + ' · ILCH';
   if (profilIdentifiant) profilIdentifiant.textContent = adminUser.identifiant || '—';
   if (profilFonction) profilFonction.textContent = fonction;
+
+  // ── Restriction d'accès pour le Secrétariat ────────────────
+  if (adminUser.fonction === 'Secrétariat') {
+    ['sb-item-personnel', 'sb-item-journal', 'sb-item-motsdepasse'].forEach(function(id) {
+      var el = document.getElementById(id);
+      if (el) el.style.display = 'none';
+    });
+  }
 })();
 function nomAdminActuel() {
   var nom = ((adminUser.prenom || '') + ' ' + (adminUser.nom || '')).trim();
@@ -1657,9 +1684,16 @@ var roleLabelsPersonnel = {
   comptable: 'Comptable', bibliotheque: 'Bibliothécaire'
 };
 
+window.toggleNiveauAccesAdmin = function() {
+  var role = document.getElementById('per-role').value;
+  var row = document.getElementById('per-niveau-row');
+  if (row) row.style.display = (role === 'admin') ? 'grid' : 'none';
+};
+
 window.creerComptePersonnel = async function() {
   var role = document.getElementById('per-role').value;
   var titre = document.getElementById('per-titre').value.trim();
+  var niveauAcces = document.getElementById('per-niveau-admin') ? document.getElementById('per-niveau-admin').value : null;
   var prenom = document.getElementById('per-prenom').value.trim();
   var nom = document.getElementById('per-nom').value.trim();
   var identifiant = document.getElementById('per-id').value.trim();
@@ -1685,9 +1719,10 @@ window.creerComptePersonnel = async function() {
     await addDoc(collection(db, 'utilisateurs'), {
       prenom: prenom, nom: nom, identifiant: identifiant, motDePasse: motDePasse,
       titre: titre || roleLabelsPersonnel[role], role: role, authUid: authUid,
+      fonction: role === 'admin' ? (niveauAcces || 'Direction') : null,
       dateCreation: new Date().toISOString()
     });
-    enregistrerActivite('Compte personnel créé', prenom + ' ' + nom + ' (' + (roleLabelsPersonnel[role] || role) + ', identifiant : ' + identifiant + ')');
+    enregistrerActivite('Compte personnel créé', prenom + ' ' + nom + ' (' + (roleLabelsPersonnel[role] || role) + (role === 'admin' ? ' · ' + (niveauAcces || 'Direction') : '') + ', identifiant : ' + identifiant + ')');
     document.getElementById('per-titre').value = '';
     document.getElementById('per-prenom').value = '';
     document.getElementById('per-nom').value = '';
