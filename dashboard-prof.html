@@ -959,7 +959,7 @@ window.saveDevoirFirebase = async function(data) {
     });
     console.log('Devoir sauvegardé Firebase:', ref.id);
     if (typeof envoyerNotification === 'function') {
-      envoyerNotification('eleve', null, 'Nouveau devoir', (data.titre || data.matiere || 'Un devoir') + ' a été publié.', 'info', (user.prenom || 'Professeur') + ' ' + (user.nom || ''));
+      envoyerNotification('eleve', null, 'Nouveau devoir', (data.titre || data.matiere || 'Un devoir') + ' a été publié.', 'info', ((user.prenom || 'Professeur') + ' ' + (user.nom || '')).trim() + ' — Professeur');
     }
     return ref.id;
   } catch(e) {

@@ -1214,7 +1214,7 @@ const db  = getFirestore(app);
 var adminUser = JSON.parse(sessionStorage.getItem('ilch_user') || '{}');
 function nomAdminActuel() {
   var nom = ((adminUser.prenom || '') + ' ' + (adminUser.nom || '')).trim();
-  return nom || 'Administration';
+  return nom ? nom + ' — Administration' : 'Administration';
 }
 
 // ── VERROU DE SÉCURITÉ — session Firebase Auth obligatoire ──

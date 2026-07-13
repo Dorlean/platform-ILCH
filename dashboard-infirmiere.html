@@ -599,7 +599,7 @@ const db  = getFirestore(app);
 var infUser = JSON.parse(sessionStorage.getItem('ilch_user') || '{}');
 function nomInfirmiereActuelle() {
   var nom = ((infUser.prenom || '') + ' ' + (infUser.nom || '')).trim();
-  return nom || 'Infirmerie';
+  return nom ? nom + ' — Infirmière' : 'Infirmerie';
 }
 
 // ── VERROU DE SÉCURITÉ — session Firebase Auth obligatoire ──
