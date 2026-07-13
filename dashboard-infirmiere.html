@@ -57,6 +57,7 @@
     .notif-item:hover{background:var(--gray-light,#F3F4F6)}
     .notif-item.unread{background:var(--gold-bg,#FAF3E8)}
     .notif-item-title{font-weight:600;color:var(--navy);margin-bottom:2px}
+    .notif-item-auteur{font-size:10px;color:var(--gold,#C9A96E);font-weight:600;margin-bottom:3px}
     .notif-item-msg{color:var(--gray,#6B7280);font-size:11px}
     .notif-item-time{color:var(--muted,#9CA3AF);font-size:10px;margin-top:4px}
     .notif-empty{padding:2rem 1rem;text-align:center;color:var(--muted,#9CA3AF);font-size:12px}
@@ -595,6 +596,11 @@ const firebaseConfig = {
 
 const app = initializeApp(firebaseConfig);
 const db  = getFirestore(app);
+var infUser = JSON.parse(sessionStorage.getItem('ilch_user') || '{}');
+function nomInfirmiereActuelle() {
+  var nom = ((infUser.prenom || '') + ' ' + (infUser.nom || '')).trim();
+  return nom || 'Infirmerie';
+}
 
 // ── VERROU DE SÉCURITÉ — session Firebase Auth obligatoire ──
 const auth = getAuth(app);
@@ -638,7 +644,7 @@ window.saveConsultationFirebase = async function(data) {
     if (typeof showToast === 'function') showToast('Consultation enregistrée dans Firebase ✓');
     if (typeof envoyerNotification === 'function') {
       var nomEleve = data.eleveNom || data.nomEleve || 'Un élève';
-      envoyerNotification('admin', null, 'Nouvelle consultation', nomEleve + ' a été vu(e) à l\'infirmerie.', 'info');
+      envoyerNotification('admin', null, 'Nouvelle consultation', nomEleve + ' a été vu(e) à l\'infirmerie.', 'info', nomInfirmiereActuelle());
     }
     return ref.id;
   } catch(e) { console.error(e); return null; }
@@ -665,8 +671,8 @@ onSnapshot(collection(db, 'medicaments'), function(snap) {
       medsDejaNotifies[m.id] = true;
       var msg = m.nom + ' — ' + m.stock + ' ' + (m.unite || 'unité(s)') + ' restant(es)';
       if (typeof envoyerNotification === 'function') {
-        envoyerNotification('infirmiere', null, 'Stock faible', msg, 'urgent');
-        envoyerNotification('admin', null, 'Stock infirmerie faible', msg, 'urgent');
+        envoyerNotification('infirmiere', null, 'Stock faible', msg, 'urgent', 'Système — Stock infirmerie');
+        envoyerNotification('admin', null, 'Stock infirmerie faible', msg, 'urgent', 'Système — Stock infirmerie');
       }
     }
   });
@@ -819,12 +825,13 @@ document.addEventListener('click', function(e) {
   }
 });
 
-window.envoyerNotification = async function(destRole, destId, titre, message, type) {
+window.envoyerNotification = async function(destRole, destId, titre, message, type, auteur) {
   try {
     await addDoc(collection(db, 'notifications'), {
       destinataireRole: destRole || null,
       destinataireId: destId || null,
       titre: titre, message: message, type: type || 'info',
+      auteur: auteur || null,
       lu: false, dateCreation: new Date().toISOString()
     });
   } catch (e) { console.error('Erreur notification:', e); }
@@ -867,6 +874,7 @@ onSnapshot(query(collection(db, 'notifications'), where('destinataireRole', 'in'
   list.innerHTML = mine.map(function(n) {
     return '<div class="notif-item' + (n.lu ? '' : ' unread') + '" onclick="marquerNotifLue(\'' + n.id + '\')">' +
       '<div class="notif-item-title">' + n.titre + '</div>' +
+      (n.auteur ? '<div class="notif-item-auteur">Publié par ' + n.auteur + '</div>' : '') +
       '<div class="notif-item-msg">' + n.message + '</div>' +
       '<div class="notif-item-time">' + tempsEcouleNotif(n.dateCreation) + '</div>' +
     '</div>';

@@ -70,6 +70,7 @@
     .notif-item:hover{background:var(--gray-light,#F3F4F6)}
     .notif-item.unread{background:var(--gold-bg,#FAF3E8)}
     .notif-item-title{font-weight:600;color:var(--navy);margin-bottom:2px}
+    .notif-item-auteur{font-size:10px;color:var(--gold,#C9A96E);font-weight:600;margin-bottom:3px}
     .notif-item-msg{color:var(--gray,#6B7280);font-size:11px}
     .notif-item-time{color:var(--muted,#9CA3AF);font-size:10px;margin-top:4px}
     .notif-empty{padding:2rem 1rem;text-align:center;color:var(--muted,#9CA3AF);font-size:12px}
@@ -1023,12 +1024,13 @@ document.addEventListener('click', function(e) {
   }
 });
 
-window.envoyerNotification = async function(destRole, destId, titre, message, type) {
+window.envoyerNotification = async function(destRole, destId, titre, message, type, auteur) {
   try {
     await addDoc(collection(db, 'notifications'), {
       destinataireRole: destRole || null,
       destinataireId: destId || null,
       titre: titre, message: message, type: type || 'info',
+      auteur: auteur || null,
       lu: false, dateCreation: new Date().toISOString()
     });
   } catch (e) { console.error('Erreur notification:', e); }
@@ -1084,6 +1086,7 @@ onSnapshot(query(collection(db, 'notifications'), where('destinataireRole', 'in'
   list.innerHTML = mine.map(function(n) {
     return '<div class="notif-item' + (n.lu ? '' : ' unread') + '" onclick="marquerNotifLue(\'' + n.id + '\')">' +
       '<div class="notif-item-title">' + n.titre + '</div>' +
+      (n.auteur ? '<div class="notif-item-auteur">Publié par ' + n.auteur + '</div>' : '') +
       '<div class="notif-item-msg">' + n.message + '</div>' +
       '<div class="notif-item-time">' + tempsEcouleNotif(n.dateCreation) + '</div>' +
     '</div>';
