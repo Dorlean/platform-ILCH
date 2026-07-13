@@ -229,8 +229,8 @@
     <div class="modal-body">
       <input type="hidden" id="prof-edit-id">
       <div class="form-row">
-        <div class="form-group"><label>Prénom</label><input type="text" id="p-prenom" placeholder="Prénom"></div>
-        <div class="form-group"><label>Nom</label><input type="text" id="p-nom" placeholder="Nom de famille"></div>
+        <div class="form-group"><label>Prénom</label><input type="text" id="p-prenom" placeholder="Prénom" oninput="autoGenProfCredentials()"></div>
+        <div class="form-group"><label>Nom</label><input type="text" id="p-nom" placeholder="Nom de famille" oninput="autoGenProfCredentials()"></div>
       </div>
       <div class="form-group"><label>Matière(s) enseignée(s)</label>
         <div class="add-tag-row">
@@ -272,8 +272,8 @@
     <div class="modal-body">
       <input type="hidden" id="par-edit-id">
       <div class="form-row">
-        <div class="form-group"><label>Prénom</label><input type="text" id="par-prenom" placeholder="Prénom"></div>
-        <div class="form-group"><label>Nom</label><input type="text" id="par-nom" placeholder="Nom de famille"></div>
+        <div class="form-group"><label>Prénom</label><input type="text" id="par-prenom" placeholder="Prénom" oninput="autoGenParentCredentials()"></div>
+        <div class="form-group"><label>Nom</label><input type="text" id="par-nom" placeholder="Nom de famille" oninput="autoGenParentCredentials()"></div>
       </div>
       <div class="form-group"><label>Téléphone</label><input type="text" id="par-tel" placeholder="+509 XX XX XX XX"></div>
       <div class="form-group"><label>Email (optionnel)</label><input type="email" id="par-email" placeholder="email@exemple.com"></div>
@@ -605,6 +605,10 @@
           </div>
           <div class="form-group"></div>
         </div>
+        <div class="form-row" style="margin-bottom:1rem" id="per-email-row">
+          <div class="form-group"><label>Adresse e-mail (connexion par e-mail — poste sensible)</label><input type="email" id="per-email" placeholder="prenom.nom@email.com"></div>
+          <div class="form-group"></div>
+        </div>
         <div class="form-row" style="margin-bottom:1rem">
           <div class="form-group"><label>Prénom</label><input type="text" id="per-prenom" placeholder="Prénom"></div>
           <div class="form-group"><label>Nom</label><input type="text" id="per-nom" placeholder="Nom"></div>
@@ -891,23 +895,51 @@ function getAbrClasse(classe) {
 function autoGenCredentials() {
   var prenom = document.getElementById('e-prenom').value.trim();
   var nom = document.getElementById('e-nom').value.trim();
-  var classe = document.getElementById('e-classe').value;
   if (!prenom || !nom) return;
 
   var p = nettoyerTexte(prenom);
   var n = nettoyerTexte(nom);
   var identifiant = p + '.' + n;
-  var pw = p.slice(0,3) + '.' + n.slice(0,3) + '.' + (classe ? getAbrClasse(classe) : 'XX') + '2026';
 
-  // Remplir les champs
+  // Ne régénère un mot de passe que s'il n'y en a pas déjà un (évite d'écraser une valeur choisie)
+  var pwField = document.getElementById('e-pw');
+  var pw = (pwField && pwField.value) ? pwField.value : genererMotDePasseSecurise();
+
   document.getElementById('e-id').value = identifiant;
-  document.getElementById('e-pw').value = pw;
+  if (pwField) pwField.value = pw;
 
-  // Afficher preview
   var previewId = document.getElementById('preview-eleve-id');
   var previewPw = document.getElementById('preview-eleve-pw');
   if (previewId) previewId.textContent = identifiant;
   if (previewPw) previewPw.textContent = pw;
+}
+
+function genererMotDePasseSecurise() {
+  var chars = 'abcdefghjkmnpqrstuvwxyz23456789';
+  var pw = ''; for (var i = 0; i < 8; i++) pw += chars[Math.floor(Math.random() * chars.length)];
+  return pw;
+}
+
+function autoGenProfCredentials() {
+  var prenom = document.getElementById('p-prenom').value.trim();
+  var nom = document.getElementById('p-nom').value.trim();
+  if (!prenom || !nom) return;
+  var identifiant = nettoyerTexte(prenom) + '.' + nettoyerTexte(nom);
+  var pwField = document.getElementById('p-pw');
+  var idField = document.getElementById('p-id');
+  if (idField) idField.value = identifiant;
+  if (pwField && !pwField.value) pwField.value = genererMotDePasseSecurise();
+}
+
+function autoGenParentCredentials() {
+  var prenom = document.getElementById('par-prenom').value.trim();
+  var nom = document.getElementById('par-nom').value.trim();
+  if (!prenom || !nom) return;
+  var identifiant = nettoyerTexte(prenom) + '.' + nettoyerTexte(nom);
+  var pwField = document.getElementById('par-pw');
+  var idField = document.getElementById('par-id');
+  if (idField) idField.value = identifiant;
+  if (pwField && !pwField.value) pwField.value = genererMotDePasseSecurise();
 }
 
 function deleteItem(store,id,cb){
@@ -1687,7 +1719,10 @@ var roleLabelsPersonnel = {
 window.toggleNiveauAccesAdmin = function() {
   var role = document.getElementById('per-role').value;
   var row = document.getElementById('per-niveau-row');
+  var emailRow = document.getElementById('per-email-row');
   if (row) row.style.display = (role === 'admin') ? 'grid' : 'none';
+  var rolesSensibles = ['admin', 'responsable', 'owner', 'comptable'];
+  if (emailRow) emailRow.style.display = (rolesSensibles.indexOf(role) !== -1) ? 'grid' : 'none';
 };
 
 window.creerComptePersonnel = async function() {
@@ -1698,9 +1733,16 @@ window.creerComptePersonnel = async function() {
   var nom = document.getElementById('per-nom').value.trim();
   var identifiant = document.getElementById('per-id').value.trim();
   var motDePasse = document.getElementById('per-pw').value.trim();
+  var email = document.getElementById('per-email') ? document.getElementById('per-email').value.trim().toLowerCase() : '';
+  var rolesSensibles = ['admin', 'responsable', 'owner', 'comptable'];
+  var estSensible = rolesSensibles.indexOf(role) !== -1;
 
   if (!prenom || !nom || !identifiant || !motDePasse) {
     if (typeof showToast === 'function') showToast('Veuillez remplir tous les champs obligatoires');
+    return;
+  }
+  if (estSensible && !email) {
+    if (typeof showToast === 'function') showToast('Une adresse e-mail est requise pour ce poste sensible');
     return;
   }
 
@@ -1712,7 +1754,8 @@ window.creerComptePersonnel = async function() {
     }
     var authUid = null;
     try {
-      authUid = await creerCompteAuthSansDeconnexion(identifiantVersEmail(identifiant), motDePasse);
+      var emailAuth = estSensible ? email : identifiantVersEmail(identifiant);
+      authUid = await creerCompteAuthSansDeconnexion(emailAuth, motDePasse);
     } catch (authErr) {
       console.error('Erreur création compte sécurisé personnel:', authErr);
     }
@@ -1720,6 +1763,7 @@ window.creerComptePersonnel = async function() {
       prenom: prenom, nom: nom, identifiant: identifiant, motDePasse: motDePasse,
       titre: titre || roleLabelsPersonnel[role], role: role, authUid: authUid,
       fonction: role === 'admin' ? (niveauAcces || 'Direction') : null,
+      email: estSensible ? email : null,
       dateCreation: new Date().toISOString()
     });
     enregistrerActivite('Compte personnel créé', prenom + ' ' + nom + ' (' + (roleLabelsPersonnel[role] || role) + (role === 'admin' ? ' · ' + (niveauAcces || 'Direction') : '') + ', identifiant : ' + identifiant + ')');
@@ -1728,6 +1772,7 @@ window.creerComptePersonnel = async function() {
     document.getElementById('per-nom').value = '';
     document.getElementById('per-id').value = '';
     document.getElementById('per-pw').value = '';
+    if (document.getElementById('per-email')) document.getElementById('per-email').value = '';
     if (typeof showToast === 'function') showToast('Compte créé ✓');
   } catch (e) {
     console.error('Erreur création compte personnel:', e);

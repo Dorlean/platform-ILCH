@@ -525,6 +525,7 @@
           <div class="form-group"><label>Mot de passe</label><input type="text" id="cpt-pw" placeholder="Mot de passe"></div>
         </div>
         <div class="form-group"><label>Fonction / Téléphone (optionnel)</label><input type="text" id="cpt-tel" placeholder="ex: +509 3X XX XX XX"></div>
+        <div class="form-group"><label>Adresse e-mail (obligatoire — poste sensible, connexion par e-mail)</label><input type="email" id="cpt-email" placeholder="prenom.nom@email.com"></div>
         <button class="btn btn-purple" onclick="creerCompteComptable()"><i class="ti ti-user-plus" aria-hidden="true"></i>Créer le compte</button>
       </div>
       <div class="section-hdr"><div class="section-hdr-title">Comptes Comptabilité existants</div></div>
@@ -1126,9 +1127,10 @@ window.creerCompteComptable = async function() {
   var identifiant = document.getElementById('cpt-id').value.trim();
   var motDePasse = document.getElementById('cpt-pw').value.trim();
   var tel = document.getElementById('cpt-tel').value.trim();
+  var email = document.getElementById('cpt-email').value.trim().toLowerCase();
 
-  if (!prenom || !nom || !identifiant || !motDePasse) {
-    if (typeof showToast === 'function') showToast('Veuillez remplir tous les champs obligatoires');
+  if (!prenom || !nom || !identifiant || !motDePasse || !email) {
+    if (typeof showToast === 'function') showToast('Veuillez remplir tous les champs obligatoires, dont l\'adresse e-mail');
     return;
   }
 
@@ -1140,12 +1142,12 @@ window.creerCompteComptable = async function() {
     }
     var authUid = null;
     try {
-      authUid = await creerCompteAuthSansDeconnexion(identifiantVersEmail(identifiant), motDePasse);
+      authUid = await creerCompteAuthSansDeconnexion(email, motDePasse);
     } catch (authErr) {
       console.error('Erreur création compte sécurisé:', authErr);
     }
     await addDoc(collection(db, 'utilisateurs'), {
-      prenom: prenom, nom: nom, identifiant: identifiant, motDePasse: motDePasse,
+      prenom: prenom, nom: nom, identifiant: identifiant, motDePasse: motDePasse, email: email,
       tel: tel, titre: 'Comptable', role: 'comptable', authUid: authUid,
       dateCreation: new Date().toISOString()
     });
@@ -1155,6 +1157,7 @@ window.creerCompteComptable = async function() {
     document.getElementById('cpt-id').value = '';
     document.getElementById('cpt-pw').value = '';
     document.getElementById('cpt-tel').value = '';
+    document.getElementById('cpt-email').value = '';
     if (typeof showToast === 'function') showToast('Compte créé ✓');
   } catch (e) {
     console.error('Erreur création compte:', e);

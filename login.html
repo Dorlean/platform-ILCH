@@ -76,6 +76,7 @@
     .spinner{width:16px;height:16px;border:2px solid rgba(255,255,255,0.3);border-top-color:#fff;border-radius:50%;animation:spin 0.7s linear infinite}
     @keyframes spin{to{transform:rotate(360deg)}}
   </style>
+  <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
 </head>
 <body>
 <div class="bg-pattern"></div>
@@ -121,7 +122,7 @@
     </div>
     <div class="error-msg" id="error-msg"><i class="ti ti-alert-circle" aria-hidden="true"></i><span id="error-text"></span></div>
     <div class="success-msg" id="success-msg"><i class="ti ti-check" aria-hidden="true"></i><span id="success-text"></span></div>
-    <div class="field-group"><label>Identifiant</label><input type="text" id="login-id" placeholder="Votre identifiant" autocomplete="username"></div>
+    <div class="field-group"><label id="login-id-label">Identifiant</label><input type="text" id="login-id" placeholder="Votre identifiant" autocomplete="username"></div>
     <div class="field-group"><label>Mot de passe</label><input type="password" id="login-pw" placeholder="••••••••" autocomplete="current-password"></div>
     <button class="login-btn btn-eleve" id="login-btn"><span id="btn-text">Se connecter</span></button>
     <div class="login-footer">Problème de connexion ? Contactez l'administration</div>
@@ -152,6 +153,35 @@ function identifiantVersEmail(id) {
   return id.trim().toLowerCase().replace(/[^a-z0-9.]/g, '') + '@ilch.local';
 }
 
+// ── Alerte de connexion par e-mail (postes sensibles) ───────
+// ⚠️ Remplacez ces 3 valeurs par celles de votre compte EmailJS (gratuit sur emailjs.com)
+const EMAILJS_PUBLIC_KEY  = 'VOTRE_CLE_PUBLIQUE_EMAILJS';
+const EMAILJS_SERVICE_ID  = 'VOTRE_SERVICE_ID';
+const EMAILJS_TEMPLATE_ID = 'VOTRE_TEMPLATE_ID';
+
+if (typeof emailjs !== 'undefined' && EMAILJS_PUBLIC_KEY !== 'VOTRE_CLE_PUBLIQUE_EMAILJS') {
+  emailjs.init({ publicKey: EMAILJS_PUBLIC_KEY });
+}
+
+function envoyerAlerteConnexion(user, role) {
+  if (typeof emailjs === 'undefined' || EMAILJS_PUBLIC_KEY === 'VOTRE_CLE_PUBLIQUE_EMAILJS') {
+    console.log('[Alerte connexion] EmailJS non configuré — email non envoyé.');
+    return;
+  }
+  var roleLabels = { admin:'Administrateur', responsable:'Responsable Pédagogique', owner:'Propriétaire', comptable:'Comptable' };
+  var maintenant = new Date().toLocaleString('fr-FR', { dateStyle:'long', timeStyle:'short' });
+  emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_TEMPLATE_ID, {
+    to_email: user.email || '',
+    to_name: (user.prenom || '') + ' ' + (user.nom || ''),
+    role: roleLabels[role] || role,
+    date_connexion: maintenant
+  }).then(function() {
+    console.log('[Alerte connexion] E-mail envoyé.');
+  }).catch(function(err) {
+    console.error('[Alerte connexion] Échec envoi e-mail:', err);
+  });
+}
+
 // Test connexion Firebase
 try {
   await getDocs(collection(db, 'utilisateurs'));
@@ -167,11 +197,11 @@ const roleConfig = {
   eleve:       {name:'Espace Élève',           icon:'ti-school',            bg:'rgba(37,99,235,0.15)',   color:'#60A5FA', dest:'dashboard-eleve.html'},
   prof:        {name:'Espace Professeur',       icon:'ti-chalkboard',        bg:'rgba(201,169,110,0.2)',  color:'#C9A96E', dest:'dashboard-prof.html'},
   parent:      {name:'Espace Parent',           icon:'ti-heart',             bg:'rgba(22,163,74,0.2)',    color:'#4ADE80', dest:'dashboard-parent.html'},
-  admin:       {name:'Administration',          icon:'ti-settings',          bg:'rgba(220,38,38,0.15)',   color:'#F87171', dest:'dashboard-admin.html'},
-  responsable: {name:'Responsable Pédagogique', icon:'ti-book',              bg:'rgba(13,148,136,0.2)',   color:'#2DD4BF', dest:'dashboard-responsable.html'},
+  admin:       {name:'Administration',          icon:'ti-settings',          bg:'rgba(220,38,38,0.15)',   color:'#F87171', dest:'dashboard-admin.html', emailLogin:true},
+  responsable: {name:'Responsable Pédagogique', icon:'ti-book',              bg:'rgba(13,148,136,0.2)',   color:'#2DD4BF', dest:'dashboard-responsable.html', emailLogin:true},
   infirmiere:  {name:'Infirmière',             icon:'ti-heart-rate-monitor', bg:'rgba(225,29,72,0.15)',   color:'#FB7185', dest:'dashboard-infirmiere.html'},
-  owner:       {name:'Espace Propriétaire',     icon:'ti-crown',             bg:'rgba(201,169,110,0.25)', color:'#C9A96E', dest:'dashboard-owner.html'},
-  comptable:   {name:'Comptabilité',            icon:'ti-calculator',        bg:'rgba(124,58,237,0.2)',   color:'#A78BFA', dest:'dashboard-comptable.html'},
+  owner:       {name:'Espace Propriétaire',     icon:'ti-crown',             bg:'rgba(201,169,110,0.25)', color:'#C9A96E', dest:'dashboard-owner.html', emailLogin:true},
+  comptable:   {name:'Comptabilité',            icon:'ti-calculator',        bg:'rgba(124,58,237,0.2)',   color:'#A78BFA', dest:'dashboard-comptable.html', emailLogin:true},
   bibliotheque:{name:'Bibliothèque',            icon:'ti-books',             bg:'rgba(146,64,14,0.2)',    color:'#FCD34D', dest:'dashboard-bibliotheque.html'},
 };
 
@@ -190,6 +220,21 @@ window.selectRole = function(role) {
   document.getElementById('login-btn').onclick = doLogin;
   hideMsg();
   document.getElementById('login-box').classList.add('show');
+
+  const idLabel = document.getElementById('login-id-label');
+  const idInput = document.getElementById('login-id');
+  if (cfg.emailLogin) {
+    idLabel.textContent = 'Adresse e-mail';
+    idInput.type = 'email';
+    idInput.placeholder = 'votreadresse@email.com';
+    idInput.autocomplete = 'email';
+  } else {
+    idLabel.textContent = 'Identifiant';
+    idInput.type = 'text';
+    idInput.placeholder = 'Votre identifiant';
+    idInput.autocomplete = 'username';
+  }
+
   setTimeout(() => document.getElementById('login-id').focus(), 100);
 };
 
@@ -206,8 +251,10 @@ async function doLogin() {
   btn.insertAdjacentHTML('beforeend','<div class="spinner"></div>');
 
   try {
+    var estEmailLogin = roleConfig[currentRole].emailLogin;
+
     // 1. Authentification réelle via Firebase Auth
-    const email = identifiantVersEmail(id);
+    const email = estEmailLogin ? id.toLowerCase() : identifiantVersEmail(id);
     await signInWithEmailAndPassword(auth, email, pw);
 
     // 2. Récupérer le profil correspondant (nom, classe, rôle, etc.)
@@ -217,7 +264,9 @@ async function doLogin() {
 
     let found = false;
     for (const col of cols) {
-      const q    = query(collection(db, col), where('identifiant','==',id));
+      const champRecherche = estEmailLogin ? 'email' : 'identifiant';
+      const valeurRecherche = estEmailLogin ? id.toLowerCase() : id;
+      const q    = query(collection(db, col), where(champRecherche,'==',valeurRecherche));
       const snap = await getDocs(q);
       if (!snap.empty) {
         const user = {id: snap.docs[0].id, ...snap.docs[0].data(), role: currentRole};
@@ -225,6 +274,9 @@ async function doLogin() {
         sessionStorage.setItem('ilch_user', JSON.stringify(user));
         sessionStorage.setItem('ilch_role', currentRole);
         showOk('Connexion réussie ! Redirection...');
+        if (estEmailLogin) {
+          envoyerAlerteConnexion(user, currentRole);
+        }
         setTimeout(() => window.location.href = roleConfig[currentRole].dest, 900);
         found = true; break;
       }
