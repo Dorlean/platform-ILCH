@@ -74,10 +74,25 @@
       <div class="slide" style="background-image:url('photo3.jpg')">
         <div class="slide-overlay"></div>
       </div>
+      <div class="slide" style="background-image:url('photo4.jpg')">
+        <div class="slide-overlay"></div>
+      </div>
+      <div class="slide" style="background-image:url('photo5.jpg')">
+        <div class="slide-overlay"></div>
+      </div>
+      <div class="slide" style="background-image:url('photo6.jpg')">
+        <div class="slide-overlay"></div>
+      </div>
+      <div class="slide" style="background-image:url('photo7.jpg')">
+        <div class="slide-overlay"></div>
+      </div>
+      <div class="slide" style="background-image:url('photo8.jpg')">
+        <div class="slide-overlay"></div>
+      </div>
     </div>
 
     <!-- COMPTEUR -->
-    <div class="slide-counter"><span id="slide-current">1</span> / 3</div>
+    <div class="slide-counter"><span id="slide-current">1</span> / 8</div>
 
     <!-- FLÈCHES -->
     <button class="slider-arrow prev" onclick="changeSlide(-1)" aria-label="Précédent">&#8592;</button>
@@ -88,6 +103,11 @@
       <button class="slider-dot active" onclick="goToSlide(0)" aria-label="Slide 1"></button>
       <button class="slider-dot" onclick="goToSlide(1)" aria-label="Slide 2"></button>
       <button class="slider-dot" onclick="goToSlide(2)" aria-label="Slide 3"></button>
+      <button class="slider-dot" onclick="goToSlide(3)" aria-label="Slide 4"></button>
+      <button class="slider-dot" onclick="goToSlide(4)" aria-label="Slide 5"></button>
+      <button class="slider-dot" onclick="goToSlide(5)" aria-label="Slide 6"></button>
+      <button class="slider-dot" onclick="goToSlide(6)" aria-label="Slide 7"></button>
+      <button class="slider-dot" onclick="goToSlide(7)" aria-label="Slide 8"></button>
     </div>
 
     <!-- CONTENU -->
@@ -157,6 +177,7 @@
 
     getDocs(collection(db, 'annonces')).then(function(snap) {
       var items = snap.docs.map(function(d) { return d.data(); });
+      items = items.filter(function(a) { return !a.destinataires || a.destinataires === 'Tous'; });
       items.sort(function(a, b) { return new Date(b.dateCreation || 0) - new Date(a.dateCreation || 0); });
       items = items.slice(0, 8);
 

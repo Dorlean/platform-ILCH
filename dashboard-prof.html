@@ -372,10 +372,15 @@
           <label>Description (optionnelle)</label>
           <textarea rows="2" placeholder="Résumé du cours, objectifs pédagogiques..."></textarea>
         </div>
-        <div class="upload-drop" onclick="showToast('Sélection de fichier simulée — intégrez votre service d\'hébergement vidéo ici')">
+        <div class="upload-drop" id="upload-drop-area" onclick="document.getElementById('vid-file').click()">
+          <input type="file" id="vid-file" accept="video/*" style="display:none" onchange="onVideoFileSelected(this)">
           <i class="ti ti-cloud-upload" aria-hidden="true"></i>
-          <div class="drop-title">Cliquer pour choisir une vidéo ou glisser-déposer</div>
-          <div class="drop-sub">MP4, MOV, AVI · Maximum 2 Go</div>
+          <div class="drop-title" id="upload-drop-title">Cliquer pour choisir une vidéo depuis votre téléphone ou ordinateur</div>
+          <div class="drop-sub">MP4, MOV · Recommandé : moins de 300 Mo</div>
+        </div>
+        <div id="upload-progress-wrap" style="display:none;margin-top:10px">
+          <div style="height:6px;background:var(--border);overflow:hidden"><div id="upload-progress-bar" style="height:100%;width:0%;background:var(--gold)"></div></div>
+          <div id="upload-progress-text" style="font-size:11px;color:var(--gray);margin-top:4px">0%</div>
         </div>
         <div class="form-actions">
           <button class="form-submit" onclick="publishVideo()">Publier le cours</button>
@@ -384,18 +389,7 @@
       </div>
 
       <div class="videos-grid" id="prof-videos-grid">
-        <div class="video-card">
-          <div class="video-thumb"><div class="video-subj">Maths</div><div class="video-actions"><button class="video-action-btn" onclick="showToast('Cours supprimé')" aria-label="Supprimer"><i class="ti ti-trash" aria-hidden="true"></i></button></div></div>
-          <div class="video-body"><div class="video-title">Les équations du 2e degré</div><div class="video-meta"><i class="ti ti-users" aria-hidden="true"></i>42 élèves<i class="ti ti-clock" style="margin-left:6px" aria-hidden="true"></i>32 min<span class="video-status status-pub"><i class="ti ti-circle-check" style="font-size:12px" aria-hidden="true"></i>Publié</span></div></div>
-        </div>
-        <div class="video-card">
-          <div class="video-thumb" style="background:#1A3D6B"><div class="video-subj">Maths</div><div class="video-actions"><button class="video-action-btn" onclick="showToast('Cours supprimé')" aria-label="Supprimer"><i class="ti ti-trash" aria-hidden="true"></i></button></div></div>
-          <div class="video-body"><div class="video-title">Introduction aux fonctions affines</div><div class="video-meta"><i class="ti ti-users" aria-hidden="true"></i>42 élèves<i class="ti ti-clock" style="margin-left:6px" aria-hidden="true"></i>40 min<span class="video-status status-pub"><i class="ti ti-circle-check" style="font-size:12px" aria-hidden="true"></i>Publié</span></div></div>
-        </div>
-        <div class="video-card">
-          <div class="video-thumb" style="background:#0F3460"><div class="video-subj">Maths</div><div class="video-actions"><button class="video-action-btn" onclick="showToast('Cours supprimé')" aria-label="Supprimer"><i class="ti ti-trash" aria-hidden="true"></i></button></div></div>
-          <div class="video-body"><div class="video-title">Les inégalités et intervalles</div><div class="video-meta"><i class="ti ti-users" aria-hidden="true"></i>42 élèves<i class="ti ti-clock" style="margin-left:6px" aria-hidden="true"></i>27 min<span class="video-status status-draft"><i class="ti ti-clock" style="font-size:12px" aria-hidden="true"></i>Brouillon</span></div></div>
-        </div>
+        <div style="grid-column:1/-1;font-size:12px;color:var(--gray);padding:1rem 0">Chargement de vos cours...</div>
       </div>
     </div>
 
@@ -587,24 +581,6 @@
   function toggleUpload(){
     var f=document.getElementById('upload-form');
     f.classList.toggle('open');
-  }
-
-  var bgColors=['#0D2B4E','#1A3D6B','#0F3460','#16213E','#0D3B2E','#1E3A5F'];
-  var colorIdx=bgColors.length;
-
-  function publishVideo(){
-    var t=document.getElementById('vid-title').value.trim()||'Nouveau cours';
-    var s=document.getElementById('vid-subject').value;
-    var g=document.getElementById('prof-videos-grid');
-    var bg=bgColors[colorIdx%bgColors.length]; colorIdx++;
-    var card=document.createElement('div');
-    card.className='video-card';
-    card.innerHTML='<div class="video-thumb" style="background:'+bg+'"><div class="video-subj">'+s.substring(0,5)+'</div><div class="video-actions"><button class="video-action-btn" onclick="showToast(\'Cours supprimé\')" aria-label="Supprimer"><i class="ti ti-trash" aria-hidden="true"></i></button></div></div><div class="video-body"><div class="video-title">'+t+'</div><div class="video-meta"><i class="ti ti-users" aria-hidden="true"></i>42 élèves<i class="ti ti-clock" style="margin-left:6px" aria-hidden="true"></i>-- min<span class="video-status status-pub"><i class="ti ti-circle-check" style="font-size:12px" aria-hidden="true"></i>Publié</span></div></div>';
-    g.appendChild(card);
-    document.getElementById('upload-form').classList.remove('open');
-    document.getElementById('vid-title').value='';
-    document.getElementById('vid-duration').value='';
-    showToast('Cours « '+t+' » publié avec succès');
   }
 
   function saveNotes(){
@@ -880,6 +856,7 @@ document.addEventListener("DOMContentLoaded",function(){
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
 import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+import { getStorage, ref as storageRef, uploadBytesResumable, getDownloadURL, deleteObject } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-storage.js";
 import {
   getFirestore, collection, doc,
   addDoc, getDocs, updateDoc, deleteDoc,
@@ -897,6 +874,7 @@ const firebaseConfig = {
 
 const app = initializeApp(firebaseConfig);
 const db  = getFirestore(app);
+const storage = getStorage(app);
 
 // ── VERROU DE SÉCURITÉ — session Firebase Auth obligatoire ──
 const auth = getAuth(app);
@@ -1294,6 +1272,109 @@ try {
   reprendreCoursDirectActif();
   reprendreExamenActif();
   console.log('✓ Dashboard Professeur connecté à Firebase');
+
+// ── COURS VIDÉO — upload réel vers Firebase Storage ─────────
+let fichierVideoSelectionne = null;
+
+window.onVideoFileSelected = function(input) {
+  var f = input.files[0];
+  if (!f) return;
+  var maxMo = 300;
+  if (f.size > maxMo * 1024 * 1024) {
+    if (typeof showToast === 'function') showToast('Fichier trop volumineux (max ' + maxMo + ' Mo). Compressez la vidéo avant l\'envoi.');
+    input.value = '';
+    fichierVideoSelectionne = null;
+    return;
+  }
+  fichierVideoSelectionne = f;
+  var titreZone = document.getElementById('upload-drop-title');
+  if (titreZone) titreZone.textContent = '✓ ' + f.name + ' (' + (f.size / 1024 / 1024).toFixed(1) + ' Mo) — cliquez pour changer';
+};
+
+window.publishVideo = async function() {
+  var titre = (document.getElementById('vid-title').value || '').trim();
+  var matiere = document.getElementById('vid-subject').value;
+  var classe = document.getElementById('vid-class').value;
+  var duree = (document.getElementById('vid-duration').value || '').trim();
+
+  if (!titre) { if (typeof showToast === 'function') showToast('Veuillez indiquer un titre'); return; }
+  if (!fichierVideoSelectionne) { if (typeof showToast === 'function') showToast('Veuillez sélectionner un fichier vidéo'); return; }
+
+  var progWrap = document.getElementById('upload-progress-wrap');
+  var progBar = document.getElementById('upload-progress-bar');
+  var progText = document.getElementById('upload-progress-text');
+  if (progWrap) progWrap.style.display = 'block';
+
+  var chemin = 'videos/' + (user.id || 'prof') + '/' + Date.now() + '_' + fichierVideoSelectionne.name.replace(/[^a-zA-Z0-9.]/g, '_');
+  var refStockage = storageRef(storage, chemin);
+  var tacheEnvoi = uploadBytesResumable(refStockage, fichierVideoSelectionne);
+
+  tacheEnvoi.on('state_changed', function(snap) {
+    var pct = Math.round((snap.bytesTransferred / snap.totalBytes) * 100);
+    if (progBar) progBar.style.width = pct + '%';
+    if (progText) progText.textContent = pct + '% envoyé...';
+  }, function(err) {
+    console.error('Erreur upload vidéo:', err);
+    if (typeof showToast === 'function') showToast("Erreur lors de l'envoi de la vidéo");
+    if (progWrap) progWrap.style.display = 'none';
+  }, async function() {
+    try {
+      var url = await getDownloadURL(tacheEnvoi.snapshot.ref);
+      await addDoc(collection(db, 'videos'), {
+        titre: titre, matiere: matiere, classe: classe, duree: duree || '—',
+        url: url, cheminStorage: chemin,
+        profId: user.id || 'demo', profNom: (user.prenom || 'Professeur') + ' ' + (user.nom || ''),
+        dateCreation: new Date().toISOString(), statut: 'publie'
+      });
+      fichierVideoSelectionne = null;
+      document.getElementById('vid-file').value = '';
+      document.getElementById('vid-title').value = '';
+      document.getElementById('vid-duration').value = '';
+      var titreZone = document.getElementById('upload-drop-title');
+      if (titreZone) titreZone.textContent = 'Cliquer pour choisir une vidéo depuis votre téléphone ou ordinateur';
+      if (progWrap) progWrap.style.display = 'none';
+      toggleUpload();
+      if (typeof showToast === 'function') showToast('Cours vidéo publié ✓');
+    } catch (e) {
+      console.error('Erreur finalisation vidéo:', e);
+      if (typeof showToast === 'function') showToast("Erreur lors de la publication");
+    }
+  });
+};
+
+window.supprimerVideoFirebase = async function(id, chemin) {
+  if (!confirm('Supprimer ce cours vidéo ?')) return;
+  try {
+    await deleteDoc(doc(db, 'videos', id));
+    if (chemin) { try { await deleteObject(storageRef(storage, chemin)); } catch (e) { console.warn('Fichier déjà supprimé ou introuvable:', e); } }
+    if (typeof showToast === 'function') showToast('Cours vidéo supprimé');
+  } catch (e) { console.error(e); }
+};
+
+// Afficher mes cours vidéo publiés, en temps réel
+if (user && user.id) {
+  onSnapshot(query(collection(db, 'videos'), where('profId', '==', user.id)), function(snap) {
+    var grid = document.getElementById('prof-videos-grid');
+    if (!grid) return;
+    var items = snap.docs.map(function(d) { return { id: d.id, ...d.data() }; });
+    items.sort(function(a, b) { return new Date(b.dateCreation) - new Date(a.dateCreation); });
+    if (!items.length) {
+      grid.innerHTML = '<div style="grid-column:1/-1;font-size:12px;color:var(--gray);padding:1rem 0">Aucun cours publié pour le moment.</div>';
+      return;
+    }
+    grid.innerHTML = items.map(function(v) {
+      return '<div class="video-card">' +
+        '<div class="video-thumb"><div class="video-subj">' + (v.matiere || '').substring(0, 5) + '</div>' +
+        '<div class="video-actions"><button class="video-action-btn" onclick="supprimerVideoFirebase(\'' + v.id + '\',\'' + (v.cheminStorage || '') + '\')" aria-label="Supprimer"><i class="ti ti-trash" aria-hidden="true"></i></button></div></div>' +
+        '<div class="video-body"><div class="video-title">' + v.titre + '</div>' +
+        '<div class="video-meta"><i class="ti ti-users" aria-hidden="true"></i>' + (v.classe || '') +
+        '<i class="ti ti-clock" style="margin-left:6px" aria-hidden="true"></i>' + (v.duree || '—') +
+        '<span class="video-status status-pub"><i class="ti ti-circle-check" style="font-size:12px" aria-hidden="true"></i>Publié</span></div>' +
+        '<a href="' + v.url + '" target="_blank" style="display:block;margin-top:8px;font-size:11px;color:var(--gold)">▶ Voir la vidéo</a></div>' +
+      '</div>';
+    }).join('');
+  });
+}
 } catch(e) {
   console.log('Mode hors ligne - Firebase non disponible');
 }
