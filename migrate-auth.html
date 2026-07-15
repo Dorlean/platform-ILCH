@@ -141,8 +141,10 @@ window.migrerTout = async function() {
         continue;
       }
       if (compte.authUid) {
+        try { await setDoc(doc(db, 'roles', compte.authUid), { role: roleDepuisCompte(compte), dateCreation: new Date().toISOString() }); }
+        catch (e2) { console.error('Erreur écriture rôle (déjà migré):', e2); }
         compteDeja++;
-        log('✓ Déjà migré : ' + compte.identifiant, 'skip');
+        log('✓ Déjà migré : ' + compte.identifiant + ' — rôle mis à jour', 'skip');
         majCompteurs();
         continue;
       }
