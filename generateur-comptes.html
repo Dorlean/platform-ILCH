@@ -269,7 +269,7 @@
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-import { getFirestore, collection, addDoc, getDocs, query, where, onSnapshot } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+import { getFirestore, collection, addDoc, getDocs, query, where, onSnapshot, doc, setDoc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 import { getAuth, createUserWithEmailAndPassword, signOut } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
 
 const firebaseConfig = {
@@ -285,12 +285,16 @@ const db  = getFirestore(app);
 function identifiantVersEmail(id) {
   return id.trim().toLowerCase().replace(/[^a-z0-9.]/g, '') + '@ilch.local';
 }
-async function creerCompteAuthSansDeconnexion(email, password) {
+async function creerCompteAuthSansDeconnexion(email, password, role) {
   var secondaryApp = initializeApp(firebaseConfig, 'Secondary-' + Date.now() + '-' + Math.random().toString(36).slice(2));
   var secondaryAuth = getAuth(secondaryApp);
   var cred = await createUserWithEmailAndPassword(secondaryAuth, email, password);
   var uid = cred.user.uid;
   await signOut(secondaryAuth);
+  if (role) {
+    try { await setDoc(doc(db, 'roles', uid), { role: role, dateCreation: new Date().toISOString() }); }
+    catch (e) { console.error('Erreur enregistrement rôle:', e); }
+  }
   return uid;
 }
 
@@ -346,7 +350,7 @@ window.envoyerFirebase = async function() {
       } else {
         var authUid = null;
         try {
-          authUid = await creerCompteAuthSansDeconnexion(identifiantVersEmail(c.identifiant), c.motDePasse);
+          authUid = await creerCompteAuthSansDeconnexion(identifiantVersEmail(c.identifiant), c.motDePasse, c.role);
         } catch (authErr) {
           addLog('⚠️ Compte sécurisé non créé pour ' + c.identifiant + ' (' + authErr.code + ')', '#FCD34D');
         }

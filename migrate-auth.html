@@ -63,7 +63,7 @@
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-import { getFirestore, collection, getDocs, doc, updateDoc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+import { getFirestore, collection, getDocs, doc, updateDoc, setDoc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 import { getAuth, createUserWithEmailAndPassword, signOut } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
 
 const firebaseConfig = {
@@ -83,6 +83,14 @@ const COLLECTIONS = ['utilisateurs', 'professeurs', 'eleves', 'parents'];
 
 function identifiantVersEmail(id) {
   return id.trim().toLowerCase().replace(/[^a-z0-9.]/g, '') + '@ilch.local';
+}
+
+function roleDepuisCompte(compte) {
+  if (compte.col === 'utilisateurs') return compte.role || 'admin';
+  if (compte.col === 'professeurs') return 'prof';
+  if (compte.col === 'eleves') return 'eleve';
+  if (compte.col === 'parents') return 'parent';
+  return 'inconnu';
 }
 
 function log(msg, type = 'info') {
@@ -140,14 +148,19 @@ window.migrerTout = async function() {
       }
 
       const email = identifiantVersEmail(compte.identifiant);
+      const role = roleDepuisCompte(compte);
       try {
         const cred = await createUserWithEmailAndPassword(auth, email, compte.motDePasse);
         await updateDoc(doc(db, compte.col, compte.id), { authUid: cred.user.uid });
+        await setDoc(doc(db, 'roles', cred.user.uid), { role: role, dateCreation: new Date().toISOString() });
         compteMigres++;
         log('✅ Migré : ' + compte.identifiant + ' (' + compte.col + ')', 'ok');
       } catch (e) {
         if (e.code === 'auth/email-already-in-use') {
           // Le compte Auth existe déjà mais le lien authUid manquait sur ce document
+          if (compte.authUid) {
+            try { await setDoc(doc(db, 'roles', compte.authUid), { role: role, dateCreation: new Date().toISOString() }); } catch (e2) {}
+          }
           compteDeja++;
           log('✓ Compte Auth déjà existant pour : ' + compte.identifiant, 'skip');
         } else {

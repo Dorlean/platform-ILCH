@@ -601,7 +601,7 @@ import { getAuth, onAuthStateChanged, createUserWithEmailAndPassword, signOut } 
 import {
   getFirestore, collection, doc,
   addDoc, getDocs, updateDoc, deleteDoc,
-  onSnapshot, query, where
+  onSnapshot, query, where, setDoc
 } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
 const firebaseConfig = {
@@ -668,12 +668,16 @@ onAuthStateChanged(auth, function(fbUser) {
 function identifiantVersEmail(id) {
   return id.trim().toLowerCase().replace(/[^a-z0-9.]/g, '') + '@ilch.local';
 }
-async function creerCompteAuthSansDeconnexion(email, password) {
+async function creerCompteAuthSansDeconnexion(email, password, role) {
   var secondaryApp = initializeApp(firebaseConfig, 'Secondary-' + Date.now() + '-' + Math.random().toString(36).slice(2));
   var secondaryAuth = getAuth(secondaryApp);
   var cred = await createUserWithEmailAndPassword(secondaryAuth, email, password);
   var uid = cred.user.uid;
   await signOut(secondaryAuth);
+  if (role) {
+    try { await setDoc(doc(db, 'roles', uid), { role: role, dateCreation: new Date().toISOString() }); }
+    catch (e) { console.error('Erreur enregistrement rôle:', e); }
+  }
   return uid;
 }
 
@@ -816,7 +820,7 @@ window.creerCompteInfirmiere = async function() {
     }
     var authUid = null;
     try {
-      authUid = await creerCompteAuthSansDeconnexion(identifiantVersEmail(identifiant), motDePasse);
+      authUid = await creerCompteAuthSansDeconnexion(identifiantVersEmail(identifiant), motDePasse, 'infirmiere');
     } catch (authErr) {
       console.error('Erreur création compte sécurisé:', authErr);
     }

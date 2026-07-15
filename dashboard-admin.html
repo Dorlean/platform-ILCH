@@ -1392,12 +1392,16 @@ function identifiantVersEmail(id) {
   return id.trim().toLowerCase().replace(/[^a-z0-9.]/g, '') + '@ilch.local';
 }
 // Crée un compte Auth SANS déconnecter la session en cours (app Firebase secondaire isolée)
-async function creerCompteAuthSansDeconnexion(email, password) {
+async function creerCompteAuthSansDeconnexion(email, password, role) {
   var secondaryApp = initializeApp(firebaseConfig, 'Secondary-' + Date.now() + '-' + Math.random().toString(36).slice(2));
   var secondaryAuth = getAuth(secondaryApp);
   var cred = await createUserWithEmailAndPassword(secondaryAuth, email, password);
   var uid = cred.user.uid;
   await signOut(secondaryAuth);
+  if (role) {
+    try { await setDoc(doc(db, 'roles', uid), { role: role, dateCreation: new Date().toISOString() }); }
+    catch (e) { console.error('Erreur enregistrement rôle:', e); }
+  }
   return uid;
 }
 
@@ -1766,7 +1770,7 @@ window.creerComptePersonnel = async function() {
     var authUid = null;
     try {
       var emailAuth = estSensible ? email : identifiantVersEmail(identifiant);
-      authUid = await creerCompteAuthSansDeconnexion(emailAuth, motDePasse);
+      authUid = await creerCompteAuthSansDeconnexion(emailAuth, motDePasse, role);
     } catch (authErr) {
       console.error('Erreur création compte sécurisé personnel:', authErr);
     }
@@ -1823,7 +1827,7 @@ onSnapshot(collection(db, 'utilisateurs'), function(snap) {
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
 import {
   getFirestore, collection, doc,
-  addDoc, getDocs, updateDoc, deleteDoc, onSnapshot
+  addDoc, getDocs, updateDoc, deleteDoc, onSnapshot, setDoc
 } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 import { getAuth, createUserWithEmailAndPassword, signOut } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
 
@@ -1842,12 +1846,16 @@ function identifiantVersEmail(id) {
   return id.trim().toLowerCase().replace(/[^a-z0-9.]/g, '') + '@ilch.local';
 }
 // Crée un compte Auth SANS déconnecter la session en cours (app Firebase secondaire isolée)
-async function creerCompteAuthSansDeconnexion(email, password) {
+async function creerCompteAuthSansDeconnexion(email, password, role) {
   var secondaryApp = initializeApp(firebaseConfig, 'Secondary-' + Date.now() + '-' + Math.random().toString(36).slice(2));
   var secondaryAuth = getAuth(secondaryApp);
   var cred = await createUserWithEmailAndPassword(secondaryAuth, email, password);
   var uid = cred.user.uid;
   await signOut(secondaryAuth);
+  if (role) {
+    try { await setDoc(doc(db, 'roles', uid), { role: role, dateCreation: new Date().toISOString() }); }
+    catch (e) { console.error('Erreur enregistrement rôle:', e); }
+  }
   return uid;
 }
 
@@ -1902,7 +1910,7 @@ window.saveEleve = async function() {
       if (typeof enregistrerActivite === 'function') enregistrerActivite('Élève modifié', data.prenom + ' ' + data.nom + ' (' + data.classe + ')');
     } else {
       try {
-        data.authUid = await creerCompteAuthSansDeconnexion(identifiantVersEmail(data.identifiant), data.motDePasse);
+        data.authUid = await creerCompteAuthSansDeconnexion(identifiantVersEmail(data.identifiant), data.motDePasse, 'eleve');
       } catch (authErr) {
         console.error('Erreur création compte sécurisé élève:', authErr);
       }
@@ -1943,7 +1951,7 @@ window.saveProf = async function() {
       if (typeof enregistrerActivite === 'function') enregistrerActivite('Professeur modifié', data.prenom + ' ' + data.nom);
     } else {
       try {
-        data.authUid = await creerCompteAuthSansDeconnexion(identifiantVersEmail(data.identifiant), data.motDePasse);
+        data.authUid = await creerCompteAuthSansDeconnexion(identifiantVersEmail(data.identifiant), data.motDePasse, 'prof');
       } catch (authErr) {
         console.error('Erreur création compte sécurisé professeur:', authErr);
       }
@@ -1986,7 +1994,7 @@ window.saveParent = async function() {
       if (typeof enregistrerActivite === 'function') enregistrerActivite('Parent modifié', data.prenom + ' ' + data.nom);
     } else {
       try {
-        data.authUid = await creerCompteAuthSansDeconnexion(identifiantVersEmail(data.identifiant), data.motDePasse);
+        data.authUid = await creerCompteAuthSansDeconnexion(identifiantVersEmail(data.identifiant), data.motDePasse, 'parent');
       } catch (authErr) {
         console.error('Erreur création compte sécurisé parent:', authErr);
       }
