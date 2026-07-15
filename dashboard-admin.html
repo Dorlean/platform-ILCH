@@ -387,7 +387,7 @@
     <div class="sb-section">Sécurité</div>
     <div class="sb-item" id="sb-item-motsdepasse" onclick="showPanel('motsdepasse',this)"><i class="ti ti-key" aria-hidden="true"></i>Mots de passe</div>
     <div class="sb-section">Communication</div>
-    <div class="sb-item" onclick="showPanel('annonces',this)"><i class="ti ti-speakerphone" aria-hidden="true"></i>Annonces</div>
+    <div class="sb-item" onclick="showPanel('annonces',this)"><i class="ti ti-speakerphone" aria-hidden="true"></i>Actualités</div>
     <div class="sb-section">Mon compte</div>
     <div class="sb-item" onclick="showPanel('profil',this)"><i class="ti ti-user" aria-hidden="true"></i>Mon profil</div>
   </nav>
@@ -623,18 +623,19 @@
       <div id="liste-comptes-personnel"></div>
     </div>
 
-    <!-- ANNONCES -->
+    <!-- ACTUALITÉS -->
     <div class="panel" id="panel-annonces">
       <div class="section-hdr">
-        <div class="section-hdr-title">Publier une annonce</div>
+        <div class="section-hdr-title">Publier une actualité</div>
       </div>
       <div style="background:var(--white);border:0.5px solid var(--border);padding:1.5rem;margin-bottom:1.25rem">
         <div class="form-row" style="margin-bottom:1rem">
-          <div class="form-group"><label>Titre de l'annonce</label><input type="text" id="ann-title" placeholder="Titre"></div>
+          <div class="form-group"><label>Titre</label><input type="text" id="ann-title" placeholder="Titre"></div>
           <div class="form-group"><label>Type</label><select id="ann-type"><option value="info">Information</option><option value="urgent">Urgent</option><option value="event">Événement</option></select></div>
         </div>
-        <div class="form-group"><label>Destinataires</label><select id="ann-dest"><option>Tous</option><option>Parents uniquement</option><option>Élèves uniquement</option><option>Professeurs uniquement</option></select></div>
-        <div class="form-group"><label>Contenu</label><textarea id="ann-body" rows="3" placeholder="Rédigez votre annonce..." style="width:100%;resize:vertical"></textarea></div>
+        <div class="form-group"><label>Destinataires</label><select id="ann-dest" onchange="toggleAvertissementPublic()"><option>Tous</option><option>Parents uniquement</option><option>Élèves uniquement</option><option>Professeurs uniquement</option></select></div>
+        <div id="ann-public-hint" style="font-size:11px;color:var(--gold);background:var(--gold-bg);padding:8px 12px;margin-bottom:0.75rem"><i class="ti ti-world" aria-hidden="true"></i> Visible publiquement sur le site (page d'accueil)</div>
+        <div class="form-group"><label>Contenu</label><textarea id="ann-body" rows="3" placeholder="Rédigez votre actualité..." style="width:100%;resize:vertical"></textarea></div>
         <button class="btn btn-gold" onclick="publishAnn()"><i class="ti ti-speakerphone" aria-hidden="true"></i>Publier</button>
       </div>
       <div id="ann-list" style="display:flex;flex-direction:column;gap:10px"></div>
@@ -1205,7 +1206,7 @@ function exportData(){
 }
 
 // ─── UI ────────────────────────────────────────────────────
-var titles={dash:'Tableau de bord',eleves:'Gestion des élèves',profs:'Gestion des professeurs',parents:'Gestion des parents',personnel:'Personnel & Direction',classes:'Gestion des classes',matieres:'Gestion des matières',effectif:'Effectif global',journal:"Journal d'activité",motsdepasse:'Mots de passe',annonces:'Annonces',profil:'Mon profil'};
+var titles={dash:'Tableau de bord',eleves:'Gestion des élèves',profs:'Gestion des professeurs',parents:'Gestion des parents',personnel:'Personnel & Direction',classes:'Gestion des classes',matieres:'Gestion des matières',effectif:'Effectif global',journal:"Journal d'activité",motsdepasse:'Mots de passe',annonces:'Actualités',profil:'Mon profil'};
 function showPanel(id,el){
   var restreints = ['personnel','journal','motsdepasse'];
   if (restreints.indexOf(id) !== -1) {
@@ -1700,14 +1701,24 @@ onSnapshot(collection(db, 'annonces'), function(snap) {
   list.innerHTML = items.map(function(a) {
     var color = iconesTypeAnnonce[a.type] || 'var(--blue,#2563EB)';
     var date = a.dateCreation ? new Date(a.dateCreation).toLocaleDateString('fr-FR') : '';
+    var estPublic = !a.destinataires || a.destinataires === 'Tous';
+    var badge = estPublic
+      ? '<span style="background:var(--gold-bg);color:var(--gold);font-size:9px;font-weight:700;padding:2px 8px;margin-left:8px"><i class="ti ti-world" aria-hidden="true"></i> Sur le site</span>'
+      : '<span style="background:var(--gray-light);color:var(--gray);font-size:9px;font-weight:700;padding:2px 8px;margin-left:8px"><i class="ti ti-lock" aria-hidden="true"></i> Interne</span>';
     return '<div style="background:var(--white);border:0.5px solid var(--border);border-left:3px solid ' + color + ';padding:1rem 1.25rem;display:flex;justify-content:space-between;align-items:start">' +
-      '<div><div style="font-size:13px;font-weight:600;color:var(--navy);margin-bottom:4px">' + a.titre + '</div>' +
+      '<div><div style="font-size:13px;font-weight:600;color:var(--navy);margin-bottom:4px">' + a.titre + badge + '</div>' +
       '<div style="font-size:12px;color:var(--gray)">' + a.contenu + '</div>' +
       '<div style="font-size:10px;color:var(--muted,#9CA3AF);margin-top:4px">' + date + ' · ' + (a.destinataires || 'Tous') + '</div></div>' +
       '<button class="btn btn-danger" onclick="supprimerAnnonceFirebase(\'' + a.id + '\',\'' + String(a.titre || '').replace(/'/g, "") + '\')"><i class="ti ti-trash" aria-hidden="true"></i></button>' +
       '</div>';
   }).join('');
 });
+
+window.toggleAvertissementPublic = function() {
+  var dest = document.getElementById('ann-dest').value;
+  var hint = document.getElementById('ann-public-hint');
+  if (hint) hint.style.display = (dest === 'Tous') ? 'block' : 'none';
+};
 
 // ── GESTION DES COMPTES — PERSONNEL & DIRECTION ────────────
 var roleLabelsPersonnel = {
