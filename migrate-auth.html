@@ -44,6 +44,23 @@
     ⚠️ Avant de continuer, active bien la méthode "Email/mot de passe" dans Firebase Console → Authentication → Sign-in method.
   </div>
 
+  <div id="login-step">
+    <div class="info-box" style="background:#FEF3C7;border-color:#FDE68A;color:#92400E">
+      🔒 Cet outil nécessite maintenant une connexion Direction (Administrateur/Propriétaire), suite au renforcement des règles de sécurité.
+    </div>
+    <div style="margin-bottom:0.75rem">
+      <label style="font-size:11px;font-weight:700;color:#0D2B4E;text-transform:uppercase;letter-spacing:0.05em">Email (compte Direction)</label>
+      <input type="email" id="admin-email" placeholder="admin@ilch.local ou votre email" style="width:100%;padding:10px 12px;border:1px solid #E5E7EB;font-size:13px;margin-top:4px">
+    </div>
+    <div style="margin-bottom:1rem">
+      <label style="font-size:11px;font-weight:700;color:#0D2B4E;text-transform:uppercase;letter-spacing:0.05em">Mot de passe</label>
+      <input type="password" id="admin-password" placeholder="Mot de passe" style="width:100%;padding:10px 12px;border:1px solid #E5E7EB;font-size:13px;margin-top:4px">
+    </div>
+    <button class="btn" id="login-btn" onclick="connexionAdmin()">Se connecter et déverrouiller la migration</button>
+    <div id="login-error" style="display:none;background:#FEE2E2;color:#B91C1C;padding:10px 14px;font-size:12px;margin-bottom:1rem"></div>
+  </div>
+
+  <div id="migration-step" style="display:none">
   <div class="stats">
     <div class="stat"><div class="stat-val" id="cnt-migres">0</div><div class="stat-label">Migrés</div></div>
     <div class="stat"><div class="stat-val" id="cnt-deja">0</div><div class="stat-label">Déjà migrés</div></div>
@@ -59,12 +76,13 @@
   <div class="success-banner" id="success-banner">
     ✅ Migration terminée ! Tous les comptes utilisent maintenant Firebase Authentication.
   </div>
+  </div>
 </div>
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
 import { getFirestore, collection, getDocs, doc, updateDoc, setDoc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
-import { getAuth, createUserWithEmailAndPassword, signOut } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+import { getAuth, createUserWithEmailAndPassword, signOut, signInWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
 
 const firebaseConfig = {
   apiKey: "AIzaSyDjrBnsTu7CNWnqeqSm29-arbs8MPoTBJ0",
@@ -78,6 +96,34 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 const auth = getAuth(app);
+
+window.connexionAdmin = async function() {
+  var email = document.getElementById('admin-email').value.trim().toLowerCase();
+  var pw = document.getElementById('admin-password').value.trim();
+  var errBox = document.getElementById('login-error');
+  var btn = document.getElementById('login-btn');
+  errBox.style.display = 'none';
+
+  if (!email || !pw) {
+    errBox.textContent = 'Veuillez remplir les deux champs.';
+    errBox.style.display = 'block';
+    return;
+  }
+
+  btn.disabled = true;
+  btn.textContent = 'Connexion...';
+  try {
+    await signInWithEmailAndPassword(auth, email, pw);
+    document.getElementById('login-step').style.display = 'none';
+    document.getElementById('migration-step').style.display = 'block';
+  } catch (e) {
+    console.error(e);
+    errBox.textContent = 'Connexion refusée. Vérifiez l\'email et le mot de passe (compte Direction requis).';
+    errBox.style.display = 'block';
+    btn.disabled = false;
+    btn.textContent = 'Se connecter et déverrouiller la migration';
+  }
+};
 
 const COLLECTIONS = ['utilisateurs', 'professeurs', 'eleves', 'parents'];
 
