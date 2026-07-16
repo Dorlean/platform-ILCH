@@ -290,14 +290,9 @@
         <button class="btn-rose" onclick="showToast('Export téléchargé')"><i class="ti ti-download" aria-hidden="true"></i>Exporter</button>
       </div>
       <table class="data-table">
-        <thead><tr><th>Date & heure</th><th>Élève</th><th>Classe</th><th>Motif</th><th>Traitement</th><th>Suite</th></tr></thead>
-        <tbody>
-          <tr><td>02/07 · 14h00</td><td><strong>Jean Pierre</strong></td><td>Terminale A</td><td>Fièvre 38.5°C</td><td>Paracétamol + repos</td><td><span class="badge badge-renvoye">Renvoyé chez lui</span></td></tr>
-          <tr><td>02/07 · 11h30</td><td><strong>Sophie Marc</strong></td><td>Terminale B</td><td>Blessure genou</td><td>Désinfection + bandage</td><td><span class="badge badge-traite">Retour en classe</span></td></tr>
-          <tr><td>02/07 · 09h15</td><td><strong>Marc Antoine</strong></td><td>Terminale A</td><td>Maux de tête</td><td>Repos + hydratation</td><td><span class="badge badge-suivi">Suivi</span></td></tr>
-          <tr><td>01/07 · 10h00</td><td><strong>Claire Dupont</strong></td><td>Terminale A</td><td>Nausées</td><td>Repos 30 min</td><td><span class="badge badge-traite">Retour en classe</span></td></tr>
-          <tr><td>30/06 · 15h00</td><td><strong>Paul Étienne</strong></td><td>Terminale A</td><td>Douleur abdominale</td><td>Repos + appel parent</td><td><span class="badge badge-renvoye">Renvoyé chez lui</span></td></tr>
-          <tr><td>28/06 · 08h45</td><td><strong>Sophie Marc</strong></td><td>Terminale B</td><td>Allergie (rougeurs)</td><td>Antihistaminique</td><td><span class="badge badge-suivi">Suivi 48h</span></td></tr>
+        <thead><tr><th>Date & heure</th><th>Élève</th><th>Classe</th><th>Motif</th><th>Traitement</th><th>Suite</th><th>Actions</th></tr></thead>
+        <tbody id="tbody-consultations">
+          <tr><td colspan="7" style="text-align:center;color:var(--muted,#9CA3AF)">Chargement...</td></tr>
         </tbody>
       </table>
     </div>
@@ -548,13 +543,6 @@ Compresses stériles&#9;15&#9;unités&#9;5"></textarea>
     document.getElementById('topbar-title').textContent=titles[id]||id;
   }
 
-  function saveConsultation(){
-    var nom=document.getElementById('c-nom').value.trim();
-    if(!nom){showToast('Veuillez saisir le nom de l\'élève');return;}
-    showToast('Consultation de '+nom+' enregistrée avec succès');
-    clearForm();
-  }
-
   function clearForm(){
     document.getElementById('c-nom').value='';
     document.getElementById('c-temp').value='';
@@ -747,6 +735,70 @@ window.saveConsultationFirebase = async function(data) {
   } catch(e) { console.error(e); return null; }
 };
 
+// ── Enregistrer réellement une consultation depuis le formulaire ──
+window.saveConsultation = async function() {
+  var nom = document.getElementById('c-nom').value.trim();
+  if (!nom) { if (typeof showToast === 'function') showToast('Veuillez saisir le nom de l\'élève'); return; }
+
+  var dateVal = document.getElementById('c-date').value;
+  var dateAffichee = dateVal ? new Date(dateVal).toLocaleString('fr-FR', {day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'}) : new Date().toLocaleString('fr-FR', {day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'});
+
+  await saveConsultationFirebase({
+    eleveNom: nom,
+    classe: document.getElementById('c-classe').value,
+    dateAffichee: dateAffichee,
+    temperature: document.getElementById('c-temp').value.trim(),
+    motif: document.getElementById('c-motif').value,
+    symptomes: document.getElementById('c-symptomes').value.trim(),
+    traitement: document.getElementById('c-traitement').value.trim(),
+    suite: document.getElementById('c-suite').value,
+    notes: document.getElementById('c-notes').value.trim()
+  });
+  if (typeof clearForm === 'function') clearForm();
+};
+
+window.supprimerConsultationFirebase = async function(id, nomEleve) {
+  if (!confirm('Supprimer cette consultation (' + nomEleve + ') ? Cette action est irréversible.')) return;
+  try {
+    await deleteDoc(doc(db, 'consultations', id));
+    if (typeof enregistrerActivite === 'function') enregistrerActivite('Consultation supprimée', nomEleve);
+    if (typeof showToast === 'function') showToast('Consultation supprimée ✓');
+  } catch (e) {
+    console.error(e);
+    if (typeof showToast === 'function') showToast('Erreur lors de la suppression');
+  }
+};
+
+var badgeSuite = {
+  'Retour en classe': 'badge-traite',
+  "Repos à l'infirmerie (30 min)": 'badge-suivi',
+  "Repos à l'infirmerie (1h+)": 'badge-suivi',
+  'Renvoyé chez lui — Parent prévenu': 'badge-renvoye',
+  'Envoyé à l\'hôpital': 'badge-renvoye',
+  'Suivi médical recommandé': 'badge-suivi'
+};
+
+onSnapshot(collection(db, 'consultations'), function(snap) {
+  var tbody = document.getElementById('tbody-consultations');
+  if (!tbody) return;
+  var items = snap.docs.map(function(d) { return { id: d.id, ...d.data() }; });
+  items.sort(function(a, b) { return new Date(b.createdAt) - new Date(a.createdAt); });
+
+  if (!items.length) {
+    tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;color:var(--muted,#9CA3AF)">Aucune consultation enregistrée.</td></tr>';
+    return;
+  }
+  tbody.innerHTML = items.map(function(c) {
+    var badgeClasse = badgeSuite[c.suite] || 'badge-suivi';
+    return '<tr><td>' + (c.dateAffichee || '—') + '</td><td><strong>' + (c.eleveNom || '—') + '</strong></td><td>' + (c.classe || '—') + '</td>' +
+      '<td>' + (c.motif || '—') + (c.temperature ? ' (' + c.temperature + '°C)' : '') + '</td>' +
+      '<td>' + (c.traitement || '—') + '</td>' +
+      '<td><span class="badge ' + badgeClasse + '">' + (c.suite || '—') + '</span></td>' +
+      '<td><button onclick="supprimerConsultationFirebase(\'' + c.id + '\',\'' + String(c.eleveNom || '').replace(/'/g, '') + '\')" style="background:none;border:none;color:var(--red);cursor:pointer;font-size:13px" title="Supprimer"><i class="ti ti-trash" aria-hidden="true"></i></button></td>' +
+    '</tr>';
+  }).join('');
+});
+
 // ── MÉDICAMENTS en temps réel ─────────────────────────────
 var medsDejaNotifies = {};
 
@@ -795,7 +847,8 @@ onSnapshot(collection(db, 'medicaments'), function(snap) {
     if (stock <= 0) { cls = 'empty'; color = 'var(--red)'; txt = '⚠️ Stock épuisé'; txtColor = 'var(--red)'; }
     else if (stock <= seuil) { cls = 'empty'; color = 'var(--red)'; txt = '⚠️ Stock critique'; txtColor = 'var(--red)'; }
     else if (stock <= seuil * 2) { cls = 'low'; color = 'var(--orange)'; txt = '⚡ Stock faible'; txtColor = 'var(--orange)'; }
-    return '<div class="stock-card">' +
+    return '<div class="stock-card" style="position:relative">' +
+      '<button onclick="supprimerMedicamentFirebase(\'' + m.id + '\',\'' + String(m.nom || '').replace(/'/g, '') + '\')" style="position:absolute;top:8px;right:8px;background:none;border:none;color:var(--red);cursor:pointer;font-size:14px" title="Supprimer"><i class="ti ti-trash" aria-hidden="true"></i></button>' +
       '<div class="stock-name">' + m.nom + '</div>' +
       '<div class="stock-qty ' + cls + '">' + stock + '</div>' +
       '<div class="stock-unit">' + (m.unite || 'unités') + ' restant(es)</div>' +
@@ -835,6 +888,18 @@ window.ajouterMedicamentUI = async function() {
 window.updateMedicamentFirebase = async function(id, data) {
   try { await updateDoc(doc(db, 'medicaments', id), data); }
   catch(e) { console.error(e); }
+};
+
+window.supprimerMedicamentFirebase = async function(id, nom) {
+  if (!confirm('Supprimer "' + nom + '" du stock ? Cette action est irréversible.')) return;
+  try {
+    await deleteDoc(doc(db, 'medicaments', id));
+    if (typeof enregistrerActivite === 'function') enregistrerActivite('Médicament supprimé', nom);
+    if (typeof showToast === 'function') showToast('Médicament supprimé ✓');
+  } catch (e) {
+    console.error(e);
+    if (typeof showToast === 'function') showToast('Erreur lors de la suppression');
+  }
 };
 
 // ── IMPORT EN MASSE (copier-coller depuis Excel) ────────────
