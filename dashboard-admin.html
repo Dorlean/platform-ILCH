@@ -1553,10 +1553,19 @@ window.saveClasse = function() {
 
 var _origDeleteItem = window.deleteItem;
 window.deleteItem = function(store, id, cb) {
-  if (store === 'classes') {
-    if (!confirm('Supprimer cette classe ?')) return;
-    supprimerClasseFirebase(id);
-    if (typeof showToast === 'function') showToast('Classe supprimée');
+  var collectionsFirestore = { classes: 'classes', eleves: 'eleves', profs: 'professeurs', parents: 'parents' };
+  var vraieCollection = collectionsFirestore[store];
+
+  if (vraieCollection) {
+    if (!confirm('Supprimer définitivement cet élément ? Cette action est irréversible.')) return;
+    deleteDoc(doc(db, vraieCollection, id)).then(function() {
+      if (typeof enregistrerActivite === 'function') enregistrerActivite('Suppression', store + ' — ID : ' + id);
+      if (typeof showToast === 'function') showToast('Supprimé définitivement ✓');
+      if (typeof cb === 'function') cb();
+    }).catch(function(e) {
+      console.error('Erreur suppression Firestore:', e);
+      if (typeof showToast === 'function') showToast('Erreur lors de la suppression');
+    });
     return;
   }
   if (_origDeleteItem) _origDeleteItem(store, id, cb);
