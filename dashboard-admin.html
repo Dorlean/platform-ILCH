@@ -2075,7 +2075,8 @@ window.deleteItem = async function(store, id, cb) {
   if (!confirm('Supprimer cet élément ?')) return;
   var fbCol = store === 'eleves' ? 'eleves' :
               store === 'profs' ? 'professeurs' :
-              store === 'parents' ? 'parents' : null;
+              store === 'parents' ? 'parents' :
+              store === 'classes' ? 'classes' : null;
   if (fbCol && id && !id.startsWith('id_')) {
     try {
       await deleteDoc(doc(db, fbCol, id));
