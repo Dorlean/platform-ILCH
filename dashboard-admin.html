@@ -378,6 +378,7 @@
     <div class="sb-item" onclick="showPanel('eleves',this)"><i class="ti ti-users" aria-hidden="true"></i>Élèves</div>
     <div class="sb-item" onclick="showPanel('profs',this)"><i class="ti ti-chalkboard" aria-hidden="true"></i>Professeurs</div>
     <div class="sb-item" onclick="showPanel('parents',this)"><i class="ti ti-heart" aria-hidden="true"></i>Parents</div>
+    <div class="sb-item" onclick="showPanel('import',this)"><i class="ti ti-clipboard-copy" aria-hidden="true"></i>Importer depuis Excel</div>
     <div class="sb-item" id="sb-item-personnel" onclick="showPanel('personnel',this)"><i class="ti ti-user-plus" aria-hidden="true"></i>Personnel &amp; Direction</div>
     <div class="sb-section">Structure scolaire</div>
     <div class="sb-item" onclick="showPanel('classes',this)"><i class="ti ti-door" aria-hidden="true"></i>Classes</div>
@@ -481,6 +482,54 @@
         <thead><tr><th>Nom complet</th><th>Identifiant</th><th>Téléphone</th><th>Email</th><th>Enfant(s)</th><th>Actions</th></tr></thead>
         <tbody id="tbody-parents"></tbody>
       </table>
+    </div>
+
+    <!-- IMPORT EN MASSE -->
+    <div class="panel" id="panel-import">
+      <div class="section-hdr"><div class="section-hdr-title">Importer depuis Excel (copier-coller)</div></div>
+
+      <div style="background:var(--white);border:0.5px solid var(--border);padding:1.5rem;margin-bottom:1.25rem;max-width:760px">
+        <div class="form-group" style="margin-bottom:1rem"><label>Type de compte à importer</label>
+          <select id="import-type" onchange="afficherModeleImport()">
+            <option value="eleve">Élèves</option>
+            <option value="prof">Professeurs</option>
+          </select>
+        </div>
+
+        <div style="background:var(--gold-bg);padding:12px 16px;margin-bottom:1rem;font-size:12px;color:var(--navy)">
+          <strong>Comment faire :</strong>
+          <ol style="margin:8px 0 0 18px;line-height:1.8">
+            <li>Dans Excel, mets tes colonnes exactement dans cet ordre : <span id="ordre-colonnes-eleve"><strong>Prénom | Nom | Classe | Nom du parent | Téléphone</strong></span></li>
+            <li>Sélectionne toutes les lignes de données (sans les titres de colonnes), copie (Ctrl+C)</li>
+            <li>Colle (Ctrl+V) directement dans la zone ci-dessous</li>
+          </ol>
+        </div>
+
+        <div class="form-group" style="margin-bottom:1rem">
+          <label>Colle tes données ici (une personne par ligne)</label>
+          <textarea id="import-donnees" rows="8" style="width:100%;font-family:monospace;font-size:12px;padding:10px;border:0.5px solid var(--border);resize:vertical" placeholder="Jean&#9;Pierre&#9;Terminale A&#9;Marie Pierre&#9;+509 3X XX XX XX
+Sophie&#9;Marc&#9;Terminale A&#9;Robert Marc&#9;+509 3X XX XX XX"></textarea>
+        </div>
+
+        <button class="btn btn-gold" onclick="analyserImport()"><i class="ti ti-file-search" aria-hidden="true"></i>Analyser les données</button>
+      </div>
+
+      <div id="import-apercu" style="display:none">
+        <div class="section-hdr"><div class="section-hdr-title">Aperçu avant import — <span id="import-count">0</span> personne(s) détectée(s)</div></div>
+        <table class="data-table">
+          <thead><tr><th>Prénom</th><th>Nom</th><th>Classe / Matière</th><th>Identifiant généré</th><th>Mot de passe généré</th></tr></thead>
+          <tbody id="import-tbody-apercu"></tbody>
+        </table>
+        <div class="form-actions" style="margin-top:1rem">
+          <button class="form-submit" onclick="confirmerImport()">✓ Confirmer et créer tous ces comptes</button>
+          <button class="form-cancel" onclick="annulerImport()">Annuler</button>
+        </div>
+      </div>
+
+      <div id="import-resultats" style="display:none;margin-top:1.5rem">
+        <div class="section-hdr"><div class="section-hdr-title">Résultat de l'import</div></div>
+        <div id="import-log" style="background:var(--navy);color:var(--gold);padding:1rem;font-family:monospace;font-size:12px;max-height:300px;overflow-y:auto"></div>
+      </div>
     </div>
 
     <!-- CLASSES -->
@@ -1206,7 +1255,7 @@ function exportData(){
 }
 
 // ─── UI ────────────────────────────────────────────────────
-var titles={dash:'Tableau de bord',eleves:'Gestion des élèves',profs:'Gestion des professeurs',parents:'Gestion des parents',personnel:'Personnel & Direction',classes:'Gestion des classes',matieres:'Gestion des matières',effectif:'Effectif global',journal:"Journal d'activité",motsdepasse:'Mots de passe',annonces:'Actualités',profil:'Mon profil'};
+var titles={dash:'Tableau de bord',eleves:'Gestion des élèves',profs:'Gestion des professeurs',parents:'Gestion des parents',personnel:'Personnel & Direction',classes:'Gestion des classes',matieres:'Gestion des matières',effectif:'Effectif global',journal:"Journal d'activité",motsdepasse:'Mots de passe',annonces:'Actualités',profil:'Mon profil',import:'Importer depuis Excel'};
 function showPanel(id,el){
   var restreints = ['personnel','journal','motsdepasse'];
   if (restreints.indexOf(id) !== -1) {
@@ -1827,7 +1876,7 @@ onSnapshot(collection(db, 'utilisateurs'), function(snap) {
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
 import {
   getFirestore, collection, doc,
-  addDoc, getDocs, updateDoc, deleteDoc, onSnapshot, setDoc
+  addDoc, getDocs, updateDoc, deleteDoc, onSnapshot, setDoc, query, where
 } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 import { getAuth, createUserWithEmailAndPassword, signOut } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
 
@@ -2071,6 +2120,126 @@ window.exportData = async function() {
     a.click();
     showToast('✓ Export Firebase téléchargé');
   } catch(e) { showToast('Erreur export: ' + e.message); }
+};
+
+// ── IMPORT EN MASSE (copier-coller depuis Excel) ────────────
+var donneesImportAnalysees = [];
+
+window.afficherModeleImport = function() {
+  var type = document.getElementById('import-type').value;
+  var el = document.getElementById('ordre-colonnes-eleve');
+  if (type === 'eleve') {
+    el.innerHTML = '<strong>Prénom | Nom | Classe | Nom du parent | Téléphone</strong>';
+  } else {
+    el.innerHTML = '<strong>Prénom | Nom | Matière | Classes (séparées par virgule) | Téléphone</strong>';
+  }
+};
+
+function decouperLigne(ligne) {
+  // Excel colle avec des tabulations ; on gère aussi la virgule en secours
+  var parts = ligne.split('\t');
+  if (parts.length < 2) parts = ligne.split(',');
+  return parts.map(function(p) { return p.trim(); });
+}
+
+window.analyserImport = function() {
+  var type = document.getElementById('import-type').value;
+  var texte = document.getElementById('import-donnees').value.trim();
+  if (!texte) { if (typeof showToast === 'function') showToast('Colle des données avant d\'analyser'); return; }
+
+  var lignes = texte.split('\n').map(function(l) { return l.trim(); }).filter(function(l) { return l; });
+  donneesImportAnalysees = [];
+
+  lignes.forEach(function(ligne) {
+    var cols = decouperLigne(ligne);
+    var prenom = cols[0] || '';
+    var nom = cols[1] || '';
+    if (!prenom || !nom) return;
+    var champ3 = cols[2] || '';
+    var champ4 = cols[3] || '';
+    var champ5 = cols[4] || '';
+    var identifiant = nettoyerTexte(prenom) + '.' + nettoyerTexte(nom);
+    var motDePasse = genererMotDePasseSecurise();
+
+    if (type === 'eleve') {
+      donneesImportAnalysees.push({ type: 'eleve', prenom: prenom, nom: nom, classe: champ3, parentNom: champ4, tel: champ5, identifiant: identifiant, motDePasse: motDePasse });
+    } else {
+      donneesImportAnalysees.push({ type: 'prof', prenom: prenom, nom: nom, matiere: champ3, classes: champ4 ? champ4.split(',').map(function(c){return c.trim();}) : [], tel: champ5, identifiant: identifiant, motDePasse: motDePasse });
+    }
+  });
+
+  var tbody = document.getElementById('import-tbody-apercu');
+  tbody.innerHTML = donneesImportAnalysees.map(function(d) {
+    return '<tr><td>' + d.prenom + '</td><td>' + d.nom + '</td><td>' + (d.classe || d.matiere || '—') + '</td><td>' + d.identifiant + '</td><td>' + d.motDePasse + '</td></tr>';
+  }).join('') || '<tr><td colspan="5" style="text-align:center;color:var(--muted)">Aucune ligne valide détectée.</td></tr>';
+
+  document.getElementById('import-count').textContent = donneesImportAnalysees.length;
+  document.getElementById('import-apercu').style.display = donneesImportAnalysees.length ? 'block' : 'none';
+};
+
+window.annulerImport = function() {
+  donneesImportAnalysees = [];
+  document.getElementById('import-apercu').style.display = 'none';
+  document.getElementById('import-resultats').style.display = 'none';
+  document.getElementById('import-donnees').value = '';
+};
+
+window.confirmerImport = async function() {
+  if (!donneesImportAnalysees.length) return;
+  var logBox = document.getElementById('import-log');
+  var resultBox = document.getElementById('import-resultats');
+  resultBox.style.display = 'block';
+  logBox.innerHTML = '';
+
+  function log(msg) {
+    var line = document.createElement('div');
+    line.textContent = msg;
+    logBox.appendChild(line);
+    logBox.scrollTop = logBox.scrollHeight;
+  }
+
+  log('🚀 Démarrage de l\'import de ' + donneesImportAnalysees.length + ' compte(s)...');
+  var crees = 0, doublons = 0, erreurs = 0;
+
+  for (var i = 0; i < donneesImportAnalysees.length; i++) {
+    var d = donneesImportAnalysees[i];
+    try {
+      var col = d.type === 'eleve' ? 'eleves' : 'professeurs';
+      var existant = await getDocs(query(collection(db, col), where('identifiant', '==', d.identifiant)));
+      if (!existant.empty) {
+        log('⚠️ Déjà existant, ignoré : ' + d.prenom + ' ' + d.nom + ' (' + d.identifiant + ')');
+        doublons++;
+        continue;
+      }
+
+      var authUid = null;
+      try {
+        authUid = await creerCompteAuthSansDeconnexion(identifiantVersEmail(d.identifiant), d.motDePasse, d.type);
+      } catch (authErr) {
+        console.error('Erreur compte sécurisé:', authErr);
+      }
+
+      var docData = d.type === 'eleve'
+        ? { prenom: d.prenom, nom: d.nom, classe: d.classe, parentNom: d.parentNom, tel: d.tel, identifiant: d.identifiant, motDePasse: d.motDePasse, role: 'eleve', authUid: authUid, createdAt: new Date().toISOString() }
+        : { prenom: d.prenom, nom: d.nom, matieres: d.matiere ? [d.matiere] : [], classes: d.classes, tel: d.tel, identifiant: d.identifiant, motDePasse: d.motDePasse, role: 'prof', authUid: authUid, createdAt: new Date().toISOString() };
+
+      await addDoc(collection(db, col), docData);
+      log('✅ Créé : ' + d.prenom + ' ' + d.nom + ' (' + d.identifiant + ' / ' + d.motDePasse + ')');
+      crees++;
+    } catch (e) {
+      console.error(e);
+      log('❌ Erreur pour ' + d.prenom + ' ' + d.nom + ' : ' + e.message);
+      erreurs++;
+    }
+  }
+
+  log('');
+  log('🎉 Import terminé : ' + crees + ' créé(s), ' + doublons + ' déjà existant(s), ' + erreurs + ' erreur(s).');
+  if (typeof enregistrerActivite === 'function') {
+    enregistrerActivite('Import en masse', crees + ' compte(s) importé(s) depuis Excel');
+  }
+  document.getElementById('import-apercu').style.display = 'none';
+  if (typeof showToast === 'function') showToast('Import terminé : ' + crees + ' compte(s) créé(s) ✓');
 };
 
 console.log('✓ Dashboard Admin entièrement connecté à Firebase');
