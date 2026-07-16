@@ -314,6 +314,7 @@
     <div class="sb-item" onclick="showPanel('rapport',this)"><i class="ti ti-file-analytics" aria-hidden="true"></i>Rapport</div>
     <div class="sb-section">Mon compte</div>
     <div class="sb-item" onclick="showPanel('comptes',this)"><i class="ti ti-user-plus" aria-hidden="true"></i>Gestion des comptes</div>
+    <div class="sb-item" onclick="showPanel('import',this)"><i class="ti ti-clipboard-copy" aria-hidden="true"></i>Importer depuis Excel</div>
     <div class="sb-item" onclick="showPanel('profil',this)"><i class="ti ti-user" aria-hidden="true"></i>Mon profil</div>
   </nav>
   <div class="sb-user">
@@ -513,6 +514,46 @@
     </div>
 
     <!-- MON PROFIL -->
+    <!-- IMPORT EN MASSE -->
+    <div class="panel" id="panel-import">
+      <div class="section-hdr"><div class="section-hdr-title">Importer des livres depuis Excel (copier-coller)</div></div>
+
+      <div style="background:var(--white);border:0.5px solid var(--border);padding:1.5rem;margin-bottom:1.25rem;max-width:760px">
+        <div style="background:var(--gold-bg,#FAF3E8);padding:12px 16px;margin-bottom:1rem;font-size:12px;color:var(--navy)">
+          <strong>Comment faire :</strong>
+          <ol style="margin:8px 0 0 18px;line-height:1.8">
+            <li>Dans Excel, mets tes colonnes exactement dans cet ordre : <strong>Titre | Auteur | Genre | Nombre d'exemplaires | Année | ISBN | Langue</strong> (les 3 dernières sont optionnelles)</li>
+            <li>Sélectionne toutes les lignes de données (sans les titres de colonnes), copie (Ctrl+C)</li>
+            <li>Colle (Ctrl+V) directement dans la zone ci-dessous</li>
+          </ol>
+        </div>
+
+        <div class="form-group" style="margin-bottom:1rem">
+          <label>Colle tes données ici (un livre par ligne)</label>
+          <textarea id="import-donnees" rows="8" style="width:100%;font-family:monospace;font-size:12px;padding:10px;border:0.5px solid var(--border);resize:vertical" placeholder="Gouverneurs de la rosée&#9;Jacques Roumain&#9;Roman&#9;3&#9;1944&#9;&#9;Français"></textarea>
+        </div>
+
+        <button class="btn btn-brown" onclick="analyserImport()"><i class="ti ti-file-search" aria-hidden="true"></i>Analyser les données</button>
+      </div>
+
+      <div id="import-apercu" style="display:none">
+        <div class="section-hdr"><div class="section-hdr-title">Aperçu avant import — <span id="import-count">0</span> livre(s) détecté(s)</div></div>
+        <table class="data-table">
+          <thead><tr><th>Titre</th><th>Auteur</th><th>Genre</th><th>Exemplaires</th></tr></thead>
+          <tbody id="import-tbody-apercu"></tbody>
+        </table>
+        <div class="form-actions" style="margin-top:1rem">
+          <button class="btn btn-brown" onclick="confirmerImport()">✓ Confirmer et ajouter au catalogue</button>
+          <button class="form-cancel" onclick="annulerImport()">Annuler</button>
+        </div>
+      </div>
+
+      <div id="import-resultats" style="display:none;margin-top:1.5rem">
+        <div class="section-hdr"><div class="section-hdr-title">Résultat de l'import</div></div>
+        <div id="import-log" style="background:var(--navy);color:var(--gold,#C9A96E);padding:1rem;font-family:monospace;font-size:12px;max-height:300px;overflow-y:auto"></div>
+      </div>
+    </div>
+
     <div class="panel" id="panel-profil">
       <div style="background:var(--white);border:0.5px solid var(--border);max-width:520px;padding:2rem">
         <div style="display:flex;align-items:center;gap:16px;margin-bottom:1.5rem;padding-bottom:1.5rem;border-bottom:1px solid var(--border)">
@@ -592,7 +633,7 @@ function showPanel(id,el){
   document.getElementById('panel-'+id).classList.add('active');
   document.querySelectorAll('.sb-item').forEach(function(i){i.classList.remove('active')});
   if(el)el.classList.add('active');
-  var titles={dash:'Tableau de bord',catalogue:'Catalogue des livres',ajouter:'Ajouter un livre',emprunts:'Emprunts en cours',retards:'Retards',historique:'Historique des emprunts',rapport:'Rapport bibliothèque',comptes:'Gestion des comptes',profil:'Mon profil'};
+  var titles={dash:'Tableau de bord',catalogue:'Catalogue des livres',ajouter:'Ajouter un livre',emprunts:'Emprunts en cours',retards:'Retards',historique:'Historique des emprunts',rapport:'Rapport bibliothèque',comptes:'Gestion des comptes',profil:'Mon profil',import:'Importer depuis Excel'};
   document.getElementById('topbar-title').textContent=titles[id]||id;
   renderAll();
 }
@@ -809,6 +850,71 @@ function addLivreFromPanel(){
 function clearAddForm(){
   ['add-titre','add-auteur','add-annee','add-isbn','add-desc'].forEach(function(id){document.getElementById(id).value='';});
   document.getElementById('add-stock').value='';
+}
+
+// ── IMPORT EN MASSE (copier-coller depuis Excel) ────────────
+var donneesImportAnalysees = [];
+
+function decouperLigneImport(ligne) {
+  var parts = ligne.split('\t');
+  if (parts.length < 2) parts = ligne.split(',');
+  return parts.map(function(p) { return p.trim(); });
+}
+
+function analyserImport() {
+  var texte = document.getElementById('import-donnees').value.trim();
+  if (!texte) { showToast('Colle des données avant d\'analyser'); return; }
+
+  var lignes = texte.split('\n').map(function(l){return l.trim();}).filter(function(l){return l;});
+  donneesImportAnalysees = [];
+
+  lignes.forEach(function(ligne){
+    var cols = decouperLigneImport(ligne);
+    var titre = cols[0] || '';
+    var auteur = cols[1] || '';
+    if (!titre || !auteur) return;
+    donneesImportAnalysees.push({
+      titre: titre, auteur: auteur, genre: cols[2] || 'Autre',
+      stock: Number(cols[3]) || 1, annee: cols[4] || '', isbn: cols[5] || '', langue: cols[6] || 'Français'
+    });
+  });
+
+  var tbody = document.getElementById('import-tbody-apercu');
+  tbody.innerHTML = donneesImportAnalysees.map(function(d){
+    return '<tr><td>'+d.titre+'</td><td>'+d.auteur+'</td><td>'+d.genre+'</td><td>'+d.stock+'</td></tr>';
+  }).join('') || '<tr><td colspan="4" style="text-align:center;color:var(--muted)">Aucune ligne valide détectée.</td></tr>';
+
+  document.getElementById('import-count').textContent = donneesImportAnalysees.length;
+  document.getElementById('import-apercu').style.display = donneesImportAnalysees.length ? 'block' : 'none';
+}
+
+function annulerImport() {
+  donneesImportAnalysees = [];
+  document.getElementById('import-apercu').style.display = 'none';
+  document.getElementById('import-resultats').style.display = 'none';
+  document.getElementById('import-donnees').value = '';
+}
+
+function confirmerImport() {
+  if (!donneesImportAnalysees.length) return;
+  var logBox = document.getElementById('import-log');
+  document.getElementById('import-resultats').style.display = 'block';
+  logBox.innerHTML = '';
+  function log(msg){ var l=document.createElement('div'); l.textContent=msg; logBox.appendChild(l); logBox.scrollTop=logBox.scrollHeight; }
+
+  log('🚀 Import de ' + donneesImportAnalysees.length + ' livre(s)...');
+  var crees = 0;
+  donneesImportAnalysees.forEach(function(d){
+    var ok = saveLivreData(d.titre, d.auteur, d.genre, d.stock, d.annee, d.isbn, d.langue, '', null);
+    if (ok) { log('✅ Ajouté : ' + d.titre + ' — ' + d.auteur); crees++; }
+    else { log('❌ Erreur pour : ' + d.titre); }
+  });
+
+  log('');
+  log('🎉 Import terminé : ' + crees + ' livre(s) ajouté(s) au catalogue.');
+  renderAll();
+  document.getElementById('import-apercu').style.display = 'none';
+  showToast('Import terminé : ' + crees + ' livre(s) ajouté(s) ✓');
 }
 
 function editLivre(id){

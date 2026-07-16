@@ -18,6 +18,18 @@
       --rose:#E11D48;--rose-bg:#FFF1F2;--rose-light:#FB7185;
     }
     body{font-family:'Inter',sans-serif;background:var(--cream);color:var(--text);display:flex;min-height:100vh}
+    .modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.45);z-index:200;align-items:center;justify-content:center;padding:1rem}
+    .modal-overlay.open{display:flex}
+    .modal{background:var(--white);width:100%;max-width:520px;max-height:90vh;overflow-y:auto;position:relative}
+    .modal-header{padding:1.25rem 1.5rem;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;background:var(--white);z-index:1}
+    .modal-title{font-family:'Playfair Display',serif;font-size:1.1rem;color:var(--navy);font-weight:700}
+    .modal-close{background:none;border:none;cursor:pointer;font-size:20px;color:var(--gray);padding:4px}
+    .classe-item{padding:10px 14px;font-size:12px;cursor:pointer;border-bottom:0.5px solid var(--border);transition:background 0.15s}
+    .classe-item:hover{background:var(--gray-light,#F3F4F6)}
+    .classe-item.active{background:var(--gold-bg,#FAF3E8);color:var(--navy);font-weight:600;border-left:3px solid var(--gold,#C9A96E)}
+    .fiche-mini-card{background:var(--white);border:0.5px solid var(--border);padding:12px 14px;cursor:pointer;transition:border-color 0.15s;display:flex;align-items:center;gap:10px}
+    .fiche-mini-card:hover{border-color:var(--gold,#C9A96E)}
+    .fiche-mini-avatar{width:36px;height:36px;border-radius:50%;background:var(--gold-bg,#FAF3E8);color:var(--navy);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;flex-shrink:0}
     a{text-decoration:none;color:inherit}
 
     /* SIDEBAR */
@@ -192,6 +204,7 @@
     <div class="sb-item" onclick="showPanel('rapports',this)"><i class="ti ti-file-analytics" aria-hidden="true"></i>Rapport médical</div>
     <div class="sb-section">Mon compte</div>
     <div class="sb-item" onclick="showPanel('comptes',this)"><i class="ti ti-user-plus" aria-hidden="true"></i>Gestion des comptes</div>
+    <div class="sb-item" onclick="showPanel('import',this)"><i class="ti ti-clipboard-copy" aria-hidden="true"></i>Importer depuis Excel</div>
     <div class="sb-item" onclick="showPanel('profil',this)"><i class="ti ti-user" aria-hidden="true"></i>Mon profil</div>
   </nav>
   <div class="sb-user">
@@ -321,56 +334,42 @@
     <div class="panel" id="panel-fiches">
       <div class="section-hdr">
         <div class="section-hdr-title">Fiches médicales des élèves</div>
-        <input type="text" placeholder="Rechercher un élève..." style="border:1px solid var(--border);padding:7px 12px;font-size:12px;outline:none;background:var(--white);width:220px">
       </div>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
-        <div class="fiche-card">
-          <div class="fiche-header">
-            <div class="fiche-avatar">JP</div>
-            <div><div class="fiche-name">Jean Pierre</div><div class="fiche-meta">Terminale A · 17 ans</div></div>
-            <span class="badge badge-suivi" style="margin-left:auto">3 visites</span>
+
+      <div style="display:grid;grid-template-columns:220px 1fr;gap:16px">
+        <!-- Liste des classes -->
+        <div style="background:var(--white);border:0.5px solid var(--border)">
+          <div style="padding:10px 14px;font-size:11px;font-weight:700;color:var(--muted,#9CA3AF);text-transform:uppercase;border-bottom:0.5px solid var(--border)">Classes</div>
+          <div id="fiches-liste-classes" style="max-height:520px;overflow-y:auto">
+            <div style="font-size:12px;color:var(--gray);padding:1rem">Chargement...</div>
           </div>
-          <div class="fiche-row"><span>Groupe sanguin</span><span class="fiche-val">A+</span></div>
-          <div class="fiche-row"><span>Allergies connues</span><span class="fiche-val">Aucune</span></div>
-          <div class="fiche-row"><span>Maladie chronique</span><span class="fiche-val">Aucune</span></div>
-          <div class="fiche-row"><span>Parent urgence</span><span class="fiche-val">Marie Pierre · +509 3X XX</span></div>
-          <div class="fiche-row"><span>Dernière visite</span><span class="fiche-val">02/07/2026 · Fièvre</span></div>
         </div>
-        <div class="fiche-card">
-          <div class="fiche-header">
-            <div class="fiche-avatar">SM</div>
-            <div><div class="fiche-name">Sophie Marc</div><div class="fiche-meta">Terminale B · 17 ans</div></div>
-            <span class="badge badge-suivi" style="margin-left:auto">2 visites</span>
-          </div>
-          <div class="fiche-row"><span>Groupe sanguin</span><span class="fiche-val">O+</span></div>
-          <div class="fiche-row"><span>Allergies connues</span><span class="fiche-val">Poussière (rhinite)</span></div>
-          <div class="fiche-row"><span>Maladie chronique</span><span class="fiche-val">Asthme léger</span></div>
-          <div class="fiche-row"><span>Parent urgence</span><span class="fiche-val">Robert Marc · +509 3X XX</span></div>
-          <div class="fiche-row"><span>Dernière visite</span><span class="fiche-val">02/07/2026 · Blessure</span></div>
+
+        <!-- Élèves de la classe sélectionnée -->
+        <div>
+          <div id="fiches-classe-titre" style="font-size:13px;font-weight:600;color:var(--navy);margin-bottom:10px">← Sélectionnez une classe à gauche</div>
+          <div id="fiches-liste-eleves" style="display:grid;grid-template-columns:1fr 1fr;gap:12px"></div>
         </div>
-        <div class="fiche-card">
-          <div class="fiche-header">
-            <div class="fiche-avatar">MA</div>
-            <div><div class="fiche-name">Marc Antoine</div><div class="fiche-meta">Terminale A · 18 ans</div></div>
-            <span class="badge badge-grave" style="margin-left:auto">4 visites</span>
-          </div>
-          <div class="fiche-row"><span>Groupe sanguin</span><span class="fiche-val">B+</span></div>
-          <div class="fiche-row"><span>Allergies connues</span><span class="fiche-val">Pénicilline</span></div>
-          <div class="fiche-row"><span>Maladie chronique</span><span class="fiche-val">Drépanocytose</span></div>
-          <div class="fiche-row"><span>Parent urgence</span><span class="fiche-val">Louise Antoine · +509 3X XX</span></div>
-          <div class="fiche-row"><span>Dernière visite</span><span class="fiche-val">02/07/2026 · Maux de tête</span></div>
+      </div>
+    </div>
+
+    <!-- FICHE MÉDICALE D'UN ÉLÈVE (modale simple) -->
+    <div id="modal-fiche-medicale" class="modal-overlay">
+      <div class="modal" style="max-width:520px">
+        <div class="modal-header">
+          <div class="modal-title" id="fm-nom-titre">Fiche médicale</div>
+          <button class="modal-close" onclick="document.getElementById('modal-fiche-medicale').classList.remove('open')">&times;</button>
         </div>
-        <div class="fiche-card">
-          <div class="fiche-header">
-            <div class="fiche-avatar">CD</div>
-            <div><div class="fiche-name">Claire Dupont</div><div class="fiche-meta">Terminale A · 17 ans</div></div>
-            <span class="badge badge-leger" style="margin-left:auto">1 visite</span>
+        <div style="padding:1.5rem">
+          <div class="form-row" style="margin-bottom:1rem">
+            <div class="form-group"><label>Groupe sanguin</label>
+              <select id="fm-groupe-sanguin"><option value="">—</option><option>O+</option><option>O-</option><option>A+</option><option>A-</option><option>B+</option><option>B-</option><option>AB+</option><option>AB-</option></select>
+            </div>
+            <div class="form-group"><label>Contact d'urgence</label><input type="text" id="fm-contact-urgence" placeholder="Nom · Téléphone"></div>
           </div>
-          <div class="fiche-row"><span>Groupe sanguin</span><span class="fiche-val">AB+</span></div>
-          <div class="fiche-row"><span>Allergies connues</span><span class="fiche-val">Aucune</span></div>
-          <div class="fiche-row"><span>Maladie chronique</span><span class="fiche-val">Aucune</span></div>
-          <div class="fiche-row"><span>Parent urgence</span><span class="fiche-val">Henri Dupont · +509 3X XX</span></div>
-          <div class="fiche-row"><span>Dernière visite</span><span class="fiche-val">01/07/2026 · Nausées</span></div>
+          <div class="form-group" style="margin-bottom:1rem"><label>Allergies connues</label><input type="text" id="fm-allergies" placeholder="ex: Pénicilline, Aucune..."></div>
+          <div class="form-group" style="margin-bottom:1.25rem"><label>Maladie(s) chronique(s)</label><input type="text" id="fm-maladie" placeholder="ex: Asthme, Aucune..."></div>
+          <button class="btn-rose" onclick="enregistrerFicheMedicale()"><i class="ti ti-check" aria-hidden="true"></i>Enregistrer la fiche</button>
         </div>
       </div>
     </div>
@@ -477,6 +476,47 @@
     </div>
 
     <!-- MON PROFIL -->
+    <!-- IMPORT EN MASSE -->
+    <div class="panel" id="panel-import">
+      <div class="section-hdr"><div class="section-hdr-title">Importer des médicaments depuis Excel (copier-coller)</div></div>
+
+      <div style="background:var(--white);border:0.5px solid var(--border);padding:1.5rem;margin-bottom:1.25rem;max-width:760px">
+        <div style="background:var(--gold-bg,#FAF3E8);padding:12px 16px;margin-bottom:1rem;font-size:12px;color:var(--navy)">
+          <strong>Comment faire :</strong>
+          <ol style="margin:8px 0 0 18px;line-height:1.8">
+            <li>Dans Excel, mets tes colonnes exactement dans cet ordre : <strong>Nom | Quantité | Unité | Seuil d'alerte</strong> (le seuil est optionnel, 5 par défaut)</li>
+            <li>Sélectionne toutes les lignes de données (sans les titres de colonnes), copie (Ctrl+C)</li>
+            <li>Colle (Ctrl+V) directement dans la zone ci-dessous</li>
+          </ol>
+        </div>
+
+        <div class="form-group" style="margin-bottom:1rem">
+          <label>Colle tes données ici (un médicament par ligne)</label>
+          <textarea id="import-donnees" rows="8" style="width:100%;font-family:monospace;font-size:12px;padding:10px;border:0.5px solid var(--border);resize:vertical" placeholder="Paracétamol 500mg&#9;20&#9;comprimés&#9;5
+Compresses stériles&#9;15&#9;unités&#9;5"></textarea>
+        </div>
+
+        <button class="btn-rose" onclick="analyserImport()"><i class="ti ti-file-search" aria-hidden="true"></i>Analyser les données</button>
+      </div>
+
+      <div id="import-apercu" style="display:none">
+        <div class="section-hdr"><div class="section-hdr-title">Aperçu avant import — <span id="import-count">0</span> médicament(s) détecté(s)</div></div>
+        <table class="data-table">
+          <thead><tr><th>Nom</th><th>Quantité</th><th>Unité</th><th>Seuil</th></tr></thead>
+          <tbody id="import-tbody-apercu"></tbody>
+        </table>
+        <div class="form-actions" style="margin-top:1rem">
+          <button class="btn-rose" onclick="confirmerImport()">✓ Confirmer et ajouter au stock</button>
+          <button class="form-cancel" onclick="annulerImport()">Annuler</button>
+        </div>
+      </div>
+
+      <div id="import-resultats" style="display:none;margin-top:1.5rem">
+        <div class="section-hdr"><div class="section-hdr-title">Résultat de l'import</div></div>
+        <div id="import-log" style="background:var(--navy);color:var(--gold,#C9A96E);padding:1rem;font-family:monospace;font-size:12px;max-height:300px;overflow-y:auto"></div>
+      </div>
+    </div>
+
     <div class="panel" id="panel-profil">
       <div style="background:var(--white);border:0.5px solid var(--border);max-width:520px;padding:2rem">
         <div style="display:flex;align-items:center;gap:16px;margin-bottom:1.5rem;padding-bottom:1.5rem;border-bottom:1px solid var(--border)">
@@ -498,7 +538,7 @@
 </div>
 
 <script>
-  var titles={dash:'Tableau de bord — Infirmerie',consultations:'Historique des consultations',nouvelle:'Nouvelle consultation',fiches:'Fiches médicales des élèves',stock:'Stock de l\'infirmerie',messages:'Messages',rapports:'Rapport médical mensuel',comptes:'Gestion des comptes',profil:'Mon profil'};
+  var titles={dash:'Tableau de bord — Infirmerie',consultations:'Historique des consultations',nouvelle:'Nouvelle consultation',fiches:'Fiches médicales des élèves',stock:'Stock de l\'infirmerie',messages:'Messages',rapports:'Rapport médical mensuel',comptes:'Gestion des comptes',profil:'Mon profil',import:'Importer depuis Excel'};
 
   function showPanel(id,el){
     document.querySelectorAll('.panel').forEach(function(p){p.classList.remove('active')});
@@ -599,7 +639,7 @@ document.addEventListener("DOMContentLoaded",function(){
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
 import { getAuth, onAuthStateChanged, createUserWithEmailAndPassword, signOut } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
 import {
-  getFirestore, collection, doc,
+  getFirestore, collection, doc, getDoc,
   addDoc, getDocs, updateDoc, deleteDoc,
   onSnapshot, query, where, setDoc
 } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
@@ -797,6 +837,79 @@ window.updateMedicamentFirebase = async function(id, data) {
   catch(e) { console.error(e); }
 };
 
+// ── IMPORT EN MASSE (copier-coller depuis Excel) ────────────
+var donneesImportAnalysees = [];
+
+function decouperLigneImport(ligne) {
+  var parts = ligne.split('\t');
+  if (parts.length < 2) parts = ligne.split(',');
+  return parts.map(function(p) { return p.trim(); });
+}
+
+window.analyserImport = function() {
+  var texte = document.getElementById('import-donnees').value.trim();
+  if (!texte) { if (typeof showToast === 'function') showToast('Colle des données avant d\'analyser'); return; }
+
+  var lignes = texte.split('\n').map(function(l){return l.trim();}).filter(function(l){return l;});
+  donneesImportAnalysees = [];
+
+  lignes.forEach(function(ligne){
+    var cols = decouperLigneImport(ligne);
+    var nom = cols[0] || '';
+    if (!nom) return;
+    donneesImportAnalysees.push({
+      nom: nom, stock: Number(cols[1]) || 0, unite: cols[2] || 'unités', seuil: Number(cols[3]) || 5
+    });
+  });
+
+  var tbody = document.getElementById('import-tbody-apercu');
+  tbody.innerHTML = donneesImportAnalysees.map(function(d){
+    return '<tr><td>'+d.nom+'</td><td>'+d.stock+'</td><td>'+d.unite+'</td><td>'+d.seuil+'</td></tr>';
+  }).join('') || '<tr><td colspan="4" style="text-align:center;color:var(--muted)">Aucune ligne valide détectée.</td></tr>';
+
+  document.getElementById('import-count').textContent = donneesImportAnalysees.length;
+  document.getElementById('import-apercu').style.display = donneesImportAnalysees.length ? 'block' : 'none';
+};
+
+window.annulerImport = function() {
+  donneesImportAnalysees = [];
+  document.getElementById('import-apercu').style.display = 'none';
+  document.getElementById('import-resultats').style.display = 'none';
+  document.getElementById('import-donnees').value = '';
+};
+
+window.confirmerImport = async function() {
+  if (!donneesImportAnalysees.length) return;
+  var logBox = document.getElementById('import-log');
+  document.getElementById('import-resultats').style.display = 'block';
+  logBox.innerHTML = '';
+  function log(msg){ var l=document.createElement('div'); l.textContent=msg; logBox.appendChild(l); logBox.scrollTop=logBox.scrollHeight; }
+
+  log('🚀 Import de ' + donneesImportAnalysees.length + ' médicament(s)...');
+  var crees = 0, erreurs = 0;
+
+  for (var i = 0; i < donneesImportAnalysees.length; i++) {
+    var d = donneesImportAnalysees[i];
+    try {
+      await addDoc(collection(db, 'medicaments'), {
+        nom: d.nom, stock: d.stock, unite: d.unite, seuil: d.seuil,
+        dateAjout: new Date().toISOString()
+      });
+      log('✅ Ajouté : ' + d.nom + ' (' + d.stock + ' ' + d.unite + ')');
+      crees++;
+    } catch (e) {
+      console.error(e);
+      log('❌ Erreur pour ' + d.nom + ' : ' + e.message);
+      erreurs++;
+    }
+  }
+
+  log('');
+  log('🎉 Import terminé : ' + crees + ' médicament(s) ajouté(s), ' + erreurs + ' erreur(s).');
+  document.getElementById('import-apercu').style.display = 'none';
+  if (typeof showToast === 'function') showToast('Import terminé : ' + crees + ' médicament(s) ajouté(s) ✓');
+};
+
 console.log('✓ Dashboard Infirmière connecté à Firebase');
 
 // ── GESTION DES COMPTES (Infirmerie) ───────────────────────
@@ -938,5 +1051,90 @@ onSnapshot(query(collection(db, 'notifications'), where('destinataireRole', 'in'
     '</div>';
   }).join('');
 });
+
+// ── FICHES MÉDICALES — classes réelles + élèves réels ───────
+onSnapshot(collection(db, 'classes'), function(snap) {
+  var classes = snap.docs.map(function(d) { return d.data(); });
+  var container = document.getElementById('fiches-liste-classes');
+  if (!container) return;
+  if (!classes.length) {
+    container.innerHTML = '<div style="font-size:12px;color:var(--gray);padding:1rem">Aucune classe configurée.</div>';
+    return;
+  }
+  container.innerHTML = classes.map(function(c) {
+    return '<div class="classe-item" onclick="selectionnerClasseFiche(\'' + c.nom + '\', this)">' + c.nom + '</div>';
+  }).join('');
+});
+
+window.selectionnerClasseFiche = async function(nomClasse, el) {
+  document.querySelectorAll('.classe-item').forEach(function(i) { i.classList.remove('active'); });
+  if (el) el.classList.add('active');
+  document.getElementById('fiches-classe-titre').textContent = nomClasse;
+
+  var container = document.getElementById('fiches-liste-eleves');
+  container.innerHTML = '<div style="font-size:12px;color:var(--gray);padding:1rem">Chargement...</div>';
+
+  try {
+    var snap = await getDocs(query(collection(db, 'eleves'), where('classe', '==', nomClasse)));
+    var eleves = snap.docs.map(function(d) { return { id: d.id, ...d.data() }; });
+    if (!eleves.length) {
+      container.innerHTML = '<div style="grid-column:1/-1;font-size:12px;color:var(--gray);padding:1rem">Aucun élève dans cette classe.</div>';
+      return;
+    }
+    container.innerHTML = eleves.map(function(e) {
+      var initiales = ((e.prenom || ' ')[0] + (e.nom || ' ')[0]).toUpperCase();
+      return '<div class="fiche-mini-card" onclick="ouvrirFicheMedicale(\'' + e.id + '\',\'' + (e.prenom + ' ' + e.nom).replace(/'/g, '') + '\')">' +
+        '<div class="fiche-mini-avatar">' + initiales + '</div>' +
+        '<div><div style="font-size:13px;font-weight:600;color:var(--navy)">' + e.prenom + ' ' + e.nom + '</div>' +
+        '<div style="font-size:11px;color:var(--muted,#9CA3AF)">Voir la fiche médicale →</div></div>' +
+      '</div>';
+    }).join('');
+  } catch (e) {
+    console.error(e);
+    container.innerHTML = '<div style="font-size:12px;color:var(--red)">Erreur de chargement.</div>';
+  }
+};
+
+var eleveFicheActuelle = null;
+
+window.ouvrirFicheMedicale = async function(eleveId, eleveNom) {
+  eleveFicheActuelle = eleveId;
+  document.getElementById('fm-nom-titre').textContent = 'Fiche médicale — ' + eleveNom;
+  document.getElementById('fm-groupe-sanguin').value = '';
+  document.getElementById('fm-contact-urgence').value = '';
+  document.getElementById('fm-allergies').value = '';
+  document.getElementById('fm-maladie').value = '';
+
+  try {
+    var snap = await getDoc(doc(db, 'fiches_medicales', eleveId));
+    if (snap.exists()) {
+      var d = snap.data();
+      document.getElementById('fm-groupe-sanguin').value = d.groupeSanguin || '';
+      document.getElementById('fm-contact-urgence').value = d.contactUrgence || '';
+      document.getElementById('fm-allergies').value = d.allergies || '';
+      document.getElementById('fm-maladie').value = d.maladieChronique || '';
+    }
+  } catch (e) { console.error(e); }
+
+  document.getElementById('modal-fiche-medicale').classList.add('open');
+};
+
+window.enregistrerFicheMedicale = async function() {
+  if (!eleveFicheActuelle) return;
+  try {
+    await setDoc(doc(db, 'fiches_medicales', eleveFicheActuelle), {
+      groupeSanguin: document.getElementById('fm-groupe-sanguin').value,
+      contactUrgence: document.getElementById('fm-contact-urgence').value.trim(),
+      allergies: document.getElementById('fm-allergies').value.trim(),
+      maladieChronique: document.getElementById('fm-maladie').value.trim(),
+      derniereMiseAJour: new Date().toISOString()
+    });
+    document.getElementById('modal-fiche-medicale').classList.remove('open');
+    if (typeof showToast === 'function') showToast('Fiche médicale enregistrée ✓');
+  } catch (e) {
+    console.error(e);
+    if (typeof showToast === 'function') showToast('Erreur lors de l\'enregistrement');
+  }
+};
 
 </script>
