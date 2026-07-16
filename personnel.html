@@ -1,0 +1,337 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#0D2B4E">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="ILCH">
+  <link rel="apple-touch-icon" href="icon-192.png">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Accès Personnel & Direction — Plateforme ILCH</title>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
+  <style>
+    *{margin:0;padding:0;box-sizing:border-box}
+    :root{--navy:#0D2B4E;--gold:#C9A96E;--cream:#FAFAF8;--white:#fff;--gray:#6B7280;--border:#E5E7EB;--text:#1F2937;--red:#DC2626;--green:#16A34A;}
+    body{font-family:'Inter',sans-serif;min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;background:var(--navy);padding:2rem;overflow-x:hidden}
+    .bg-pattern{position:fixed;inset:0;background-image:radial-gradient(circle,rgba(201,169,110,0.05) 1px,transparent 1px);background-size:32px 32px;pointer-events:none}
+    .wrap{position:relative;z-index:2;width:100%;max-width:1100px}
+    .back-link{display:inline-flex;align-items:center;gap:6px;color:rgba(255,255,255,0.45);font-size:12px;margin-bottom:1.5rem;transition:color 0.2s;text-decoration:none}
+    .back-link:hover{color:var(--gold)}
+    .portal-header{text-align:center;margin-bottom:1.5rem}
+    .portal-logo{display:inline-flex;align-items:center;gap:12px;margin-bottom:0.75rem}
+    .portal-badge{width:48px;height:48px;background:var(--gold);display:flex;align-items:center;justify-content:center;font-family:'Playfair Display',serif;font-weight:700;font-size:18px;color:var(--navy)}
+    .portal-name{font-family:'Playfair Display',serif;font-size:20px;font-weight:700;color:var(--white);text-align:left;line-height:1.2}
+    .portal-name small{display:block;font-family:'Inter',sans-serif;font-size:11px;color:rgba(255,255,255,0.4);font-weight:300;letter-spacing:0.06em;text-transform:uppercase}
+    .portal-title{font-size:13px;color:rgba(255,255,255,0.5)}
+    .firebase-status{display:flex;align-items:center;gap:8px;justify-content:center;margin-bottom:1.25rem;font-size:12px}
+    .fb-dot{width:8px;height:8px;border-radius:50%;background:var(--gold);animation:pulse 2s infinite}
+    .fb-dot.connected{background:var(--green);animation:none}
+    .fb-dot.error{background:var(--red);animation:none}
+    @keyframes pulse{0%,100%{opacity:1}50%{opacity:0.4}}
+    .fb-label{color:rgba(255,255,255,0.5)}
+    .role-section-title{font-size:10px;color:rgba(255,255,255,0.3);letter-spacing:0.12em;text-transform:uppercase;margin-bottom:8px;margin-top:1rem}
+    .role-cards{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:8px}
+    .role-cards-2{display:grid;grid-template-columns:repeat(5,1fr);gap:10px;margin-bottom:1.5rem}
+    .role-card{background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);padding:1rem;cursor:pointer;text-align:center;transition:all 0.2s;position:relative}
+    .role-card:hover{background:rgba(201,169,110,0.1);border-color:rgba(201,169,110,0.4);transform:translateY(-2px)}
+    .role-card.selected{background:rgba(201,169,110,0.15);border-color:var(--gold);border-width:2px}
+    .role-card.selected::after{content:'✓';position:absolute;top:6px;right:8px;color:var(--gold);font-size:13px;font-weight:700}
+    .role-icon{width:38px;height:38px;border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 0.5rem;font-size:17px}
+    .role-card.eleve .role-icon{background:rgba(37,99,235,0.2);color:#60A5FA}
+    .role-card.prof .role-icon{background:rgba(201,169,110,0.2);color:var(--gold)}
+    .role-card.parent .role-icon{background:rgba(22,163,74,0.2);color:#4ADE80}
+    .role-card.admin .role-icon{background:rgba(220,38,38,0.15);color:#F87171}
+    .role-card.responsable .role-icon{background:rgba(13,148,136,0.2);color:#2DD4BF}
+    .role-card.infirmiere .role-icon{background:rgba(225,29,72,0.15);color:#FB7185}
+    .role-card.owner .role-icon{background:rgba(201,169,110,0.25);color:var(--gold)}
+    .role-card.comptable .role-icon{background:rgba(124,58,237,0.2);color:#A78BFA}
+    .role-card.bibliotheque .role-icon{background:rgba(146,64,14,0.2);color:#FCD34D}
+    .role-title{font-size:11px;font-weight:600;color:var(--white);margin-bottom:2px}
+    .role-desc{font-size:9px;color:rgba(255,255,255,0.4);line-height:1.3}
+    .login-box{background:var(--white);padding:2rem;display:none;margin-top:0.5rem}
+    .login-box.show{display:block}
+    .login-box-header{display:flex;align-items:center;gap:10px;margin-bottom:1.25rem;padding-bottom:1rem;border-bottom:1px solid var(--border)}
+    .login-role-icon{width:34px;height:34px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:15px;flex-shrink:0}
+    .login-role-name{font-family:'Playfair Display',serif;font-size:15px;font-weight:700;color:var(--navy)}
+    .login-role-label{font-size:12px;color:var(--gray)}
+    .field-group{margin-bottom:0.9rem}
+    .field-group label{display:block;font-size:11px;font-weight:600;color:var(--navy);margin-bottom:4px;letter-spacing:0.05em;text-transform:uppercase}
+    .field-group input{width:100%;padding:10px 13px;border:1px solid var(--border);font-size:14px;outline:none;background:var(--cream);color:var(--text);font-family:'Inter',sans-serif;transition:border-color 0.15s}
+    .field-group input:focus{border-color:var(--gold)}
+    .error-msg{background:#FEF2F2;border:1px solid #FECACA;color:var(--red);font-size:12px;padding:9px 13px;margin-bottom:0.9rem;display:none;align-items:center;gap:6px}
+    .error-msg.show{display:flex}
+    .success-msg{background:#F0FDF4;border:1px solid #BBF7D0;color:var(--green);font-size:12px;padding:9px 13px;margin-bottom:0.9rem;display:none;align-items:center;gap:6px}
+    .success-msg.show{display:flex}
+    .login-btn{width:100%;padding:12px;font-size:14px;font-weight:600;border:none;cursor:pointer;font-family:'Inter',sans-serif;transition:all 0.15s;margin-top:4px;display:flex;align-items:center;justify-content:center;gap:8px}
+    .btn-eleve{background:#2563EB;color:#fff}.btn-prof{background:var(--gold);color:var(--navy)}
+    .btn-parent{background:#16A34A;color:#fff}.btn-admin{background:#0A1F38;color:#fff}
+    .btn-responsable{background:#0D9488;color:#fff}.btn-infirmiere{background:#E11D48;color:#fff}
+    .btn-owner{background:linear-gradient(135deg,#C9A96E,#d4a855);color:#0A1628;font-weight:700}
+    .btn-comptable{background:#7C3AED;color:#fff}.btn-bibliotheque{background:#92400E;color:#fff}
+    .login-footer{text-align:center;margin-top:0.9rem;font-size:12px;color:var(--gray)}
+    .portal-footer{text-align:center;margin-top:1.25rem;font-size:11px;color:rgba(255,255,255,0.25)}
+    .spinner{width:16px;height:16px;border:2px solid rgba(255,255,255,0.3);border-top-color:#fff;border-radius:50%;animation:spin 0.7s linear infinite}
+    @keyframes spin{to{transform:rotate(360deg)}}
+  </style>
+  <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
+</head>
+<body>
+<div class="bg-pattern"></div>
+
+<!-- BANNIÈRE MISE À JOUR -->
+<div id="update-banner" style="display:none;position:fixed;top:0;left:0;right:0;background:#16A34A;color:#fff;padding:12px 20px;text-align:center;z-index:9999;font-size:13px;font-weight:600;display:none;align-items:center;justify-content:center;gap:10px">
+  <i class="ti ti-refresh"></i>
+  Nouvelle version disponible !
+  <button onclick="window.location.reload(true)" style="background:#fff;color:#16A34A;border:none;padding:5px 12px;font-weight:700;cursor:pointer;font-family:'Inter',sans-serif;font-size:12px">Mettre à jour maintenant</button>
+</div>
+<div class="wrap">
+  <a href="index.html" class="back-link"><i class="ti ti-arrow-left" style="font-size:13px" aria-hidden="true"></i> Retour au site</a>
+  <div class="portal-header">
+    <div class="portal-logo">
+      <div class="portal-badge">ILCH</div>
+      <div class="portal-name">Institution Louis Chauvet<small>Plateforme numérique · Pétion-Ville, Haïti</small></div>
+    </div>
+    <div class="portal-title">Accès réservé au personnel et à la direction de l'ILCH</div>
+  </div>
+  <div class="firebase-status">
+    <div class="fb-dot" id="fb-dot"></div>
+    <span class="fb-label" id="fb-label">Connexion à Firebase...</span>
+  </div>
+  <div class="role-section-title">Personnel & Direction</div>
+  <div class="role-cards" style="grid-template-columns:repeat(3,1fr)">
+    <div class="role-card admin" onclick="selectRole('admin')"><div class="role-icon"><i class="ti ti-settings" aria-hidden="true"></i></div><div class="role-title">Administration</div><div class="role-desc">Gestion scolaire</div></div>
+    <div class="role-card responsable" onclick="selectRole('responsable')"><div class="role-icon"><i class="ti ti-book" aria-hidden="true"></i></div><div class="role-title">Responsable Péd.</div><div class="role-desc">Suivi de section</div></div>
+    <div class="role-card infirmiere" onclick="selectRole('infirmiere')"><div class="role-icon"><i class="ti ti-heart-rate-monitor" aria-hidden="true"></i></div><div class="role-title">Infirmière</div><div class="role-desc">Service médical</div></div>
+  </div>
+  <div class="role-cards" style="grid-template-columns:repeat(3,1fr)">
+    <div class="role-card owner" onclick="selectRole('owner')"><div class="role-icon"><i class="ti ti-crown" aria-hidden="true"></i></div><div class="role-title">Propriétaire</div><div class="role-desc">Accès total</div></div>
+    <div class="role-card comptable" onclick="selectRole('comptable')"><div class="role-icon"><i class="ti ti-calculator" aria-hidden="true"></i></div><div class="role-title">Comptable</div><div class="role-desc">Finances & frais</div></div>
+    <div class="role-card bibliotheque" onclick="selectRole('bibliotheque')"><div class="role-icon"><i class="ti ti-books" aria-hidden="true"></i></div><div class="role-title">Bibliothécaire</div><div class="role-desc">Catalogue & emprunts</div></div>
+  </div>
+  <div class="login-box" id="login-box">
+    <div class="login-box-header">
+      <div class="login-role-icon" id="login-role-icon"></div>
+      <div><div class="login-role-label">Connexion</div><div class="login-role-name" id="login-role-name">Choisissez un profil</div></div>
+    </div>
+    <div class="error-msg" id="error-msg"><i class="ti ti-alert-circle" aria-hidden="true"></i><span id="error-text"></span></div>
+    <div class="success-msg" id="success-msg"><i class="ti ti-check" aria-hidden="true"></i><span id="success-text"></span></div>
+    <div class="field-group"><label id="login-id-label">Identifiant</label><input type="text" id="login-id" placeholder="Votre identifiant" autocomplete="username"></div>
+    <div class="field-group"><label>Mot de passe</label><input type="password" id="login-pw" placeholder="••••••••" autocomplete="current-password"></div>
+    <button class="login-btn btn-eleve" id="login-btn"><span id="btn-text">Se connecter</span></button>
+    <div class="login-footer">Problème de connexion ? Contactez l'administration</div>
+  </div>
+  <div class="portal-footer">© 2026 Institution Louis Chauvet · Sécurisé par Firebase · Pétion-Ville, Haïti · Développé par Dorlean Ricardo</div>
+</div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import { getFirestore, collection, getDocs, query, where } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+import { getAuth, signInWithEmailAndPassword, signOut } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyDjrBnsTu7CNWnqeqSm29-arbs8MPoTBJ0",
+  authDomain: "ilch-plateforme.firebaseapp.com",
+  projectId: "ilch-plateforme",
+  storageBucket: "ilch-plateforme.firebasestorage.app",
+  messagingSenderId: "978336467476",
+  appId: "1:978336467476:web:1f716ca406469a0c62b501"
+};
+
+const app = initializeApp(firebaseConfig);
+const db  = getFirestore(app);
+const auth = getAuth(app);
+
+// ── Domaine synthétique pour transformer un identifiant en email Firebase Auth
+function identifiantVersEmail(id) {
+  return id.trim().toLowerCase().replace(/[^a-z0-9.]/g, '') + '@ilch.local';
+}
+
+// ── Alerte de connexion par e-mail (postes sensibles) ───────
+// ⚠️ Remplacez ces 3 valeurs par celles de votre compte EmailJS (gratuit sur emailjs.com)
+const EMAILJS_PUBLIC_KEY  = 'VOTRE_CLE_PUBLIQUE_EMAILJS';
+const EMAILJS_SERVICE_ID  = 'VOTRE_SERVICE_ID';
+const EMAILJS_TEMPLATE_ID = 'VOTRE_TEMPLATE_ID';
+
+if (typeof emailjs !== 'undefined' && EMAILJS_PUBLIC_KEY !== 'VOTRE_CLE_PUBLIQUE_EMAILJS') {
+  emailjs.init({ publicKey: EMAILJS_PUBLIC_KEY });
+}
+
+function envoyerAlerteConnexion(user, role) {
+  if (typeof emailjs === 'undefined' || EMAILJS_PUBLIC_KEY === 'VOTRE_CLE_PUBLIQUE_EMAILJS') {
+    console.log('[Alerte connexion] EmailJS non configuré — email non envoyé.');
+    return;
+  }
+  var roleLabels = { admin:'Administrateur', responsable:'Responsable Pédagogique', owner:'Propriétaire', comptable:'Comptable' };
+  var maintenant = new Date().toLocaleString('fr-FR', { dateStyle:'long', timeStyle:'short' });
+  emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_TEMPLATE_ID, {
+    to_email: user.email || '',
+    to_name: (user.prenom || '') + ' ' + (user.nom || ''),
+    role: roleLabels[role] || role,
+    date_connexion: maintenant
+  }).then(function() {
+    console.log('[Alerte connexion] E-mail envoyé.');
+  }).catch(function(err) {
+    console.error('[Alerte connexion] Échec envoi e-mail:', err);
+  });
+}
+
+// Test connexion Firebase
+try {
+  await getDocs(collection(db, 'utilisateurs'));
+  document.getElementById('fb-dot').classList.add('connected');
+  document.getElementById('fb-label').textContent = '✓ Connecté à Firebase — Base de données ILCH';
+  document.getElementById('fb-label').style.color = '#4ADE80';
+} catch(e) {
+  document.getElementById('fb-dot').classList.add('error');
+  document.getElementById('fb-label').textContent = 'Mode hors ligne — données locales';
+}
+
+const roleConfig = {
+  eleve:       {name:'Espace Élève',           icon:'ti-school',            bg:'rgba(37,99,235,0.15)',   color:'#60A5FA', dest:'dashboard-eleve.html'},
+  prof:        {name:'Espace Professeur',       icon:'ti-chalkboard',        bg:'rgba(201,169,110,0.2)',  color:'#C9A96E', dest:'dashboard-prof.html'},
+  parent:      {name:'Espace Parent',           icon:'ti-heart',             bg:'rgba(22,163,74,0.2)',    color:'#4ADE80', dest:'dashboard-parent.html'},
+  admin:       {name:'Administration',          icon:'ti-settings',          bg:'rgba(220,38,38,0.15)',   color:'#F87171', dest:'dashboard-admin.html', emailLogin:true},
+  responsable: {name:'Responsable Pédagogique', icon:'ti-book',              bg:'rgba(13,148,136,0.2)',   color:'#2DD4BF', dest:'dashboard-responsable.html', emailLogin:true},
+  infirmiere:  {name:'Infirmière',             icon:'ti-heart-rate-monitor', bg:'rgba(225,29,72,0.15)',   color:'#FB7185', dest:'dashboard-infirmiere.html'},
+  owner:       {name:'Espace Propriétaire',     icon:'ti-crown',             bg:'rgba(201,169,110,0.25)', color:'#C9A96E', dest:'dashboard-owner.html', emailLogin:true},
+  comptable:   {name:'Comptabilité',            icon:'ti-calculator',        bg:'rgba(124,58,237,0.2)',   color:'#A78BFA', dest:'dashboard-comptable.html', emailLogin:true},
+  bibliotheque:{name:'Bibliothèque',            icon:'ti-books',             bg:'rgba(146,64,14,0.2)',    color:'#FCD34D', dest:'dashboard-bibliotheque.html'},
+};
+
+let currentRole = '';
+
+window.selectRole = function(role) {
+  currentRole = role;
+  document.querySelectorAll('.role-card').forEach(c => c.classList.remove('selected'));
+  document.querySelector('.role-card.' + role).classList.add('selected');
+  const cfg = roleConfig[role];
+  document.getElementById('login-role-name').textContent = cfg.name;
+  const icon = document.getElementById('login-role-icon');
+  icon.style.background = cfg.bg;
+  icon.innerHTML = `<i class="ti ${cfg.icon}" style="font-size:16px;color:${cfg.color}" aria-hidden="true"></i>`;
+  document.getElementById('login-btn').className = 'login-btn btn-' + role;
+  document.getElementById('login-btn').onclick = doLogin;
+  hideMsg();
+  document.getElementById('login-box').classList.add('show');
+
+  const idLabel = document.getElementById('login-id-label');
+  const idInput = document.getElementById('login-id');
+  if (cfg.emailLogin) {
+    idLabel.textContent = 'Adresse e-mail';
+    idInput.type = 'email';
+    idInput.placeholder = 'votreadresse@email.com';
+    idInput.autocomplete = 'email';
+  } else {
+    idLabel.textContent = 'Identifiant';
+    idInput.type = 'text';
+    idInput.placeholder = 'Votre identifiant';
+    idInput.autocomplete = 'username';
+  }
+
+  setTimeout(() => document.getElementById('login-id').focus(), 100);
+};
+
+async function doLogin() {
+  const id  = document.getElementById('login-id').value.trim();
+  const pw  = document.getElementById('login-pw').value.trim();
+  const btn = document.getElementById('login-btn');
+  hideMsg();
+  if (!currentRole) { showErr('Veuillez choisir un profil.'); return; }
+  if (!id || !pw)   { showErr('Veuillez remplir tous les champs.'); return; }
+
+  btn.disabled = true;
+  document.getElementById('btn-text').textContent = 'Connexion...';
+  btn.insertAdjacentHTML('beforeend','<div class="spinner"></div>');
+
+  try {
+    var estEmailLogin = roleConfig[currentRole].emailLogin;
+
+    // 1. Authentification réelle via Firebase Auth
+    const email = estEmailLogin ? id.toLowerCase() : identifiantVersEmail(id);
+    await signInWithEmailAndPassword(auth, email, pw);
+
+    // 2. Récupérer le profil correspondant (nom, classe, rôle, etc.)
+    const cols = currentRole==='eleve'  ? ['eleves'] :
+                 currentRole==='prof'   ? ['professeurs'] :
+                 currentRole==='parent' ? ['parents'] : ['utilisateurs'];
+
+    let found = false;
+    for (const col of cols) {
+      const champRecherche = estEmailLogin ? 'email' : 'identifiant';
+      const valeurRecherche = estEmailLogin ? id.toLowerCase() : id;
+      const q    = query(collection(db, col), where(champRecherche,'==',valeurRecherche));
+      const snap = await getDocs(q);
+      if (!snap.empty) {
+        const user = {id: snap.docs[0].id, ...snap.docs[0].data(), role: currentRole};
+        if (col==='utilisateurs' && user.role && user.role !== currentRole) continue;
+        sessionStorage.setItem('ilch_user', JSON.stringify(user));
+        sessionStorage.setItem('ilch_role', currentRole);
+        showOk('Connexion réussie ! Redirection...');
+        if (estEmailLogin) {
+          envoyerAlerteConnexion(user, currentRole);
+        }
+        setTimeout(() => window.location.href = roleConfig[currentRole].dest, 900);
+        found = true; break;
+      }
+    }
+
+    if (!found) {
+      // Compte authentifié mais profil introuvable pour ce rôle → déconnexion
+      await signOut(auth);
+      showErr("Ce compte n'a pas de profil pour le rôle sélectionné.");
+      resetBtn();
+    }
+  } catch(e) {
+    console.error('Erreur de connexion:', e.code || e);
+    if (e.code === 'auth/user-not-found' || e.code === 'auth/invalid-credential' || e.code === 'auth/wrong-password') {
+      showErr('Identifiant ou mot de passe incorrect.');
+    } else if (e.code === 'auth/too-many-requests') {
+      showErr('Trop de tentatives. Veuillez réessayer dans quelques minutes.');
+    } else {
+      showErr('Erreur de connexion. Vérifiez votre connexion internet.');
+    }
+    resetBtn();
+  }
+}
+
+function showErr(m){document.getElementById('error-text').textContent=m;document.getElementById('error-msg').classList.add('show');}
+function showOk(m){document.getElementById('success-text').textContent=m;document.getElementById('success-msg').classList.add('show');}
+function hideMsg(){document.getElementById('error-msg').classList.remove('show');document.getElementById('success-msg').classList.remove('show');}
+function resetBtn(){const b=document.getElementById('login-btn');b.disabled=false;document.getElementById('btn-text').textContent='Se connecter';const s=b.querySelector('.spinner');if(s)s.remove();}
+
+document.addEventListener('keydown', e => { if(e.key==='Enter') doLogin(); });
+</script>
+</body>
+</html>
+<script>
+if("serviceWorker" in navigator){
+  window.addEventListener("load",function(){
+    navigator.serviceWorker.register("/sw.js").then(function(reg){
+      console.log("[ILCH] PWA Service Worker actif");
+
+      // Écouter les mises à jour
+      reg.addEventListener('updatefound', function() {
+        var newWorker = reg.installing;
+        newWorker.addEventListener('statechange', function() {
+          if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+            // Nouvelle version disponible !
+            var banner = document.getElementById('update-banner');
+            if (banner) banner.style.display = 'flex';
+          }
+        });
+      });
+    }).catch(function(err){console.log("[ILCH] SW erreur:",err);});
+
+    // Recevoir message du SW
+    navigator.serviceWorker.addEventListener('message', function(event) {
+      if (event.data && event.data.type === 'SW_UPDATED') {
+        var banner = document.getElementById('update-banner');
+        if (banner) banner.style.display = 'flex';
+      }
+    });
+  });
+}
+</script>
