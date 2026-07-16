@@ -4,7 +4,7 @@
 
 // ⚠️ IMPORTANT : Changez ce numéro à chaque mise à jour !
 // Exemple : 'ilch-cache-v2', 'ilch-cache-v3', etc.
-const CACHE_VERSION = 'ilch-cache-v4';
+const CACHE_VERSION = 'ilch-cache-v5';
 const CACHE_NAME = CACHE_VERSION;
 
 const CACHE_URLS = [
@@ -18,6 +18,7 @@ const CACHE_URLS = [
   '/style.css',
   '/script.js',
   '/login.html',
+  '/personnel.html',
   '/dashboard-eleve.html',
   '/dashboard-prof.html',
   '/dashboard-parent.html',

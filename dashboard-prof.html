@@ -482,21 +482,23 @@
     <!-- SAISIE DES NOTES -->
     <div class="panel" id="panel-notes">
       <div class="notes-header">
-        <div style="font-size:14px;font-weight:600;color:var(--navy)">Saisie des notes — Trimestre 2</div>
-        <div style="display:flex;gap:8px;align-items:center">
-          <select class="class-select"><option>Terminale A</option><option>Terminale B</option></select>
+        <div style="font-size:14px;font-weight:600;color:var(--navy)">Saisie des notes</div>
+        <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+          <select class="class-select" id="notes-classe" onchange="chargerClasseNotes()"></select>
+          <select class="class-select" id="notes-matiere">
+            <option>Mathématiques</option><option>Français</option><option>Sciences</option>
+            <option>Histoire-Géographie</option><option>Anglais</option><option>Philosophie</option>
+          </select>
+          <select class="class-select" id="notes-trimestre">
+            <option value="T1">Trimestre 1</option><option value="T2">Trimestre 2</option><option value="T3">Trimestre 3</option>
+          </select>
           <button class="save-notes-btn" onclick="saveNotes()">Enregistrer</button>
         </div>
       </div>
       <table class="notes-table">
         <thead><tr><th>Élève</th><th>Note / 20</th><th>Appréciation</th></tr></thead>
-        <tbody>
-          <tr><td>Jean Pierre</td><td><input type="number" min="0" max="20" value="16" step="0.5"></td><td><input type="text" value="Très bien" style="width:100%;border:1px solid var(--border);padding:5px 8px;font-size:13px;background:var(--cream);outline:none;font-family:'Inter',sans-serif"></td></tr>
-          <tr><td>Sophie Marc</td><td><input type="number" min="0" max="20" value="14" step="0.5"></td><td><input type="text" value="Bien" style="width:100%;border:1px solid var(--border);padding:5px 8px;font-size:13px;background:var(--cream);outline:none;font-family:'Inter',sans-serif"></td></tr>
-          <tr><td>Marc Antoine</td><td><input type="number" min="0" max="20" value="11" step="0.5"></td><td><input type="text" value="Passable" style="width:100%;border:1px solid var(--border);padding:5px 8px;font-size:13px;background:var(--cream);outline:none;font-family:'Inter',sans-serif"></td></tr>
-          <tr><td>Claire Dupont</td><td><input type="number" min="0" max="20" value="18" step="0.5"></td><td><input type="text" value="Excellent" style="width:100%;border:1px solid var(--border);padding:5px 8px;font-size:13px;background:var(--cream);outline:none;font-family:'Inter',sans-serif"></td></tr>
-          <tr><td>Paul Étienne</td><td><input type="number" min="0" max="20" value="8" step="0.5"></td><td><input type="text" value="Insuffisant" style="width:100%;border:1px solid var(--border);padding:5px 8px;font-size:13px;background:var(--cream);outline:none;font-family:'Inter',sans-serif"></td></tr>
-          <tr><td>Marie Joëlle</td><td><input type="number" min="0" max="20" value="13" step="0.5"></td><td><input type="text" value="Assez bien" style="width:100%;border:1px solid var(--border);padding:5px 8px;font-size:13px;background:var(--cream);outline:none;font-family:'Inter',sans-serif"></td></tr>
+        <tbody id="notes-tbody">
+          <tr><td colspan="3" style="text-align:center;color:var(--gray)">Choisissez une classe pour commencer.</td></tr>
         </tbody>
       </table>
     </div>
@@ -581,10 +583,6 @@
   function toggleUpload(){
     var f=document.getElementById('upload-form');
     f.classList.toggle('open');
-  }
-
-  function saveNotes(){
-    showToast('Notes enregistrées');
   }
 
   function switchContact(name,sub,initials,el){
@@ -997,6 +995,83 @@ window.saveNoteFirebase = async function(data) {
     }
     if (typeof showToast === 'function') showToast('Note sauvegardée dans Firebase ✓');
   } catch(e) { console.error('Erreur note Firebase:', e); }
+};
+
+// ── SAISIE DES NOTES — classes réelles + envoi au responsable ──
+var CLASSES_CYCLE3_NS = ['7ème Fondamentale', '8ème Fondamentale', '9ème Fondamentale', 'Nouveau Secondaire'];
+
+function remplirClassesNotes() {
+  var sel = document.getElementById('notes-classe');
+  if (!sel) return;
+  var mesClasses = Array.isArray(user.classes) && user.classes.length ? user.classes : ['Terminale A', 'Terminale B'];
+  sel.innerHTML = mesClasses.map(function(c) { return '<option value="' + c + '">' + c + '</option>'; }).join('');
+}
+setTimeout(remplirClassesNotes, 300);
+
+window.chargerClasseNotes = async function() {
+  var classe = document.getElementById('notes-classe').value;
+  var tbody = document.getElementById('notes-tbody');
+  tbody.innerHTML = '<tr><td colspan="3" style="text-align:center;color:var(--gray)">Chargement...</td></tr>';
+
+  try {
+    var snap = await getDocs(query(collection(db, 'eleves'), where('classe', '==', classe)));
+    var eleves = snap.docs.map(function(d) { return { id: d.id, ...d.data() }; });
+    if (!eleves.length) {
+      tbody.innerHTML = '<tr><td colspan="3" style="text-align:center;color:var(--gray)">Aucun élève dans cette classe.</td></tr>';
+      return;
+    }
+    tbody.innerHTML = eleves.map(function(e) {
+      return '<tr data-eleve-id="' + e.id + '" data-eleve-nom="' + (e.prenom + ' ' + e.nom).replace(/"/g, '') + '">' +
+        '<td>' + e.prenom + ' ' + e.nom + '</td>' +
+        '<td><input type="number" min="0" max="20" step="0.5" class="note-input" placeholder="—"></td>' +
+        '<td><input type="text" class="appreciation-input" placeholder="Appréciation" style="width:100%;border:1px solid var(--border);padding:5px 8px;font-size:13px;background:var(--cream);outline:none;font-family:\'Inter\',sans-serif"></td>' +
+      '</tr>';
+    }).join('');
+  } catch (e) {
+    console.error(e);
+    tbody.innerHTML = '<tr><td colspan="3" style="text-align:center;color:var(--red)">Erreur de chargement.</td></tr>';
+  }
+};
+
+window.saveNotes = async function() {
+  var classe = document.getElementById('notes-classe').value;
+  var matiere = document.getElementById('notes-matiere').value;
+  var trimestre = document.getElementById('notes-trimestre').value;
+  var rows = document.querySelectorAll('#notes-tbody tr[data-eleve-id]');
+  if (!rows.length) { if (typeof showToast === 'function') showToast('Chargez une classe avant d\'enregistrer'); return; }
+
+  var estCycle3OuNS = CLASSES_CYCLE3_NS.indexOf(classe) !== -1;
+  var nbEnregistrees = 0;
+
+  for (var i = 0; i < rows.length; i++) {
+    var row = rows[i];
+    var noteInput = row.querySelector('.note-input');
+    var noteVal = noteInput.value.trim();
+    if (noteVal === '') continue;
+    var appreciation = row.querySelector('.appreciation-input').value.trim();
+
+    await saveNoteFirebase({
+      eleveId: row.getAttribute('data-eleve-id'),
+      eleveNom: row.getAttribute('data-eleve-nom'),
+      classe: classe,
+      matiere: matiere,
+      trimestre: trimestre,
+      note: Number(noteVal),
+      appreciation: appreciation,
+      envoyeResponsable: estCycle3OuNS
+    });
+    nbEnregistrees++;
+  }
+
+  if (estCycle3OuNS && nbEnregistrees > 0 && typeof envoyerNotification === 'function') {
+    envoyerNotification('responsable', null, 'Notes reçues — ' + classe,
+      (user.prenom || 'Un professeur') + ' ' + (user.nom || '') + ' a transmis ' + nbEnregistrees + ' note(s) en ' + matiere + ' (' + trimestre + ') pour ' + classe + '.',
+      'info', (user.prenom || 'Professeur') + ' ' + (user.nom || '') + ' — Professeur');
+  }
+
+  if (typeof showToast === 'function') {
+    showToast(nbEnregistrees + ' note(s) enregistrée(s)' + (estCycle3OuNS ? ' et transmise(s) au responsable pédagogique ✓' : ' ✓'));
+  }
 };
 
 // ── MESSAGES Firebase ──────────────────────────────────────

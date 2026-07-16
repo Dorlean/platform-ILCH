@@ -440,7 +440,7 @@
         <button class="btn btn-teal" onclick="showToast('Export PDF téléchargé')"><i class="ti ti-download" aria-hidden="true"></i>Exporter PDF</button>
       </div>
       <table class="data-table" id="tbl-notes">
-        <thead><tr><th>Élève</th><th>Classe</th><th>Matière</th><th>Note / 20</th><th>Appréciation</th></tr></thead>
+        <thead><tr><th>Élève</th><th>Classe</th><th>Matière</th><th>Note / 20</th><th>Appréciation</th><th>Statut</th></tr></thead>
         <tbody id="tbody-notes"></tbody>
       </table>
     </div>
@@ -760,15 +760,16 @@ function renderProfs(){
 function renderNotes(){
   var eleves=getElevesSection();
   var tb=document.getElementById('tbody-notes');
-  if(!eleves.length){tb.innerHTML='<tr><td colspan="5"><div class="empty-state"><i class="ti ti-chart-bar" aria-hidden="true"></i><p>Aucun élève dans cette section.</p></div></td></tr>';return;}
+  if(!eleves.length){tb.innerHTML='<tr><td colspan="6"><div class="empty-state"><i class="ti ti-chart-bar" aria-hidden="true"></i><p>Aucun élève dans cette section.</p></div></td></tr>';return;}
   var notes=DB.get('notes').filter(function(n){return eleves.find(function(e){return e.id===n.eleveId;});});
-  if(!notes.length){tb.innerHTML='<tr><td colspan="5"><div class="empty-state"><i class="ti ti-chart-bar" aria-hidden="true"></i><p>Aucune note enregistrée pour cette section.</p></div></td></tr>';return;}
+  if(!notes.length){tb.innerHTML='<tr><td colspan="6"><div class="empty-state"><i class="ti ti-chart-bar" aria-hidden="true"></i><p>Aucune note enregistrée pour cette section.</p></div></td></tr>';return;}
   tb.innerHTML=notes.map(function(n){
     var e=eleves.find(function(x){return x.id===n.eleveId;})||{prenom:'?',nom:'',classe:''};
     var cls=n.note>=14?'badge-good':n.note>=10?'badge-mid':'badge-low';
     var app=n.note>=16?'Très bien':n.note>=14?'Bien':n.note>=10?'Passable':'Insuffisant';
+    var statut=n.envoyeResponsable?'<span class="badge badge-good">✓ Transmise</span>':'<span class="badge badge-mid">—</span>';
     return '<tr><td><strong>'+e.prenom+' '+e.nom+'</strong></td><td>'+e.classe+'</td><td>'+n.matiere+'</td>'+
-      '<td><span class="badge '+cls+'">'+n.note+'/20</span></td><td>'+app+'</td></tr>';
+      '<td><span class="badge '+cls+'">'+n.note+'/20</span></td><td>'+app+'</td><td>'+statut+'</td></tr>';
   }).join('');
 }
 
@@ -1204,6 +1205,28 @@ onSnapshot(query(collection(db, 'notifications'), where('destinataireRole', 'in'
 });
 
 console.log('✓ Notifications connectées à Firebase');
+
+// ── SYNCHRONISATION RÉELLE — élèves et notes ────────────────
+onSnapshot(collection(db, 'eleves'), function(snap) {
+  var eleves = snap.docs.map(function(d) { return { id: d.id, ...d.data() }; });
+  DB.set('eleves', eleves);
+  if (typeof renderEleves === 'function') { try { renderEleves(); } catch(e) {} }
+  if (typeof renderNotes === 'function') { try { renderNotes(); } catch(e) {} }
+  if (typeof renderAbsences === 'function') { try { renderAbsences(); } catch(e) {} }
+  if (typeof updateDashboard === 'function') { try { updateDashboard(); } catch(e) {} }
+});
+
+onSnapshot(collection(db, 'notes'), function(snap) {
+  var notes = snap.docs.map(function(d) { return { id: d.id, ...d.data() }; });
+  DB.set('notes', notes);
+  if (typeof renderNotes === 'function') { try { renderNotes(); } catch(e) {} }
+});
+
+onSnapshot(collection(db, 'professeurs'), function(snap) {
+  var profs = snap.docs.map(function(d) { return { id: d.id, ...d.data() }; });
+  DB.set('profs', profs);
+  if (typeof renderProfs === 'function') { try { renderProfs(); } catch(e) {} }
+});
 
 // ── IMPORT EN MASSE (copier-coller depuis Excel) ────────────
 var donneesImportAnalysees = [];
