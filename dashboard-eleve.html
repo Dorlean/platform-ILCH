@@ -208,7 +208,7 @@
     <div class="sb-section">Communication</div>
     <div class="sb-item" onclick="showPanel('msgs',this)"><i class="ti ti-message" aria-hidden="true"></i>Messages<span class="sb-badge-count">2</span></div>
     <div class="sb-section">Compte</div>
-    <div class="sb-item" onclick="showPanel('numerique',this)"><i class="ti ti-device-tablet" aria-hidden="true"></i>Bibliothèque numérique</div>
+    <div class="sb-item" onclick="showPanel('numerique',this)"><i class="ti ti-device-tablet" aria-hidden="true"></i>Bibliothèque numérique ILCH</div>
     <div class="sb-item" onclick="showPanel('profil',this)"><i class="ti ti-user" aria-hidden="true"></i>Mon profil</div>
   </nav>
   <div class="sb-user">
@@ -431,7 +431,7 @@
     <!-- BIBLIOTHÈQUE NUMÉRIQUE -->
     <div class="panel" id="panel-numerique">
       <div class="section-hdr">
-        <div class="section-hdr-title">Bibliothèque numérique</div>
+        <div class="section-hdr-title">Bibliothèque numérique ILCH</div>
         <input type="text" id="num-recherche" placeholder="Rechercher un livre..." oninput="filtrerLivresNumeriques()" style="padding:8px 12px;border:0.5px solid var(--border);font-size:12px;width:220px">
       </div>
       <div id="num-grid-eleve" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:14px">
@@ -462,7 +462,7 @@
 </div>
 
 <script>
-  var titles={dash:'Tableau de bord',videos:'Cours vidéo',notes:'Mes notes',msgs:'Messages',profil:'Mon profil',numerique:'Bibliothèque numérique'};
+  var titles={dash:'Tableau de bord',videos:'Cours vidéo',notes:'Mes notes',msgs:'Messages',profil:'Mon profil',numerique:'Bibliothèque numérique ILCH'};
 
   function showPanel(id,el){
     document.querySelectorAll('.panel').forEach(function(p){p.classList.remove('active')});

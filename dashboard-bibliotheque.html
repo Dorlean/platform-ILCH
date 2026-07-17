@@ -315,7 +315,7 @@
     <div class="sb-section">Mon compte</div>
     <div class="sb-item" onclick="showPanel('comptes',this)"><i class="ti ti-user-plus" aria-hidden="true"></i>Gestion des comptes</div>
     <div class="sb-item" onclick="showPanel('import',this)"><i class="ti ti-clipboard-copy" aria-hidden="true"></i>Importer depuis Excel</div>
-    <div class="sb-item" onclick="showPanel('numerique',this)"><i class="ti ti-device-tablet" aria-hidden="true"></i>Bibliothèque numérique</div>
+    <div class="sb-item" onclick="showPanel('numerique',this)"><i class="ti ti-device-tablet" aria-hidden="true"></i>Bibliothèque numérique ILCH</div>
     <div class="sb-item" onclick="showPanel('profil',this)"><i class="ti ti-user" aria-hidden="true"></i>Mon profil</div>
   </nav>
   <div class="sb-user">
@@ -668,7 +668,7 @@ function showPanel(id,el){
   document.getElementById('panel-'+id).classList.add('active');
   document.querySelectorAll('.sb-item').forEach(function(i){i.classList.remove('active')});
   if(el)el.classList.add('active');
-  var titles={dash:'Tableau de bord',catalogue:'Catalogue des livres',ajouter:'Ajouter un livre',emprunts:'Emprunts en cours',retards:'Retards',historique:'Historique des emprunts',rapport:'Rapport bibliothèque',comptes:'Gestion des comptes',profil:'Mon profil',import:'Importer depuis Excel',numerique:'Bibliothèque numérique'};
+  var titles={dash:'Tableau de bord',catalogue:'Catalogue des livres',ajouter:'Ajouter un livre',emprunts:'Emprunts en cours',retards:'Retards',historique:'Historique des emprunts',rapport:'Rapport bibliothèque',comptes:'Gestion des comptes',profil:'Mon profil',import:'Importer depuis Excel',numerique:'Bibliothèque numérique ILCH'};
   document.getElementById('topbar-title').textContent=titles[id]||id;
   renderAll();
 }
