@@ -315,6 +315,7 @@
     <div class="sb-section">Mon compte</div>
     <div class="sb-item" onclick="showPanel('comptes',this)"><i class="ti ti-user-plus" aria-hidden="true"></i>Gestion des comptes</div>
     <div class="sb-item" onclick="showPanel('import',this)"><i class="ti ti-clipboard-copy" aria-hidden="true"></i>Importer depuis Excel</div>
+    <div class="sb-item" onclick="showPanel('numerique',this)"><i class="ti ti-device-tablet" aria-hidden="true"></i>Bibliothèque numérique</div>
     <div class="sb-item" onclick="showPanel('profil',this)"><i class="ti ti-user" aria-hidden="true"></i>Mon profil</div>
   </nav>
   <div class="sb-user">
@@ -554,6 +555,40 @@
       </div>
     </div>
 
+    <!-- BIBLIOTHÈQUE NUMÉRIQUE -->
+    <div class="panel" id="panel-numerique">
+      <div class="section-hdr"><div class="section-hdr-title">Ajouter un livre numérique (PDF)</div></div>
+
+      <div style="background:var(--white);border:0.5px solid var(--border);padding:1.5rem;margin-bottom:1.25rem;max-width:640px">
+        <div class="form-row" style="margin-bottom:1rem">
+          <div class="form-group"><label>Titre</label><input type="text" id="num-titre" placeholder="Titre du livre"></div>
+          <div class="form-group"><label>Auteur</label><input type="text" id="num-auteur" placeholder="Nom de l'auteur"></div>
+        </div>
+        <div class="form-group" style="margin-bottom:1rem"><label>Genre</label>
+          <select id="num-genre"><option>Roman</option><option>Manuel scolaire</option><option>Sciences</option><option>Histoire</option><option>Poésie</option><option>Théâtre</option><option>Autre</option></select>
+        </div>
+        <div class="form-group" style="margin-bottom:1rem"><label>Description (optionnel)</label><textarea id="num-description" rows="2" style="width:100%;padding:8px 10px;border:0.5px solid var(--border);font-family:'Inter',sans-serif;font-size:13px;resize:vertical"></textarea></div>
+
+        <div class="upload-drop" id="num-drop-area" onclick="document.getElementById('num-file').click()" style="border:1px dashed var(--border);padding:1.5rem;text-align:center;cursor:pointer;margin-bottom:1rem">
+          <input type="file" id="num-file" accept="application/pdf" style="display:none" onchange="onFichierNumeriqueSelected(this)">
+          <i class="ti ti-file-upload" style="font-size:22px;color:var(--gold,#8B5E34)" aria-hidden="true"></i>
+          <div id="num-drop-titre" style="font-size:12px;color:var(--navy);margin-top:6px">Cliquer pour choisir un fichier PDF</div>
+          <div style="font-size:11px;color:var(--gray);margin-top:2px">Recommandé : moins de 50 Mo</div>
+        </div>
+        <div id="num-progress-wrap" style="display:none;margin-bottom:1rem">
+          <div style="height:6px;background:var(--border);overflow:hidden"><div id="num-progress-bar" style="height:100%;width:0%;background:var(--gold,#8B5E34)"></div></div>
+          <div id="num-progress-text" style="font-size:11px;color:var(--gray);margin-top:4px">0%</div>
+        </div>
+
+        <button class="btn btn-brown" onclick="publierLivreNumerique()"><i class="ti ti-upload" aria-hidden="true"></i>Publier le livre numérique</button>
+      </div>
+
+      <div class="section-hdr"><div class="section-hdr-title">Livres numériques publiés</div></div>
+      <div id="num-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:12px">
+        <div style="font-size:12px;color:var(--gray)">Chargement...</div>
+      </div>
+    </div>
+
     <div class="panel" id="panel-profil">
       <div style="background:var(--white);border:0.5px solid var(--border);max-width:520px;padding:2rem">
         <div style="display:flex;align-items:center;gap:16px;margin-bottom:1.5rem;padding-bottom:1.5rem;border-bottom:1px solid var(--border)">
@@ -633,7 +668,7 @@ function showPanel(id,el){
   document.getElementById('panel-'+id).classList.add('active');
   document.querySelectorAll('.sb-item').forEach(function(i){i.classList.remove('active')});
   if(el)el.classList.add('active');
-  var titles={dash:'Tableau de bord',catalogue:'Catalogue des livres',ajouter:'Ajouter un livre',emprunts:'Emprunts en cours',retards:'Retards',historique:'Historique des emprunts',rapport:'Rapport bibliothèque',comptes:'Gestion des comptes',profil:'Mon profil',import:'Importer depuis Excel'};
+  var titles={dash:'Tableau de bord',catalogue:'Catalogue des livres',ajouter:'Ajouter un livre',emprunts:'Emprunts en cours',retards:'Retards',historique:'Historique des emprunts',rapport:'Rapport bibliothèque',comptes:'Gestion des comptes',profil:'Mon profil',import:'Importer depuis Excel',numerique:'Bibliothèque numérique'};
   document.getElementById('topbar-title').textContent=titles[id]||id;
   renderAll();
 }
@@ -1066,6 +1101,7 @@ document.addEventListener("DOMContentLoaded",function(){
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
 import { getAuth, onAuthStateChanged, createUserWithEmailAndPassword, signOut } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+import { getStorage, ref as storageRef, uploadBytesResumable, getDownloadURL, deleteObject } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-storage.js";
 import {
   getFirestore, collection, doc,
   addDoc, getDocs, updateDoc, deleteDoc,
@@ -1083,6 +1119,7 @@ const firebaseConfig = {
 
 const app = initializeApp(firebaseConfig);
 const db  = getFirestore(app);
+const storage = getStorage(app);
 var deptUser = JSON.parse(sessionStorage.getItem('ilch_user') || '{}');
 
 // ── Afficher les vraies infos du bibliothécaire connecté ────
@@ -1339,6 +1376,102 @@ onSnapshot(query(collection(db, 'notifications'), where('destinataireRole', 'in'
       (n.auteur ? '<div class="notif-item-auteur">Publié par ' + n.auteur + '</div>' : '') +
       '<div class="notif-item-msg">' + n.message + '</div>' +
       '<div class="notif-item-time">' + tempsEcouleNotif(n.dateCreation) + '</div>' +
+    '</div>';
+  }).join('');
+});
+
+// ── BIBLIOTHÈQUE NUMÉRIQUE (upload PDF réel vers Firebase Storage) ──
+let fichierNumeriqueSelectionne = null;
+
+window.onFichierNumeriqueSelected = function(input) {
+  var f = input.files[0];
+  if (!f) return;
+  var maxMo = 50;
+  if (f.size > maxMo * 1024 * 1024) {
+    if (typeof showToast === 'function') showToast('Fichier trop volumineux (max ' + maxMo + ' Mo).');
+    input.value = '';
+    fichierNumeriqueSelectionne = null;
+    return;
+  }
+  fichierNumeriqueSelectionne = f;
+  document.getElementById('num-drop-titre').textContent = '✓ ' + f.name + ' (' + (f.size / 1024 / 1024).toFixed(1) + ' Mo)';
+};
+
+window.publierLivreNumerique = async function() {
+  var titre = document.getElementById('num-titre').value.trim();
+  var auteur = document.getElementById('num-auteur').value.trim();
+  var genre = document.getElementById('num-genre').value;
+  var description = document.getElementById('num-description').value.trim();
+
+  if (!titre || !auteur) { if (typeof showToast === 'function') showToast('Veuillez indiquer au moins le titre et l\'auteur'); return; }
+  if (!fichierNumeriqueSelectionne) { if (typeof showToast === 'function') showToast('Veuillez sélectionner un fichier PDF'); return; }
+
+  var progWrap = document.getElementById('num-progress-wrap');
+  var progBar = document.getElementById('num-progress-bar');
+  var progText = document.getElementById('num-progress-text');
+  progWrap.style.display = 'block';
+
+  var chemin = 'livres_numeriques/' + Date.now() + '_' + fichierNumeriqueSelectionne.name.replace(/[^a-zA-Z0-9.]/g, '_');
+  var refStockage = storageRef(storage, chemin);
+  var tacheEnvoi = uploadBytesResumable(refStockage, fichierNumeriqueSelectionne);
+
+  tacheEnvoi.on('state_changed', function(snap) {
+    var pct = Math.round((snap.bytesTransferred / snap.totalBytes) * 100);
+    progBar.style.width = pct + '%';
+    progText.textContent = pct + '% envoyé...';
+  }, function(err) {
+    console.error('Erreur upload livre numérique:', err);
+    if (typeof showToast === 'function') showToast("Erreur lors de l'envoi du fichier");
+    progWrap.style.display = 'none';
+  }, async function() {
+    try {
+      var url = await getDownloadURL(tacheEnvoi.snapshot.ref);
+      await addDoc(collection(db, 'livres_numeriques'), {
+        titre: titre, auteur: auteur, genre: genre, description: description,
+        fichierUrl: url, cheminStorage: chemin,
+        publiePar: ((deptUser.prenom || '') + ' ' + (deptUser.nom || '')).trim() || 'Bibliothécaire',
+        dateAjout: new Date().toISOString()
+      });
+      fichierNumeriqueSelectionne = null;
+      document.getElementById('num-titre').value = '';
+      document.getElementById('num-auteur').value = '';
+      document.getElementById('num-description').value = '';
+      document.getElementById('num-file').value = '';
+      document.getElementById('num-drop-titre').textContent = 'Cliquer pour choisir un fichier PDF';
+      progWrap.style.display = 'none';
+      if (typeof showToast === 'function') showToast('Livre numérique publié ✓');
+    } catch (e) {
+      console.error(e);
+      if (typeof showToast === 'function') showToast('Erreur lors de la publication');
+    }
+  });
+};
+
+window.supprimerLivreNumerique = async function(id, chemin, titre) {
+  if (!confirm('Supprimer "' + titre + '" de la bibliothèque numérique ?')) return;
+  try {
+    await deleteDoc(doc(db, 'livres_numeriques', id));
+    if (chemin) { try { await deleteObject(storageRef(storage, chemin)); } catch (e) { console.warn(e); } }
+    if (typeof showToast === 'function') showToast('Livre numérique supprimé');
+  } catch (e) { console.error(e); }
+};
+
+onSnapshot(collection(db, 'livres_numeriques'), function(snap) {
+  var grid = document.getElementById('num-grid');
+  if (!grid) return;
+  var items = snap.docs.map(function(d) { return { id: d.id, ...d.data() }; });
+  items.sort(function(a, b) { return new Date(b.dateAjout) - new Date(a.dateAjout); });
+  if (!items.length) {
+    grid.innerHTML = '<div style="grid-column:1/-1;font-size:12px;color:var(--gray)">Aucun livre numérique publié pour le moment.</div>';
+    return;
+  }
+  grid.innerHTML = items.map(function(l) {
+    return '<div style="background:var(--white);border:0.5px solid var(--border);padding:14px">' +
+      '<div style="display:flex;justify-content:space-between;align-items:start"><i class="ti ti-file-type-pdf" style="font-size:22px;color:#DC2626" aria-hidden="true"></i>' +
+      '<button onclick="supprimerLivreNumerique(\'' + l.id + '\',\'' + (l.cheminStorage || '') + '\',\'' + String(l.titre || '').replace(/'/g, '') + '\')" style="background:none;border:none;color:var(--red,#DC2626);cursor:pointer;font-size:13px" title="Supprimer"><i class="ti ti-trash" aria-hidden="true"></i></button></div>' +
+      '<div style="font-size:13px;font-weight:600;color:var(--navy);margin-top:8px">' + l.titre + '</div>' +
+      '<div style="font-size:11px;color:var(--gray);margin-top:2px">' + l.auteur + ' · ' + l.genre + '</div>' +
+      '<a href="' + l.fichierUrl + '" target="_blank" style="display:block;margin-top:10px;font-size:11px;color:var(--gold,#8B5E34)">📖 Ouvrir le PDF</a>' +
     '</div>';
   }).join('');
 });

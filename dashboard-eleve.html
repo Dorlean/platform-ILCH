@@ -208,6 +208,7 @@
     <div class="sb-section">Communication</div>
     <div class="sb-item" onclick="showPanel('msgs',this)"><i class="ti ti-message" aria-hidden="true"></i>Messages<span class="sb-badge-count">2</span></div>
     <div class="sb-section">Compte</div>
+    <div class="sb-item" onclick="showPanel('numerique',this)"><i class="ti ti-device-tablet" aria-hidden="true"></i>Bibliothèque numérique</div>
     <div class="sb-item" onclick="showPanel('profil',this)"><i class="ti ti-user" aria-hidden="true"></i>Mon profil</div>
   </nav>
   <div class="sb-user">
@@ -427,6 +428,17 @@
     </div>
 
     <!-- PROFIL -->
+    <!-- BIBLIOTHÈQUE NUMÉRIQUE -->
+    <div class="panel" id="panel-numerique">
+      <div class="section-hdr">
+        <div class="section-hdr-title">Bibliothèque numérique</div>
+        <input type="text" id="num-recherche" placeholder="Rechercher un livre..." oninput="filtrerLivresNumeriques()" style="padding:8px 12px;border:0.5px solid var(--border);font-size:12px;width:220px">
+      </div>
+      <div id="num-grid-eleve" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:14px">
+        <div style="font-size:12px;color:var(--gray)">Chargement...</div>
+      </div>
+    </div>
+
     <div class="panel" id="panel-profil">
       <div style="background:var(--white);border:0.5px solid var(--border);max-width:520px;padding:2rem">
         <div style="display:flex;align-items:center;gap:16px;margin-bottom:1.5rem;padding-bottom:1.5rem;border-bottom:1px solid var(--border)">
@@ -450,7 +462,7 @@
 </div>
 
 <script>
-  var titles={dash:'Tableau de bord',videos:'Cours vidéo',notes:'Mes notes',msgs:'Messages',profil:'Mon profil'};
+  var titles={dash:'Tableau de bord',videos:'Cours vidéo',notes:'Mes notes',msgs:'Messages',profil:'Mon profil',numerique:'Bibliothèque numérique'};
 
   function showPanel(id,el){
     document.querySelectorAll('.panel').forEach(function(p){p.classList.remove('active')});
@@ -953,6 +965,42 @@ function afficherResultatExamen(soumission) {
 }
 
 console.log('✓ Dashboard Élève connecté à Firebase');
+
+// ── BIBLIOTHÈQUE NUMÉRIQUE ──────────────────────────────────
+var livresNumeriquesTousDisponibles = [];
+
+onSnapshot(collection(db, 'livres_numeriques'), function(snap) {
+  livresNumeriquesTousDisponibles = snap.docs.map(function(d) { return { id: d.id, ...d.data() }; });
+  livresNumeriquesTousDisponibles.sort(function(a, b) { return new Date(b.dateAjout) - new Date(a.dateAjout); });
+  afficherLivresNumeriques(livresNumeriquesTousDisponibles);
+});
+
+function afficherLivresNumeriques(liste) {
+  var grid = document.getElementById('num-grid-eleve');
+  if (!grid) return;
+  if (!liste.length) {
+    grid.innerHTML = '<div style="grid-column:1/-1;font-size:12px;color:var(--gray)">Aucun livre numérique disponible pour le moment.</div>';
+    return;
+  }
+  grid.innerHTML = liste.map(function(l) {
+    return '<div style="background:var(--white);border:0.5px solid var(--border);padding:14px">' +
+      '<i class="ti ti-file-type-pdf" style="font-size:24px;color:#DC2626" aria-hidden="true"></i>' +
+      '<div style="font-size:13px;font-weight:600;color:var(--navy);margin-top:8px">' + l.titre + '</div>' +
+      '<div style="font-size:11px;color:var(--gray);margin-top:2px">' + l.auteur + ' · ' + l.genre + '</div>' +
+      (l.description ? '<div style="font-size:11px;color:var(--gray);margin-top:6px;line-height:1.5">' + l.description + '</div>' : '') +
+      '<a href="' + l.fichierUrl + '" target="_blank" style="display:inline-block;margin-top:10px;background:var(--navy);color:#fff;padding:7px 14px;font-size:11px;font-weight:600;text-decoration:none">📖 Lire le livre</a>' +
+    '</div>';
+  }).join('');
+}
+
+window.filtrerLivresNumeriques = function() {
+  var q = document.getElementById('num-recherche').value.trim().toLowerCase();
+  if (!q) { afficherLivresNumeriques(livresNumeriquesTousDisponibles); return; }
+  var filtres = livresNumeriquesTousDisponibles.filter(function(l) {
+    return ((l.titre || '') + ' ' + (l.auteur || '') + ' ' + (l.genre || '')).toLowerCase().indexOf(q) !== -1;
+  });
+  afficherLivresNumeriques(filtres);
+};
 
 // ── COURS VIDÉO — affichage réel, filtré par classe ─────────
 var matiereCourte = { 'Mathématiques':'Maths', 'Histoire-Géographie':'Histoire' };
