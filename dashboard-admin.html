@@ -333,7 +333,8 @@
       <button class="modal-close" onclick="closeModal('modal-matiere')"><i class="ti ti-x" aria-hidden="true"></i></button>
     </div>
     <div class="modal-body">
-      <div class="form-group"><label>Nom de la matière</label><input type="text" id="mat-nom" placeholder="Ex: Mathématiques, Créole haïtien..."></div>
+      <div class="form-group" style="margin-bottom:1rem"><label>Nom de la matière</label><input type="text" id="mat-nom" placeholder="Ex: Mathématiques, Créole haïtien..."></div>
+      <div class="form-group"><label>Coefficient</label><input type="number" id="mat-coef" min="1" max="10" value="2" placeholder="Ex: 4"></div>
     </div>
     <div class="modal-footer">
       <button class="btn btn-gold" onclick="saveMatiere()"><i class="ti ti-check" aria-hidden="true"></i>Ajouter</button>
@@ -558,7 +559,7 @@ Sophie&#9;Marc&#9;Terminale A&#9;Robert Marc&#9;+509 3X XX XX XX"></textarea>
         <button class="btn btn-gold" onclick="openModal('modal-matiere')"><i class="ti ti-plus" aria-hidden="true"></i>Ajouter une matière</button>
       </div>
       <table class="data-table" id="tbl-matieres">
-        <thead><tr><th>Nom de la matière</th><th>Nb professeurs</th><th>Actions</th></tr></thead>
+        <thead><tr><th>Nom de la matière</th><th>Coefficient</th><th>Nb professeurs</th><th>Actions</th></tr></thead>
         <tbody id="tbody-matieres"></tbody>
       </table>
     </div>
@@ -912,11 +913,12 @@ function renderMatieres(){
   var matieres = DB.get('matieres');
   var profs = DB.get('profs');
   var tb = document.getElementById('tbody-matieres');
-  if(!matieres.length){ tb.innerHTML='<tr><td colspan="3"><div class="empty-state"><i class="ti ti-book" aria-hidden="true"></i><p>Aucune matière créée.</p></div></td></tr>'; return; }
+  if(!matieres.length){ tb.innerHTML='<tr><td colspan="4"><div class="empty-state"><i class="ti ti-book" aria-hidden="true"></i><p>Aucune matière créée.</p></div></td></tr>'; return; }
   tb.innerHTML = matieres.map(function(m){
     var nb = profs.filter(function(p){return (p.matieres||[]).indexOf(m.nom)>-1;}).length;
     return '<tr>'+
       '<td><strong>'+m.nom+'</strong></td>'+
+      '<td>'+(m.coefficient||'—')+'</td>'+
       '<td>'+nb+' prof'+(nb>1?'s':'')+'</td>'+
       '<td><div class="tbl-actions">'+
         '<button class="btn btn-danger" onclick="deleteItem(\'matieres\',\''+m.id+'\',renderMatieres)"><i class="ti ti-trash" aria-hidden="true"></i>Supprimer</button>'+
@@ -1268,14 +1270,13 @@ function saveClasse(){
 // Matière
 function saveMatiere(){
   var nom=document.getElementById('mat-nom').value.trim();
+  var coef=Number(document.getElementById('mat-coef').value)||2;
   if(!nom){showToast('Veuillez saisir un nom de matière');return;}
-  var matieres=DB.get('matieres');
-  matieres.push({id:DB.id(),nom:nom});
-  DB.set('matieres',matieres);
+  saveMatiereFirebase(nom, coef);
   closeModal('modal-matiere');
-  renderMatieres();
   showToast('Matière "'+nom+'" créée');
   document.getElementById('mat-nom').value='';
+  document.getElementById('mat-coef').value='2';
 }
 
 // Mot de passe
@@ -1607,6 +1608,55 @@ window.saveClasseFirebase = async function(nom, niveau) {
     enregistrerActivite('Classe créée', 'Classe "' + nom + '" (' + niveau + ')');
   } catch (e) { console.error('Erreur création classe:', e); }
 };
+
+// ── MATIÈRES — source unique partagée pour toute la plateforme ──
+var MATIERES_SEED_DEFAUT = [
+  { nom: 'Mathématiques', coefficient: 4 },
+  { nom: 'Français', coefficient: 4 },
+  { nom: 'Sciences', coefficient: 3 },
+  { nom: 'Histoire-Géographie', coefficient: 2 },
+  { nom: 'Anglais', coefficient: 2 },
+  { nom: 'Philosophie', coefficient: 3 }
+];
+var matieresSeedTente = false;
+
+onSnapshot(collection(db, 'matieres'), function(snap) {
+  if (snap.empty && !matieresSeedTente) {
+    matieresSeedTente = true;
+    MATIERES_SEED_DEFAUT.forEach(function(m) {
+      addDoc(collection(db, 'matieres'), {
+        nom: m.nom, coefficient: m.coefficient, dateCreation: new Date().toISOString()
+      }).catch(function(e) { console.error('Erreur seed matière:', e); });
+    });
+    return;
+  }
+  var matieres = snap.docs.map(function(d) { return { id: d.id, ...d.data() }; });
+  localStorage.setItem('ilch_matieres', JSON.stringify(matieres));
+  if (typeof renderMatieres === 'function') renderMatieres();
+  if (typeof remplirMatieresSelects === 'function') remplirMatieresSelects();
+});
+
+window.saveMatiereFirebase = async function(nom, coefficient) {
+  try {
+    await addDoc(collection(db, 'matieres'), { nom: nom, coefficient: coefficient, dateCreation: new Date().toISOString() });
+    enregistrerActivite('Matière créée', nom + ' (coef. ' + coefficient + ')');
+  } catch (e) { console.error('Erreur création matière:', e); }
+};
+
+function remplirMatieresSelects() {
+  var matieres = JSON.parse(localStorage.getItem('ilch_matieres') || '[]');
+  var input = document.getElementById('p-matiere-input');
+  if (input && input.tagName === 'INPUT') {
+    // Remplace le champ texte libre par une vraie liste déroulante, une seule fois
+    var select = document.createElement('select');
+    select.id = 'p-matiere-input';
+    select.style.cssText = input.style.cssText;
+    select.innerHTML = '<option value="">-- Choisir une matière --</option>' + matieres.map(function(m) { return '<option value="' + m.nom + '">' + m.nom + ' (coef. ' + m.coefficient + ')</option>'; }).join('');
+    input.parentNode.replaceChild(select, input);
+  } else if (input) {
+    input.innerHTML = '<option value="">-- Choisir une matière --</option>' + matieres.map(function(m) { return '<option value="' + m.nom + '">' + m.nom + ' (coef. ' + m.coefficient + ')</option>'; }).join('');
+  }
+}
 
 window.supprimerClasseFirebase = async function(id) {
   try { await deleteDoc(doc(db, 'classes', id)); enregistrerActivite('Classe supprimée', 'ID : ' + id); } catch (e) { console.error(e); }
@@ -2148,7 +2198,8 @@ window.deleteItem = async function(store, id, cb) {
   var fbCol = store === 'eleves' ? 'eleves' :
               store === 'profs' ? 'professeurs' :
               store === 'parents' ? 'parents' :
-              store === 'classes' ? 'classes' : null;
+              store === 'classes' ? 'classes' :
+              store === 'matieres' ? 'matieres' : null;
   if (fbCol && id && !id.startsWith('id_')) {
     try {
       await deleteDoc(doc(db, fbCol, id));

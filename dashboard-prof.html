@@ -998,10 +998,19 @@ window.saveNoteFirebase = async function(data) {
 };
 
 // ── SAISIE DES NOTES — classes réelles + envoi au responsable ──
-var COEFFICIENTS_MATIERES = {
-  'Mathématiques': 4, 'Français': 4, 'Sciences': 3, 'Histoire-Géographie': 2,
-  'Anglais': 2, 'Philosophie': 3
-};
+onSnapshot(collection(db, 'matieres'), function(snap) {
+  var matieres = snap.docs.map(function(d) { return d.data(); });
+  if (!matieres.length) return;
+
+  var selNotes = document.getElementById('notes-matiere');
+  if (selNotes) selNotes.innerHTML = matieres.map(function(m) { return '<option value="' + m.nom + '" data-coef="' + (m.coefficient || 1) + '">' + m.nom + ' (coef. ' + (m.coefficient || 1) + ')</option>'; }).join('');
+
+  var optionsSimples = matieres.map(function(m) { return '<option value="' + m.nom + '">' + m.nom + '</option>'; }).join('');
+  var selDirect = document.getElementById('direct-matiere');
+  if (selDirect) selDirect.innerHTML = optionsSimples;
+  var selExam = document.getElementById('exam-matiere');
+  if (selExam) selExam.innerHTML = optionsSimples;
+});
 
 function remplirClassesNotes() {
   var sel = document.getElementById('notes-classe');
@@ -1038,12 +1047,14 @@ window.chargerClasseNotes = async function() {
 
 window.saveNotes = async function() {
   var classe = document.getElementById('notes-classe').value;
-  var matiere = document.getElementById('notes-matiere').value;
+  var selMatiere = document.getElementById('notes-matiere');
+  var matiere = selMatiere.value;
   var trimestre = document.getElementById('notes-trimestre').value;
   var rows = document.querySelectorAll('#notes-tbody tr[data-eleve-id]');
   if (!rows.length) { if (typeof showToast === 'function') showToast('Chargez une classe avant d\'enregistrer'); return; }
 
-  var coefficient = COEFFICIENTS_MATIERES[matiere] || 1;
+  var optionSelectionnee = selMatiere.options[selMatiere.selectedIndex];
+  var coefficient = optionSelectionnee ? Number(optionSelectionnee.getAttribute('data-coef')) || 1 : 1;
   var nbEnregistrees = 0;
 
   for (var i = 0; i < rows.length; i++) {

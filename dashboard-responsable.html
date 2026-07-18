@@ -894,26 +894,43 @@ function editEleve(id){
   openModal('modal-eleve');
   setTimeout(function(){document.getElementById('e-classe').value=e.classe;},80);
 }
-function saveEleve(){
+async function saveEleve(){
   var prenom=document.getElementById('e-prenom').value.trim();
   var nom=document.getElementById('e-nom').value.trim();
   var classe=document.getElementById('e-classe').value;
   var id=document.getElementById('e-id').value.trim();
   var pw=document.getElementById('e-pw').value.trim();
   if(!prenom||!nom||!classe||!id||!pw){showToast('Veuillez remplir tous les champs obligatoires');return;}
-  var eleves=DB.get('eleves');
-  var obj={id:eleveEditId||DB.id(),prenom:prenom,nom:nom,classe:classe,parentNom:document.getElementById('e-parent').value.trim(),tel:document.getElementById('e-tel').value.trim(),dob:document.getElementById('e-dob').value,identifiant:id,motDePasse:pw};
-  if(eleveEditId){var idx=eleves.findIndex(function(x){return x.id===eleveEditId;});if(idx>-1)eleves[idx]=obj;}
-  else eleves.push(obj);
-  DB.set('eleves',eleves);
-  closeModal('modal-eleve');
-  renderAll();
-  showToast(prenom+' '+nom+' '+(eleveEditId?'modifié':'ajouté')+'(e)');
+  var data={prenom:prenom,nom:nom,classe:classe,parentNom:document.getElementById('e-parent').value.trim(),tel:document.getElementById('e-tel').value.trim(),dob:document.getElementById('e-dob').value,identifiant:id,motDePasse:pw};
+  try{
+    if(eleveEditId){
+      await updateDoc(doc(db,'eleves',eleveEditId),data);
+      if(typeof enregistrerActiviteResp==='function') enregistrerActiviteResp('Élève modifié',prenom+' '+nom+' ('+classe+')');
+    } else {
+      try{
+        data.authUid=await creerCompteAuthSansDeconnexion(identifiantVersEmail(id),pw,'eleve');
+      }catch(authErr){console.error('Erreur compte sécurisé:',authErr);}
+      data.createdAt=new Date().toISOString();
+      await addDoc(collection(db,'eleves'),data);
+      if(typeof enregistrerActiviteResp==='function') enregistrerActiviteResp('Élève créé',prenom+' '+nom+' ('+classe+')');
+    }
+    closeModal('modal-eleve');
+    showToast(prenom+' '+nom+' '+(eleveEditId?'modifié':'ajouté')+'(e) ✓');
+  }catch(e){
+    console.error(e);
+    showToast('Erreur lors de l\'enregistrement');
+  }
 }
-function delEleve(id){
-  if(!confirm('Supprimer cet élève ?')) return;
-  DB.set('eleves',DB.get('eleves').filter(function(x){return x.id!==id;}));
-  renderAll(); showToast('Élève supprimé');
+async function delEleve(id){
+  if(!confirm('Supprimer cet élève ? Cette action est irréversible.')) return;
+  try{
+    await deleteDoc(doc(db,'eleves',id));
+    if(typeof enregistrerActiviteResp==='function') enregistrerActiviteResp('Élève supprimé','ID : '+id);
+    showToast('Élève supprimé ✓');
+  }catch(e){
+    console.error(e);
+    showToast('Erreur lors de la suppression');
+  }
 }
 
 // PROF — tags
@@ -956,25 +973,42 @@ function editProf(id){
   openModal('modal-prof');
   renderProfTags();
 }
-function saveProf(){
+async function saveProf(){
   var prenom=document.getElementById('p-prenom').value.trim();
   var nom=document.getElementById('p-nom').value.trim();
   var id=document.getElementById('p-id').value.trim();
   var pw=document.getElementById('p-pw').value.trim();
   if(!prenom||!nom||!id||!pw){showToast('Veuillez remplir tous les champs');return;}
-  var profs=DB.get('profs');
-  var obj={id:profEditId||DB.id(),prenom:prenom,nom:nom,tel:document.getElementById('p-tel').value.trim(),identifiant:id,motDePasse:pw,matieres:profMats,classes:profCls};
-  if(profEditId){var idx=profs.findIndex(function(x){return x.id===profEditId;});if(idx>-1)profs[idx]=obj;}
-  else profs.push(obj);
-  DB.set('profs',profs);
-  closeModal('modal-prof');
-  renderAll();
-  showToast(prenom+' '+nom+' '+(profEditId?'modifié':'ajouté'));
+  var data={prenom:prenom,nom:nom,tel:document.getElementById('p-tel').value.trim(),identifiant:id,motDePasse:pw,matieres:profMats,classes:profCls};
+  try{
+    if(profEditId){
+      await updateDoc(doc(db,'professeurs',profEditId),data);
+      if(typeof enregistrerActiviteResp==='function') enregistrerActiviteResp('Professeur modifié',prenom+' '+nom);
+    } else {
+      try{
+        data.authUid=await creerCompteAuthSansDeconnexion(identifiantVersEmail(id),pw,'prof');
+      }catch(authErr){console.error('Erreur compte sécurisé:',authErr);}
+      data.createdAt=new Date().toISOString();
+      await addDoc(collection(db,'professeurs'),data);
+      if(typeof enregistrerActiviteResp==='function') enregistrerActiviteResp('Professeur créé',prenom+' '+nom);
+    }
+    closeModal('modal-prof');
+    showToast(prenom+' '+nom+' '+(profEditId?'modifié':'ajouté')+' ✓');
+  }catch(e){
+    console.error(e);
+    showToast('Erreur lors de l\'enregistrement');
+  }
 }
-function delProf(id){
-  if(!confirm('Supprimer ce professeur ?')) return;
-  DB.set('profs',DB.get('profs').filter(function(x){return x.id!==id;}));
-  renderAll(); showToast('Professeur supprimé');
+async function delProf(id){
+  if(!confirm('Supprimer ce professeur ? Cette action est irréversible.')) return;
+  try{
+    await deleteDoc(doc(db,'professeurs',id));
+    if(typeof enregistrerActiviteResp==='function') enregistrerActiviteResp('Professeur supprimé','ID : '+id);
+    showToast('Professeur supprimé ✓');
+  }catch(e){
+    console.error(e);
+    showToast('Erreur lors de la suppression');
+  }
 }
 
 // ABSENCE
@@ -1081,7 +1115,7 @@ import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/fireba
 import { getAuth, onAuthStateChanged, createUserWithEmailAndPassword, signOut } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
 import {
   getFirestore, collection, doc,
-  addDoc, updateDoc, onSnapshot, query, where, getDocs, setDoc
+  addDoc, updateDoc, deleteDoc, onSnapshot, query, where, getDocs, setDoc
 } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
 const firebaseConfig = {
@@ -1095,6 +1129,17 @@ const firebaseConfig = {
 
 const app = initializeApp(firebaseConfig);
 const db  = getFirestore(app);
+
+async function enregistrerActiviteResp(action, details) {
+  try {
+    var respUser = JSON.parse(sessionStorage.getItem('ilch_user') || '{}');
+    var nom = ((respUser.prenom || '') + ' ' + (respUser.nom || '')).trim() || 'Responsable Pédagogique';
+    await addDoc(collection(db, 'journal_activite'), {
+      auteur: nom + ' — Responsable Pédagogique', role: 'responsable', action: action, details: details || '',
+      dateCreation: new Date().toISOString()
+    });
+  } catch (e) { console.error('Erreur journal activité:', e); }
+}
 
 function identifiantVersEmail(id) {
   return id.trim().toLowerCase().replace(/[^a-z0-9.]/g, '') + '@ilch.local';
