@@ -972,14 +972,18 @@ var livresNumeriquesTousDisponibles = [];
 onSnapshot(collection(db, 'livres_numeriques'), function(snap) {
   livresNumeriquesTousDisponibles = snap.docs.map(function(d) { return { id: d.id, ...d.data() }; });
   livresNumeriquesTousDisponibles.sort(function(a, b) { return new Date(b.dateAjout) - new Date(a.dateAjout); });
-  afficherLivresNumeriques(livresNumeriquesTousDisponibles);
+  afficherLivresNumeriques(livresNumeriquesTousDisponibles, false);
 });
 
-function afficherLivresNumeriques(liste) {
+function afficherLivresNumeriques(liste, rechercheActive) {
   var grid = document.getElementById('num-grid-eleve');
   if (!grid) return;
   if (!liste.length) {
-    grid.innerHTML = '<div style="grid-column:1/-1;font-size:12px;color:var(--gray)">Aucun livre numérique disponible pour le moment.</div>';
+    if (rechercheActive) {
+      grid.innerHTML = '<div style="grid-column:1/-1;font-size:12px;color:var(--gray)">Aucun livre ne correspond à ta recherche. Essaie un autre mot-clé.</div>';
+    } else {
+      grid.innerHTML = '<div style="grid-column:1/-1;font-size:12px;color:var(--gray)">Aucun livre numérique n\'a encore été publié par la bibliothèque. Reviens bientôt !</div>';
+    }
     return;
   }
   grid.innerHTML = liste.map(function(l) {
@@ -995,11 +999,11 @@ function afficherLivresNumeriques(liste) {
 
 window.filtrerLivresNumeriques = function() {
   var q = document.getElementById('num-recherche').value.trim().toLowerCase();
-  if (!q) { afficherLivresNumeriques(livresNumeriquesTousDisponibles); return; }
+  if (!q) { afficherLivresNumeriques(livresNumeriquesTousDisponibles, false); return; }
   var filtres = livresNumeriquesTousDisponibles.filter(function(l) {
     return ((l.titre || '') + ' ' + (l.auteur || '') + ' ' + (l.genre || '')).toLowerCase().indexOf(q) !== -1;
   });
-  afficherLivresNumeriques(filtres);
+  afficherLivresNumeriques(filtres, true);
 };
 
 // ── COURS VIDÉO — affichage réel, filtré par classe ─────────
