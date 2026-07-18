@@ -4,7 +4,7 @@
 
 // ⚠️ IMPORTANT : Changez ce numéro à chaque mise à jour !
 // Exemple : 'ilch-cache-v2', 'ilch-cache-v3', etc.
-const CACHE_VERSION = 'ilch-cache-v5';
+const CACHE_VERSION = 'ilch-cache-v6';
 const CACHE_NAME = CACHE_VERSION;
 
 const CACHE_URLS = [
@@ -30,6 +30,7 @@ const CACHE_URLS = [
   '/dashboard-owner.html',
   '/mobile.css',
   '/manifest.json',
+  '/manifest-personnel.json',
 ];
 
 // ── Installation ────────────────────────────────────────────
