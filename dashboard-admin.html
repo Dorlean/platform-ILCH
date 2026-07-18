@@ -148,6 +148,11 @@
     .empty-state{text-align:center;padding:3rem;color:var(--muted)}
     .empty-state i{font-size:48px;display:block;margin-bottom:1rem;color:var(--border)}
     .empty-state p{font-size:14px}
+    @media print {
+      body *{visibility:hidden}
+      .releve-printable, .releve-printable *{visibility:visible}
+      .releve-printable{position:absolute;top:0;left:0;width:100%;border:none !important;box-shadow:none !important}
+    }
   </style>
 </head>
 <body>
@@ -389,6 +394,8 @@
     <div class="sb-item" id="sb-item-motsdepasse" onclick="showPanel('motsdepasse',this)"><i class="ti ti-key" aria-hidden="true"></i>Mots de passe</div>
     <div class="sb-section">Communication</div>
     <div class="sb-item" onclick="showPanel('annonces',this)"><i class="ti ti-speakerphone" aria-hidden="true"></i>Actualités</div>
+    <div class="sb-section">Scolarité</div>
+    <div class="sb-item" onclick="showPanel('releve',this)"><i class="ti ti-file-certificate" aria-hidden="true"></i>Relevé de notes</div>
     <div class="sb-section">Mon compte</div>
     <div class="sb-item" onclick="showPanel('profil',this)"><i class="ti ti-user" aria-hidden="true"></i>Mon profil</div>
   </nav>
@@ -691,6 +698,60 @@ Sophie&#9;Marc&#9;Terminale A&#9;Robert Marc&#9;+509 3X XX XX XX"></textarea>
     </div>
 
     <!-- MON PROFIL -->
+    <!-- RELEVÉ DE NOTES -->
+    <div class="panel" id="panel-releve">
+      <div class="section-hdr"><div class="section-hdr-title">Relevé de notes officiel</div></div>
+
+      <div style="background:var(--white);border:0.5px solid var(--border);padding:1.5rem;margin-bottom:1.25rem;max-width:760px">
+        <div class="form-row" style="margin-bottom:1rem">
+          <div class="form-group"><label>Classe</label><select id="rel-classe" onchange="chargerElevesReleve()"><option value="">-- Choisir une classe --</option></select></div>
+          <div class="form-group"><label>Élève</label><select id="rel-eleve" onchange="genererReleve()"><option value="">-- Choisir un élève --</option></select></div>
+        </div>
+        <div class="form-group"><label>Trimestre</label>
+          <select id="rel-trimestre" onchange="genererReleve()">
+            <option value="T1">Trimestre 1</option><option value="T2">Trimestre 2</option><option value="T3">Trimestre 3</option>
+          </select>
+        </div>
+      </div>
+
+      <div id="releve-document" style="display:none;background:var(--white);border:0.5px solid var(--border);max-width:760px;padding:2.5rem" class="releve-printable">
+        <div style="text-align:center;border-bottom:2px solid var(--navy);padding-bottom:1rem;margin-bottom:1.5rem">
+          <div style="font-family:'Playfair Display',serif;font-size:20px;font-weight:700;color:var(--navy)">Institution Louis Chauvet</div>
+          <div style="font-size:11px;color:var(--gray)">Thomassin 25 · Pétion-Ville, Haïti</div>
+          <div style="font-size:13px;font-weight:700;color:var(--gold);margin-top:10px;letter-spacing:0.05em">RELEVÉ DE NOTES OFFICIEL</div>
+        </div>
+
+        <div style="display:flex;justify-content:space-between;margin-bottom:1.5rem;font-size:13px">
+          <div><strong>Élève :</strong> <span id="rel-doc-nom">—</span></div>
+          <div><strong>Classe :</strong> <span id="rel-doc-classe">—</span></div>
+          <div><strong>Période :</strong> <span id="rel-doc-trimestre">—</span></div>
+        </div>
+
+        <table class="data-table" style="margin-bottom:1.5rem">
+          <thead><tr><th>Matière</th><th>Coefficient</th><th>Note / 20</th><th>Appréciation</th></tr></thead>
+          <tbody id="rel-doc-matieres"></tbody>
+        </table>
+
+        <div style="text-align:right;font-size:15px;font-weight:700;color:var(--navy);margin-bottom:2rem">
+          Moyenne générale pondérée : <span id="rel-doc-moyenne" style="color:var(--gold)">—</span> / 20
+        </div>
+
+        <div style="border-top:1px solid var(--border);padding-top:1.5rem;display:flex;justify-content:flex-end">
+          <div style="text-align:center;min-width:260px">
+            <div style="font-size:11px;color:var(--gray);margin-bottom:8px">Signature électronique du Directeur</div>
+            <div id="rel-signature-zone" style="border:1px dashed var(--border);padding:1rem;min-height:60px;display:flex;flex-direction:column;align-items:center;justify-content:center">
+              <div id="rel-signature-statut" style="font-size:12px;color:var(--muted)">Document non signé</div>
+            </div>
+            <button class="btn btn-gold" id="rel-btn-signer" onclick="signerReleve()" style="margin-top:10px"><i class="ti ti-signature" aria-hidden="true"></i>Signer électroniquement</button>
+          </div>
+        </div>
+      </div>
+
+      <div id="releve-actions" style="display:none;margin-top:1rem;max-width:760px">
+        <button class="btn btn-gold" onclick="window.print()"><i class="ti ti-printer" aria-hidden="true"></i>Imprimer / Télécharger PDF</button>
+      </div>
+    </div>
+
     <div class="panel" id="panel-profil">
       <div style="background:var(--white);border:0.5px solid var(--border);max-width:520px;padding:2rem">
         <div style="display:flex;align-items:center;gap:16px;margin-bottom:1.5rem;padding-bottom:1.5rem;border-bottom:1px solid var(--border)">
@@ -1266,7 +1327,7 @@ function exportData(){
 }
 
 // ─── UI ────────────────────────────────────────────────────
-var titles={dash:'Tableau de bord',eleves:'Gestion des élèves',profs:'Gestion des professeurs',parents:'Gestion des parents',personnel:'Personnel & Direction',classes:'Gestion des classes',matieres:'Gestion des matières',effectif:'Effectif global',journal:"Journal d'activité",motsdepasse:'Mots de passe',annonces:'Actualités',profil:'Mon profil',import:'Importer depuis Excel'};
+var titles={dash:'Tableau de bord',eleves:'Gestion des élèves',profs:'Gestion des professeurs',parents:'Gestion des parents',personnel:'Personnel & Direction',classes:'Gestion des classes',matieres:'Gestion des matières',effectif:'Effectif global',journal:"Journal d'activité",motsdepasse:'Mots de passe',annonces:'Actualités',profil:'Mon profil',import:'Importer depuis Excel',releve:'Relevé de notes'};
 function showPanel(id,el){
   var restreints = ['personnel','journal','motsdepasse'];
   if (restreints.indexOf(id) !== -1) {
@@ -1895,7 +1956,7 @@ onSnapshot(collection(db, 'utilisateurs'), function(snap) {
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
 import {
-  getFirestore, collection, doc,
+  getFirestore, collection, doc, getDoc,
   addDoc, getDocs, updateDoc, deleteDoc, onSnapshot, setDoc, query, where
 } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 import { getAuth, createUserWithEmailAndPassword, signOut } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
@@ -2261,6 +2322,122 @@ window.confirmerImport = async function() {
   }
   document.getElementById('import-apercu').style.display = 'none';
   if (typeof showToast === 'function') showToast('Import terminé : ' + crees + ' compte(s) créé(s) ✓');
+};
+
+// ── RELEVÉ DE NOTES OFFICIEL — avec signature électronique ──
+onSnapshot(collection(db, 'classes'), function(snap) {
+  var sel = document.getElementById('rel-classe');
+  if (!sel) return;
+  var classes = snap.docs.map(function(d) { return d.data(); });
+  sel.innerHTML = '<option value="">-- Choisir une classe --</option>' + classes.map(function(c) { return '<option value="' + c.nom + '">' + c.nom + '</option>'; }).join('');
+});
+
+window.chargerElevesReleve = async function() {
+  var classe = document.getElementById('rel-classe').value;
+  var selEleve = document.getElementById('rel-eleve');
+  selEleve.innerHTML = '<option value="">Chargement...</option>';
+  document.getElementById('releve-document').style.display = 'none';
+  document.getElementById('releve-actions').style.display = 'none';
+  if (!classe) { selEleve.innerHTML = '<option value="">-- Choisir un élève --</option>'; return; }
+  try {
+    var snap = await getDocs(query(collection(db, 'eleves'), where('classe', '==', classe)));
+    var eleves = snap.docs.map(function(d) { return { id: d.id, ...d.data() }; });
+    selEleve.innerHTML = '<option value="">-- Choisir un élève --</option>' + eleves.map(function(e) {
+      return '<option value="' + e.id + '" data-nom="' + (e.prenom + ' ' + e.nom).replace(/"/g, '') + '" data-classe="' + classe + '">' + e.prenom + ' ' + e.nom + '</option>';
+    }).join('');
+  } catch (e) { console.error(e); }
+};
+
+window.genererReleve = async function() {
+  var selEleve = document.getElementById('rel-eleve');
+  var eleveId = selEleve.value;
+  var trimestre = document.getElementById('rel-trimestre').value;
+  if (!eleveId) { document.getElementById('releve-document').style.display = 'none'; document.getElementById('releve-actions').style.display = 'none'; return; }
+
+  var option = selEleve.options[selEleve.selectedIndex];
+  var eleveNom = option.getAttribute('data-nom');
+  var classe = option.getAttribute('data-classe');
+
+  document.getElementById('rel-doc-nom').textContent = eleveNom;
+  document.getElementById('rel-doc-classe').textContent = classe;
+  document.getElementById('rel-doc-trimestre').textContent = trimestre === 'T1' ? 'Trimestre 1' : trimestre === 'T2' ? 'Trimestre 2' : 'Trimestre 3';
+
+  try {
+    var snap = await getDocs(query(collection(db, 'notes'), where('eleveId', '==', eleveId), where('trimestre', '==', trimestre)));
+    var notes = snap.docs.map(function(d) { return d.data(); });
+
+    var tbody = document.getElementById('rel-doc-matieres');
+    if (!notes.length) {
+      tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;color:var(--muted)">Aucune note enregistrée pour cette période.</td></tr>';
+      document.getElementById('rel-doc-moyenne').textContent = '—';
+    } else {
+      var sommeNotesCoef = 0, sommeCoef = 0;
+      tbody.innerHTML = notes.map(function(n) {
+        var coef = n.coefficient || 1;
+        sommeNotesCoef += n.note * coef;
+        sommeCoef += coef;
+        return '<tr><td>' + n.matiere + '</td><td>' + coef + '</td><td>' + n.note + '/20</td><td>' + (n.appreciation || '—') + '</td></tr>';
+      }).join('');
+      var moyenne = sommeCoef > 0 ? (sommeNotesCoef / sommeCoef).toFixed(2) : '—';
+      document.getElementById('rel-doc-moyenne').textContent = moyenne;
+    }
+
+    // Vérifier si ce relevé est déjà signé
+    var releveDocId = eleveId + '_' + trimestre;
+    var releveSnap = await getDoc(doc(db, 'releves_notes', releveDocId));
+    var statutEl = document.getElementById('rel-signature-statut');
+    var btnSigner = document.getElementById('rel-btn-signer');
+    if (releveSnap.exists() && releveSnap.data().signe) {
+      var sig = releveSnap.data();
+      statutEl.innerHTML = '✓ Signé électroniquement par <strong>' + sig.signePar + '</strong><br>Directeur — le ' + new Date(sig.dateSignature).toLocaleDateString('fr-FR');
+      statutEl.style.color = 'var(--green,#16A34A)';
+      btnSigner.style.display = 'none';
+    } else {
+      statutEl.textContent = 'Document non signé';
+      statutEl.style.color = 'var(--muted)';
+      btnSigner.style.display = 'inline-flex';
+    }
+
+    document.getElementById('releve-document').style.display = 'block';
+    document.getElementById('releve-actions').style.display = 'block';
+  } catch (e) {
+    console.error(e);
+    if (typeof showToast === 'function') showToast('Erreur lors du chargement du relevé');
+  }
+};
+
+window.signerReleve = async function() {
+  var adminUserActuel = JSON.parse(sessionStorage.getItem('ilch_user') || '{}');
+  if (adminUserActuel.fonction === 'Secrétariat') {
+    if (typeof showToast === 'function') showToast('Seule la Direction peut signer un relevé officiel.');
+    return;
+  }
+  var selEleve = document.getElementById('rel-eleve');
+  var eleveId = selEleve.value;
+  var trimestre = document.getElementById('rel-trimestre').value;
+  if (!eleveId) return;
+
+  var nomSignataire = ((adminUserActuel.prenom || '') + ' ' + (adminUserActuel.nom || '')).trim() || 'Directeur';
+  if (!confirm('Confirmer la signature électronique de ce relevé en tant que Directeur (' + nomSignataire + ') ?')) return;
+
+  try {
+    var releveDocId = eleveId + '_' + trimestre;
+    await setDoc(doc(db, 'releves_notes', releveDocId), {
+      eleveId: eleveId,
+      trimestre: trimestre,
+      signe: true,
+      signePar: nomSignataire,
+      dateSignature: new Date().toISOString()
+    });
+    if (typeof enregistrerActivite === 'function') {
+      enregistrerActivite('Relevé de notes signé', selEleve.options[selEleve.selectedIndex].getAttribute('data-nom') + ' — ' + trimestre);
+    }
+    if (typeof showToast === 'function') showToast('Relevé signé électroniquement ✓');
+    genererReleve();
+  } catch (e) {
+    console.error(e);
+    if (typeof showToast === 'function') showToast('Erreur lors de la signature');
+  }
 };
 
 console.log('✓ Dashboard Admin entièrement connecté à Firebase');

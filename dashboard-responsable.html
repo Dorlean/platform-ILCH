@@ -338,7 +338,7 @@
     <div class="sb-item" onclick="showPanel('profs',this)"><i class="ti ti-chalkboard" aria-hidden="true"></i>Mes professeurs</div>
     <div class="sb-item" onclick="showPanel('affectations',this)"><i class="ti ti-arrows-shuffle" aria-hidden="true"></i>Affectations</div>
     <div class="sb-section">Suivi</div>
-    <div class="sb-item" onclick="showPanel('notes',this)"><i class="ti ti-chart-bar" aria-hidden="true"></i>Notes & résultats</div>
+    <div class="sb-item" onclick="showPanel('notes',this)"><i class="ti ti-chart-bar" aria-hidden="true"></i>Notes d'évaluation</div>
     <div class="sb-item" onclick="showPanel('absences',this)"><i class="ti ti-calendar-x" aria-hidden="true"></i>Absences<span class="sb-count" id="abs-count">0</span></div>
     <div class="sb-item" onclick="showPanel('presence',this)"><i class="ti ti-clipboard-check" aria-hidden="true"></i>Prise de présence</div>
     <div class="sb-item" onclick="showPanel('effectif',this);afficherEffectif('jour')"><i class="ti ti-users-group" aria-hidden="true"></i>Effectif de section</div>
@@ -436,12 +436,18 @@
     <!-- NOTES -->
     <div class="panel" id="panel-notes">
       <div class="section-hdr">
-        <div class="section-hdr-title">Notes & résultats</div>
+        <div class="section-hdr-title">Notes d'évaluation — détail par matière</div>
         <button class="btn btn-teal" onclick="showToast('Export PDF téléchargé')"><i class="ti ti-download" aria-hidden="true"></i>Exporter PDF</button>
       </div>
       <table class="data-table" id="tbl-notes">
         <thead><tr><th>Élève</th><th>Classe</th><th>Matière</th><th>Note / 20</th><th>Appréciation</th><th>Statut</th></tr></thead>
         <tbody id="tbody-notes"></tbody>
+      </table>
+
+      <div class="section-hdr" style="margin-top:1.5rem"><div class="section-hdr-title">Moyennes pondérées par élève (selon coefficient des matières)</div></div>
+      <table class="data-table" id="tbl-moyennes">
+        <thead><tr><th>Élève</th><th>Classe</th><th>Matières évaluées</th><th>Moyenne pondérée / 20</th></tr></thead>
+        <tbody id="tbody-moyennes"></tbody>
       </table>
     </div>
 
@@ -760,9 +766,18 @@ function renderProfs(){
 function renderNotes(){
   var eleves=getElevesSection();
   var tb=document.getElementById('tbody-notes');
-  if(!eleves.length){tb.innerHTML='<tr><td colspan="6"><div class="empty-state"><i class="ti ti-chart-bar" aria-hidden="true"></i><p>Aucun élève dans cette section.</p></div></td></tr>';return;}
+  var tbMoy=document.getElementById('tbody-moyennes');
+  if(!eleves.length){
+    tb.innerHTML='<tr><td colspan="6"><div class="empty-state"><i class="ti ti-chart-bar" aria-hidden="true"></i><p>Aucun élève dans cette section.</p></div></td></tr>';
+    if(tbMoy) tbMoy.innerHTML='<tr><td colspan="4"><div class="empty-state"><i class="ti ti-chart-bar" aria-hidden="true"></i><p>Aucun élève dans cette section.</p></div></td></tr>';
+    return;
+  }
   var notes=DB.get('notes').filter(function(n){return eleves.find(function(e){return e.id===n.eleveId;});});
-  if(!notes.length){tb.innerHTML='<tr><td colspan="6"><div class="empty-state"><i class="ti ti-chart-bar" aria-hidden="true"></i><p>Aucune note enregistrée pour cette section.</p></div></td></tr>';return;}
+  if(!notes.length){
+    tb.innerHTML='<tr><td colspan="6"><div class="empty-state"><i class="ti ti-chart-bar" aria-hidden="true"></i><p>Aucune note enregistrée pour cette section.</p></div></td></tr>';
+    if(tbMoy) tbMoy.innerHTML='<tr><td colspan="4"><div class="empty-state"><i class="ti ti-chart-bar" aria-hidden="true"></i><p>Aucune note enregistrée pour cette section.</p></div></td></tr>';
+    return;
+  }
   tb.innerHTML=notes.map(function(n){
     var e=eleves.find(function(x){return x.id===n.eleveId;})||{prenom:'?',nom:'',classe:''};
     var cls=n.note>=14?'badge-good':n.note>=10?'badge-mid':'badge-low';
@@ -771,6 +786,28 @@ function renderNotes(){
     return '<tr><td><strong>'+e.prenom+' '+e.nom+'</strong></td><td>'+e.classe+'</td><td>'+n.matiere+'</td>'+
       '<td><span class="badge '+cls+'">'+n.note+'/20</span></td><td>'+app+'</td><td>'+statut+'</td></tr>';
   }).join('');
+
+  // ── Moyennes pondérées par élève (selon coefficient de chaque matière) ──
+  if(tbMoy){
+    var parEleve={};
+    notes.forEach(function(n){
+      if(!parEleve[n.eleveId]) parEleve[n.eleveId]={sommeNotesCoef:0,sommeCoef:0,matieres:[]};
+      var coef=n.coefficient||1;
+      parEleve[n.eleveId].sommeNotesCoef+=n.note*coef;
+      parEleve[n.eleveId].sommeCoef+=coef;
+      parEleve[n.eleveId].matieres.push(n.matiere+' (coef.'+coef+')');
+    });
+    var lignesMoy=Object.keys(parEleve).map(function(eleveId){
+      var e=eleves.find(function(x){return x.id===eleveId;})||{prenom:'?',nom:'',classe:''};
+      var d=parEleve[eleveId];
+      var moyenne=d.sommeCoef>0?(d.sommeNotesCoef/d.sommeCoef).toFixed(2):'—';
+      var cls=moyenne>=14?'badge-good':moyenne>=10?'badge-mid':'badge-low';
+      return '<tr><td><strong>'+e.prenom+' '+e.nom+'</strong></td><td>'+e.classe+'</td>'+
+        '<td style="font-size:11px;color:var(--gray)">'+d.matieres.join(', ')+'</td>'+
+        '<td><span class="badge '+cls+'">'+moyenne+'/20</span></td></tr>';
+    });
+    tbMoy.innerHTML=lignesMoy.join('')||'<tr><td colspan="4"><div class="empty-state"><p>Aucune moyenne calculable.</p></div></td></tr>';
+  }
 }
 
 function renderAbsences(){
@@ -1010,7 +1047,7 @@ function showPanel(id,el){
   document.getElementById('panel-'+id).classList.add('active');
   document.querySelectorAll('.sb-item').forEach(function(i){i.classList.remove('active')});
   if(el)el.classList.add('active');
-  var titles={dash:'Tableau de bord',eleves:'Mes élèves',profs:'Mes professeurs',affectations:'Affectations',notes:'Notes & résultats',absences:'Absences',presence:'Prise de présence',effectif:'Effectif de section',messages:'Messages',annonces:'Annonces',rapports:'Rapport de section',profil:'Mon profil',import:'Importer depuis Excel'};
+  var titles={dash:'Tableau de bord',eleves:'Mes élèves',profs:'Mes professeurs',affectations:'Affectations',notes:"Notes d'évaluation",absences:'Absences',presence:'Prise de présence',effectif:'Effectif de section',messages:'Messages',annonces:'Annonces',rapports:'Rapport de section',profil:'Mon profil',import:'Importer depuis Excel'};
   document.getElementById('topbar-title').textContent=titles[id]||id;
   renderAll();
 }

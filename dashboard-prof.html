@@ -998,7 +998,10 @@ window.saveNoteFirebase = async function(data) {
 };
 
 // ── SAISIE DES NOTES — classes réelles + envoi au responsable ──
-var CLASSES_CYCLE3_NS = ['7ème Fondamentale', '8ème Fondamentale', '9ème Fondamentale', 'Nouveau Secondaire'];
+var COEFFICIENTS_MATIERES = {
+  'Mathématiques': 4, 'Français': 4, 'Sciences': 3, 'Histoire-Géographie': 2,
+  'Anglais': 2, 'Philosophie': 3
+};
 
 function remplirClassesNotes() {
   var sel = document.getElementById('notes-classe');
@@ -1040,7 +1043,7 @@ window.saveNotes = async function() {
   var rows = document.querySelectorAll('#notes-tbody tr[data-eleve-id]');
   if (!rows.length) { if (typeof showToast === 'function') showToast('Chargez une classe avant d\'enregistrer'); return; }
 
-  var estCycle3OuNS = CLASSES_CYCLE3_NS.indexOf(classe) !== -1;
+  var coefficient = COEFFICIENTS_MATIERES[matiere] || 1;
   var nbEnregistrees = 0;
 
   for (var i = 0; i < rows.length; i++) {
@@ -1055,22 +1058,23 @@ window.saveNotes = async function() {
       eleveNom: row.getAttribute('data-eleve-nom'),
       classe: classe,
       matiere: matiere,
+      coefficient: coefficient,
       trimestre: trimestre,
       note: Number(noteVal),
       appreciation: appreciation,
-      envoyeResponsable: estCycle3OuNS
+      envoyeResponsable: true
     });
     nbEnregistrees++;
   }
 
-  if (estCycle3OuNS && nbEnregistrees > 0 && typeof envoyerNotification === 'function') {
+  if (nbEnregistrees > 0 && typeof envoyerNotification === 'function') {
     envoyerNotification('responsable', null, 'Notes reçues — ' + classe,
-      (user.prenom || 'Un professeur') + ' ' + (user.nom || '') + ' a transmis ' + nbEnregistrees + ' note(s) en ' + matiere + ' (' + trimestre + ') pour ' + classe + '.',
+      (user.prenom || 'Un professeur') + ' ' + (user.nom || '') + ' a transmis ' + nbEnregistrees + ' note(s) en ' + matiere + ' (coef. ' + coefficient + ', ' + trimestre + ') pour ' + classe + '.',
       'info', (user.prenom || 'Professeur') + ' ' + (user.nom || '') + ' — Professeur');
   }
 
   if (typeof showToast === 'function') {
-    showToast(nbEnregistrees + ' note(s) enregistrée(s)' + (estCycle3OuNS ? ' et transmise(s) au responsable pédagogique ✓' : ' ✓'));
+    showToast(nbEnregistrees + ' note(s) enregistrée(s) et transmise(s) au responsable pédagogique ✓');
   }
 };
 
