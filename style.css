@@ -107,6 +107,8 @@
     .video-dots{position:absolute;bottom:10px;right:16px;display:flex;gap:6px;z-index:3}
     .video-dot{width:7px;height:7px;border-radius:50%;background:rgba(255,255,255,0.4);border:none;cursor:pointer;padding:0}
     .video-dot.active{background:var(--gold)}
+    .video-sound-toggle{position:absolute;top:14px;right:14px;background:rgba(0,0,0,0.5);color:#fff;border:none;width:34px;height:34px;border-radius:50%;font-size:15px;cursor:pointer;z-index:3;display:flex;align-items:center;justify-content:center;transition:background 0.2s}
+    .video-sound-toggle:hover{background:rgba(0,0,0,0.7)}
     @media(max-width:768px){
       .video-arrow{width:32px;height:32px;font-size:16px}
     }

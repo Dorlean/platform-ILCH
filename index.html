@@ -194,18 +194,19 @@
 
       <div class="video-slider" id="video-slider-accueil">
         <div class="video-slide active">
-          <video controls preload="none" poster="video-poster1.jpg"><source src="video1.mp4" type="video/mp4"></video>
+          <video autoplay muted loop playsinline controls preload="auto" poster="video-poster1.jpg"><source src="video1.mp4" type="video/mp4"></video>
           <div class="video-caption">Une journée à l'ILCH</div>
         </div>
         <div class="video-slide">
-          <video controls preload="none" poster="video-poster2.jpg"><source src="video2.mp4" type="video/mp4"></video>
+          <video muted loop playsinline controls preload="none" poster="video-poster2.jpg"><source src="video2.mp4" type="video/mp4"></video>
           <div class="video-caption">Paroles d'élèves</div>
         </div>
         <div class="video-slide">
-          <video controls preload="none" poster="video-poster3.jpg"><source src="video3.mp4" type="video/mp4"></video>
+          <video muted loop playsinline controls preload="none" poster="video-poster3.jpg"><source src="video3.mp4" type="video/mp4"></video>
           <div class="video-caption">Projets et activités</div>
         </div>
 
+        <button class="video-sound-toggle" onclick="videoToggleSound(this)" aria-label="Activer/couper le son"><i class="ti ti-volume-3" aria-hidden="true"></i></button>
         <button class="video-arrow video-prev" onclick="videoMove(this,-1)" aria-label="Vidéo précédente">&#8249;</button>
         <button class="video-arrow video-next" onclick="videoMove(this,1)" aria-label="Vidéo suivante">&#8250;</button>
         <div class="video-dots">

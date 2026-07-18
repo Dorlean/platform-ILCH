@@ -132,21 +132,33 @@ document.querySelectorAll('.fw-slider').forEach(function(slider){
   startAuto();
 })();
 
-// ===== Carrousel vidéo (pas d'avance automatique) =====
+// ===== Carrousel vidéo (pas d'avance automatique, lecture auto en muet) =====
 function videoGetParts(el){
   var slider = el.closest('.video-slider');
   return { slider: slider, slides: slider.querySelectorAll('.video-slide'), dots: slider.querySelectorAll('.video-dot') };
 }
+function videoPlayActive(slider){
+  var current = parseInt(slider.getAttribute('data-current') || 0, 10);
+  var slides = slider.querySelectorAll('.video-slide');
+  var video = slides[current].querySelector('video');
+  if (video) {
+    var p = video.play();
+    if (p && p.catch) p.catch(function(){});
+  }
+  var btn = slider.querySelector('.video-sound-toggle i');
+  if (btn && video) btn.className = video.muted ? 'ti ti-volume-3' : 'ti ti-volume';
+}
 function videoShow(slider, slides, dots, index){
   var current = parseInt(slider.getAttribute('data-current') || 0, 10);
   var currentVideo = slides[current].querySelector('video');
-  if (currentVideo) currentVideo.pause();
+  if (currentVideo) { currentVideo.pause(); currentVideo.currentTime = 0; }
   slides[current].classList.remove('active');
   dots[current].classList.remove('active');
   var next = (index + slides.length) % slides.length;
   slides[next].classList.add('active');
   dots[next].classList.add('active');
   slider.setAttribute('data-current', next);
+  videoPlayActive(slider);
 }
 function videoMove(el, dir){
   var p = videoGetParts(el);
@@ -157,6 +169,15 @@ function videoGoTo(el, index){
   var p = videoGetParts(el);
   videoShow(p.slider, p.slides, p.dots, index);
 }
+function videoToggleSound(btn){
+  var slider = btn.closest('.video-slider');
+  var current = parseInt(slider.getAttribute('data-current') || 0, 10);
+  var video = slider.querySelectorAll('.video-slide')[current].querySelector('video');
+  if (!video) return;
+  video.muted = !video.muted;
+  btn.querySelector('i').className = video.muted ? 'ti ti-volume-3' : 'ti ti-volume';
+}
 document.querySelectorAll('.video-slider').forEach(function(slider){
   slider.setAttribute('data-current', 0);
+  videoPlayActive(slider);
 });
