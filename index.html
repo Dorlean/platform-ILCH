@@ -140,20 +140,49 @@
             <div class="news-home-loading">Chargement des actualités...</div>
           </div>
         </div>
-        <div class="news-home-photo">
-          <img src="IMG12.jpg" alt="Vie à l'ILCH">
+        <div class="news-home-photo fw-slider">
+          <div class="fw-slide active"><img src="IMG12.jpg" alt="Vie à l'ILCH 1"></div>
+          <div class="fw-slide"><img src="news-photo2.jpg" alt="Vie à l'ILCH 2"></div>
+          <div class="fw-slide"><img src="news-photo3.jpg" alt="Vie à l'ILCH 3"></div>
+          <div class="fw-slide"><img src="news-photo4.jpg" alt="Vie à l'ILCH 4"></div>
+          <div class="fw-arrow fw-prev" onclick="fwMove(this,-1)">&#8249;</div>
+          <div class="fw-arrow fw-next" onclick="fwMove(this,1)">&#8250;</div>
+          <div class="fw-dots">
+            <button class="fw-dot active" onclick="fwGoTo(this,0)"></button>
+            <button class="fw-dot" onclick="fwGoTo(this,1)"></button>
+            <button class="fw-dot" onclick="fwGoTo(this,2)"></button>
+            <button class="fw-dot" onclick="fwGoTo(this,3)"></button>
+          </div>
         </div>
       </div>
     </div>
   </section>
 
-  <section class="history-immersive" style="background-image:url('IMG14.jpg')">
-    <div class="history-overlay"></div>
-    <div class="history-content">
-      <div class="section-label" style="color:var(--gold)">Notre histoire</div>
-      <h2>Une institution ancrée dans ses valeurs</h2>
-      <p>Former des élèves intellectuellement compétents, moralement solides et socialement responsables. Chaque décision pédagogique est prise dans l'intérêt supérieur de l'enfant.</p>
-      <a href="apropos.html" class="btn-primary">Découvrir notre histoire</a>
+  <section class="section histoire-section">
+    <div class="container">
+      <div class="histoire-grid">
+        <div class="histoire-text">
+          <div class="section-label" style="color:var(--gold)">Notre histoire</div>
+          <div class="gold-line" style="margin-bottom:1.5rem"></div>
+          <h2 class="section-title">Une institution ancrée dans ses valeurs</h2>
+          <p class="section-body">Former des élèves intellectuellement compétents, moralement solides et socialement responsables. Chaque décision pédagogique est prise dans l'intérêt supérieur de l'enfant.</p>
+          <a href="apropos.html" class="btn-primary">Découvrir notre histoire</a>
+        </div>
+        <div class="histoire-photo fw-slider">
+          <div class="fw-slide active"><img src="IMG14.jpg" alt="Notre histoire 1"></div>
+          <div class="fw-slide"><img src="histoire-photo2.jpg" alt="Notre histoire 2"></div>
+          <div class="fw-slide"><img src="histoire-photo3.jpg" alt="Notre histoire 3"></div>
+          <div class="fw-slide"><img src="histoire-photo4.jpg" alt="Notre histoire 4"></div>
+          <div class="fw-arrow fw-prev" onclick="fwMove(this,-1)">&#8249;</div>
+          <div class="fw-arrow fw-next" onclick="fwMove(this,1)">&#8250;</div>
+          <div class="fw-dots">
+            <button class="fw-dot active" onclick="fwGoTo(this,0)"></button>
+            <button class="fw-dot" onclick="fwGoTo(this,1)"></button>
+            <button class="fw-dot" onclick="fwGoTo(this,2)"></button>
+            <button class="fw-dot" onclick="fwGoTo(this,3)"></button>
+          </div>
+        </div>
+      </div>
     </div>
   </section>
 
