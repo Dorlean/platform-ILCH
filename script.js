@@ -131,3 +131,32 @@ document.querySelectorAll('.fw-slider').forEach(function(slider){
 
   startAuto();
 })();
+
+// ===== Carrousel vidéo (pas d'avance automatique) =====
+function videoGetParts(el){
+  var slider = el.closest('.video-slider');
+  return { slider: slider, slides: slider.querySelectorAll('.video-slide'), dots: slider.querySelectorAll('.video-dot') };
+}
+function videoShow(slider, slides, dots, index){
+  var current = parseInt(slider.getAttribute('data-current') || 0, 10);
+  var currentVideo = slides[current].querySelector('video');
+  if (currentVideo) currentVideo.pause();
+  slides[current].classList.remove('active');
+  dots[current].classList.remove('active');
+  var next = (index + slides.length) % slides.length;
+  slides[next].classList.add('active');
+  dots[next].classList.add('active');
+  slider.setAttribute('data-current', next);
+}
+function videoMove(el, dir){
+  var p = videoGetParts(el);
+  var current = parseInt(p.slider.getAttribute('data-current') || 0, 10);
+  videoShow(p.slider, p.slides, p.dots, current + dir);
+}
+function videoGoTo(el, index){
+  var p = videoGetParts(el);
+  videoShow(p.slider, p.slides, p.dots, index);
+}
+document.querySelectorAll('.video-slider').forEach(function(slider){
+  slider.setAttribute('data-current', 0);
+});

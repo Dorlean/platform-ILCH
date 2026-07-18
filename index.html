@@ -157,6 +157,37 @@
     </div>
   </section>
 
+  <section class="section videos-eleves-section">
+    <div class="container">
+      <div class="section-label">Vie estudiantine</div>
+      <div class="gold-line"></div>
+      <h2 class="section-title">Nos élèves en vidéo</h2>
+
+      <div class="video-slider" id="video-slider-accueil">
+        <div class="video-slide active">
+          <video controls preload="none" poster="video-poster1.jpg"><source src="video1.mp4" type="video/mp4"></video>
+          <div class="video-caption">Une journée à l'ILCH</div>
+        </div>
+        <div class="video-slide">
+          <video controls preload="none" poster="video-poster2.jpg"><source src="video2.mp4" type="video/mp4"></video>
+          <div class="video-caption">Paroles d'élèves</div>
+        </div>
+        <div class="video-slide">
+          <video controls preload="none" poster="video-poster3.jpg"><source src="video3.mp4" type="video/mp4"></video>
+          <div class="video-caption">Projets et activités</div>
+        </div>
+
+        <button class="video-arrow video-prev" onclick="videoMove(this,-1)" aria-label="Vidéo précédente">&#8249;</button>
+        <button class="video-arrow video-next" onclick="videoMove(this,1)" aria-label="Vidéo suivante">&#8250;</button>
+        <div class="video-dots">
+          <button class="video-dot active" onclick="videoGoTo(this,0)" aria-label="Vidéo 1"></button>
+          <button class="video-dot" onclick="videoGoTo(this,1)" aria-label="Vidéo 2"></button>
+          <button class="video-dot" onclick="videoGoTo(this,2)" aria-label="Vidéo 3"></button>
+        </div>
+      </div>
+    </div>
+  </section>
+
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
     import { getFirestore, collection, getDocs } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
