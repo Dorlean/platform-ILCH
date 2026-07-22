@@ -1,0 +1,20 @@
+# Adresses propres, sans extension .html visible
+# Format : [adresse propre]  [vrai fichier]  [200 = affichage direct, garde l'URL propre]
+
+/login          /login.html          200
+/personnel      /personnel.html      200
+/admin          /dashboard-admin.html          200
+/professeur     /dashboard-prof.html           200
+/eleve          /dashboard-eleve.html          200
+/parent         /dashboard-parent.html         200
+/responsable    /dashboard-responsable.html    200
+/infirmerie     /dashboard-infirmiere.html     200
+/comptabilite   /dashboard-comptable.html      200
+/bibliotheque   /dashboard-bibliotheque.html   200
+/proprietaire   /dashboard-owner.html          200
+
+/apropos        /apropos.html          200
+/vie-scolaire   /vie-scolaire.html     200
+/admissions     /admissions.html       200
+/evenements     /evenements.html       200
+/plateforme     /plateforme.html       200
