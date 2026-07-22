@@ -1115,7 +1115,7 @@ import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/fireba
 import { getAuth, onAuthStateChanged, createUserWithEmailAndPassword, signOut } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
 import {
   getFirestore, collection, doc,
-  addDoc, updateDoc, deleteDoc, onSnapshot, query, where, getDocs, setDoc
+  addDoc, updateDoc, deleteDoc, onSnapshot, query, where, getDocs, setDoc, limit
 } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
 const firebaseConfig = {
@@ -1256,7 +1256,7 @@ window.getClassesForSection = function(sid) {
   return filtered.length ? filtered : (sections[sid] ? sections[sid].classes : []);
 };
 
-onSnapshot(query(collection(db, 'notifications'), where('destinataireRole', 'in', [MON_ROLE_NOTIF, 'tous'])), function(snap) {
+onSnapshot(query(collection(db, 'notifications'), where('destinataireRole', 'in', [MON_ROLE_NOTIF, 'tous']), limit(50)), function(snap) {
   var items = snap.docs.map(function(d) { return { id: d.id, ...d.data() }; });
   var moi = user ? user.id : null;
   var mine = items.filter(function(n) { return !n.destinataireId || n.destinataireId === moi; });
@@ -1298,7 +1298,7 @@ onSnapshot(collection(db, 'eleves'), function(snap) {
   if (typeof updateDashboard === 'function') { try { updateDashboard(); } catch(e) {} }
 });
 
-onSnapshot(collection(db, 'notes'), function(snap) {
+onSnapshot(query(collection(db, 'notes'), limit(1000)), function(snap) {
   var notes = snap.docs.map(function(d) { return { id: d.id, ...d.data() }; });
   DB.set('notes', notes);
   if (typeof renderNotes === 'function') { try { renderNotes(); } catch(e) {} }

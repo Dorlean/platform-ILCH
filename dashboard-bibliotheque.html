@@ -1105,7 +1105,7 @@ import { getStorage, ref as storageRef, uploadBytesResumable, getDownloadURL, de
 import {
   getFirestore, collection, doc,
   addDoc, getDocs, updateDoc, deleteDoc,
-  onSnapshot, query, where, setDoc
+  onSnapshot, query, where, setDoc, limit
 } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
 const firebaseConfig = {
@@ -1350,7 +1350,7 @@ function tempsEcouleNotif(dateStr) {
   return 'Il y a ' + Math.floor(h / 24) + 'j';
 }
 
-onSnapshot(query(collection(db, 'notifications'), where('destinataireRole', 'in', [MON_ROLE_NOTIF, 'tous'])), function(snap) {
+onSnapshot(query(collection(db, 'notifications'), where('destinataireRole', 'in', [MON_ROLE_NOTIF, 'tous']), limit(50)), function(snap) {
   var items = snap.docs.map(function(d) { return { id: d.id, ...d.data() }; });
   var moi = (typeof user !== 'undefined' && user) ? user.id : null;
   var mine = items.filter(function(n) { return !n.destinataireId || n.destinataireId === moi; });

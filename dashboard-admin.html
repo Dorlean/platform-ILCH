@@ -1472,7 +1472,7 @@ window.enregistrerActivite = enregistrerActivite;
 
 // ── Écouter et afficher le journal d'activité ──────────────
 var journalEntries = [];
-onSnapshot(collection(db, 'journal_activite'), function(snap) {
+onSnapshot(query(collection(db, 'journal_activite'), orderBy('dateCreation', 'desc'), limit(300)), function(snap) {
   journalEntries = snap.docs.map(function(d) { return d.data(); });
   journalEntries.sort(function(a, b) { return new Date(b.dateCreation) - new Date(a.dateCreation); });
   renderJournal(journalEntries);
@@ -2007,7 +2007,7 @@ onSnapshot(collection(db, 'utilisateurs'), function(snap) {
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
 import {
   getFirestore, collection, doc, getDoc,
-  addDoc, getDocs, updateDoc, deleteDoc, onSnapshot, setDoc, query, where
+  addDoc, getDocs, updateDoc, deleteDoc, onSnapshot, setDoc, query, where, limit, orderBy
 } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 import { getAuth, createUserWithEmailAndPassword, signOut } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
 
@@ -2534,7 +2534,7 @@ function tempsEcouleNotif(dateStr) {
   return 'Il y a ' + Math.floor(h / 24) + 'j';
 }
 
-onSnapshot(query(collection(db, 'notifications'), where('destinataireRole', 'in', [MON_ROLE_NOTIF, 'tous'])), function(snap) {
+onSnapshot(query(collection(db, 'notifications'), where('destinataireRole', 'in', [MON_ROLE_NOTIF, 'tous']), limit(50)), function(snap) {
   var items = snap.docs.map(function(d) { return { id: d.id, ...d.data() }; });
   var moi = (typeof user !== 'undefined' && user) ? user.id : null;
   var mine = items.filter(function(n) { return !n.destinataireId || n.destinataireId === moi; });
