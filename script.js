@@ -92,6 +92,8 @@ function fwGoTo(el, index){
   fwResetTimer(p.slider, p.slides, p.dots);
 }
 document.querySelectorAll('.fw-slider').forEach(function(slider){
+  if (slider._fwInitialized) return;
+  slider._fwInitialized = true;
   var slides = slider.querySelectorAll('.fw-slide');
   var dots = slider.querySelectorAll('.fw-dot');
   if(!slides.length) return;
