@@ -2,7 +2,7 @@
   "name": "Institution Louis Chauvet",
   "short_name": "ILCH",
   "description": "Plateforme numérique de l'Institution Louis Chauvet - Pétion-Ville, Haïti",
-  "start_url": "/login.html",
+  "start_url": "/login",
   "display": "standalone",
   "background_color": "#0D2B4E",
   "theme_color": "#0D2B4E",

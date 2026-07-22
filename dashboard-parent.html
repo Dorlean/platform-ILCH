@@ -200,7 +200,7 @@
       <div class="sb-avatar" id="sb-user-avatar">MP</div>
       <div><div class="sb-user-name" id="sb-user-name">Marie Pierre</div><div class="sb-user-role" id="sb-user-role">Parent · 1 enfant suivi</div></div>
     </div>
-    <button class="logout-btn" onclick="window.location.href='login.html'"><i class="ti ti-logout" style="font-size:13px" aria-hidden="true"></i> Déconnexion</button>
+    <button class="logout-btn" onclick="window.location.href='/login'"><i class="ti ti-logout" style="font-size:13px" aria-hidden="true"></i> Déconnexion</button>
     <span class="dev-credit-sidebar">Développé par Dorlean Ricardo</span>
   </div>
 </aside>
@@ -515,7 +515,7 @@ onAuthStateChanged(auth, function(fbUser) {
   if (!fbUser) {
     sessionStorage.removeItem('ilch_user');
     sessionStorage.removeItem('ilch_role');
-    window.location.href = 'login.html';
+    window.location.href = '/login';
   }
 });
 const user = JSON.parse(sessionStorage.getItem('ilch_user') || '{}');

@@ -4,7 +4,7 @@
 
 // ⚠️ IMPORTANT : Changez ce numéro à chaque mise à jour !
 // Exemple : 'ilch-cache-v2', 'ilch-cache-v3', etc.
-const CACHE_VERSION = 'ilch-cache-v6';
+const CACHE_VERSION = 'ilch-cache-v7';
 const CACHE_NAME = CACHE_VERSION;
 
 const CACHE_URLS = [
@@ -15,10 +15,17 @@ const CACHE_URLS = [
   '/admissions.html',
   '/evenements.html',
   '/plateforme.html',
+  '/apropos',
+  '/vie-scolaire',
+  '/admissions',
+  '/evenements',
+  '/plateforme',
   '/style.css',
   '/script.js',
   '/login.html',
   '/personnel.html',
+  '/login',
+  '/personnel',
   '/dashboard-eleve.html',
   '/dashboard-prof.html',
   '/dashboard-parent.html',
@@ -105,7 +112,7 @@ self.addEventListener('fetch', function(event) {
       return caches.match(event.request).then(function(cachedResponse) {
         if (cachedResponse) return cachedResponse;
         if (event.request.destination === 'document') {
-          return caches.match('/login.html');
+          return caches.match('/login');
         }
       });
     })
@@ -120,7 +127,7 @@ self.addEventListener('push', function(event) {
     icon: '/icon-192.png',
     badge: '/icon-72.png',
     vibrate: [100, 50, 100],
-    data: { url: data.url || '/login.html' },
+    data: { url: data.url || '/login' },
     actions: [
       { action: 'ouvrir', title: 'Ouvrir' },
       { action: 'fermer', title: 'Fermer' }
@@ -138,7 +145,7 @@ self.addEventListener('notificationclick', function(event) {
   event.notification.close();
   if (event.action !== 'fermer') {
     event.waitUntil(
-      clients.openWindow(event.notification.data.url || '/login.html')
+      clients.openWindow(event.notification.data.url || '/login')
     );
   }
 });

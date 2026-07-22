@@ -2,7 +2,7 @@
   "name": "ILCH Personnel & Direction",
   "short_name": "ILCH Personnel",
   "description": "Accès Personnel & Direction — Institution Louis Chauvet",
-  "start_url": "/personnel.html",
+  "start_url": "/personnel",
   "display": "standalone",
   "background_color": "#0D2B4E",
   "theme_color": "#0D2B4E",

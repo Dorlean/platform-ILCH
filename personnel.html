@@ -234,15 +234,15 @@ try {
 }
 
 const roleConfig = {
-  eleve:       {name:'Espace Élève',           icon:'ti-school',            bg:'rgba(37,99,235,0.15)',   color:'#60A5FA', dest:'dashboard-eleve.html'},
-  prof:        {name:'Espace Professeur',       icon:'ti-chalkboard',        bg:'rgba(201,169,110,0.2)',  color:'#C9A96E', dest:'dashboard-prof.html'},
-  parent:      {name:'Espace Parent',           icon:'ti-heart',             bg:'rgba(22,163,74,0.2)',    color:'#4ADE80', dest:'dashboard-parent.html'},
-  admin:       {name:'Administration',          icon:'ti-settings',          bg:'rgba(220,38,38,0.15)',   color:'#F87171', dest:'dashboard-admin.html', emailLogin:true},
-  responsable: {name:'Responsable Pédagogique', icon:'ti-book',              bg:'rgba(13,148,136,0.2)',   color:'#2DD4BF', dest:'dashboard-responsable.html', emailLogin:true},
-  infirmiere:  {name:'Infirmière',             icon:'ti-heart-rate-monitor', bg:'rgba(225,29,72,0.15)',   color:'#FB7185', dest:'dashboard-infirmiere.html'},
-  owner:       {name:'Espace Propriétaire',     icon:'ti-crown',             bg:'rgba(201,169,110,0.25)', color:'#C9A96E', dest:'dashboard-owner.html', emailLogin:true},
-  comptable:   {name:'Comptabilité',            icon:'ti-calculator',        bg:'rgba(124,58,237,0.2)',   color:'#A78BFA', dest:'dashboard-comptable.html', emailLogin:true},
-  bibliotheque:{name:'Bibliothèque',            icon:'ti-books',             bg:'rgba(146,64,14,0.2)',    color:'#FCD34D', dest:'dashboard-bibliotheque.html'},
+  eleve:       {name:'Espace Élève',           icon:'ti-school',            bg:'rgba(37,99,235,0.15)',   color:'#60A5FA', dest:'/eleve'},
+  prof:        {name:'Espace Professeur',       icon:'ti-chalkboard',        bg:'rgba(201,169,110,0.2)',  color:'#C9A96E', dest:'/professeur'},
+  parent:      {name:'Espace Parent',           icon:'ti-heart',             bg:'rgba(22,163,74,0.2)',    color:'#4ADE80', dest:'/parent'},
+  admin:       {name:'Administration',          icon:'ti-settings',          bg:'rgba(220,38,38,0.15)',   color:'#F87171', dest:'/admin', emailLogin:true},
+  responsable: {name:'Responsable Pédagogique', icon:'ti-book',              bg:'rgba(13,148,136,0.2)',   color:'#2DD4BF', dest:'/responsable', emailLogin:true},
+  infirmiere:  {name:'Infirmière',             icon:'ti-heart-rate-monitor', bg:'rgba(225,29,72,0.15)',   color:'#FB7185', dest:'/infirmerie'},
+  owner:       {name:'Espace Propriétaire',     icon:'ti-crown',             bg:'rgba(201,169,110,0.25)', color:'#C9A96E', dest:'/proprietaire', emailLogin:true},
+  comptable:   {name:'Comptabilité',            icon:'ti-calculator',        bg:'rgba(124,58,237,0.2)',   color:'#A78BFA', dest:'/comptabilite', emailLogin:true},
+  bibliotheque:{name:'Bibliothèque',            icon:'ti-books',             bg:'rgba(146,64,14,0.2)',    color:'#FCD34D', dest:'/bibliotheque'},
 };
 
 let currentRole = '';
