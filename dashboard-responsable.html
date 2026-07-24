@@ -1248,6 +1248,11 @@ onSnapshot(collection(db, 'classes'), function(snap) {
   var classes = snap.docs.map(function(d) { return { id: d.id, ...d.data() }; });
   localStorage.setItem('ilch_classes', JSON.stringify(classes));
   if (typeof remplirClassesPresence === 'function') remplirClassesPresence();
+  var panelEff = document.getElementById('panel-effectif');
+  if (panelEff && panelEff.classList.contains('active') && typeof afficherEffectif === 'function') {
+    var modeActifMaj = document.getElementById('eff-btn-mois') && document.getElementById('eff-btn-mois').classList.contains('btn-primary') ? 'mois' : 'jour';
+    afficherEffectif(modeActifMaj);
+  }
 });
 
 window.getClassesForSection = function(sid) {
@@ -1572,6 +1577,8 @@ window.afficherEffectif = async function(mode) {
     document.getElementById('eff-total-absents').textContent = totalAbsG;
   } catch (e) {
     console.error('Erreur chargement effectif:', e);
+    var tbodyErr = document.getElementById('eff-tbody');
+    if (tbodyErr) tbodyErr.innerHTML = '<tr><td colspan="9" style="text-align:center;color:var(--red);padding:1.5rem">Erreur de chargement. Vérifiez votre connexion et réessayez.</td></tr>';
   }
 };
 

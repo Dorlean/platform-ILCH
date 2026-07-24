@@ -1597,6 +1597,12 @@ onSnapshot(collection(db, 'classes'), function(snap) {
   if (typeof updateClasseSelects === 'function') updateClasseSelects();
   if (typeof updateDashboard === 'function') updateDashboard();
   if (typeof remplirClassesEffectifAdmin === 'function') remplirClassesEffectifAdmin(true);
+  // Si le panneau Effectif est déjà ouvert, on le rafraîchit dès que les classes arrivent
+  var panelEff = document.getElementById('panel-effectif');
+  if (panelEff && panelEff.classList.contains('active') && typeof afficherEffectifGlobal === 'function') {
+    var modeActifMaj = document.getElementById('eff-btn-mois') && document.getElementById('eff-btn-mois').classList.contains('btn-primary') ? 'mois' : 'jour';
+    afficherEffectifGlobal(modeActifMaj);
+  }
 });
 
 window.saveClasseFirebase = async function(nom, niveau) {
@@ -1837,6 +1843,8 @@ window.afficherEffectifGlobal = async function(mode) {
     document.getElementById('eff-total-absents').textContent = totalAbsG;
   } catch (e) {
     console.error('Erreur chargement effectif global:', e);
+    var tbodyErr = document.getElementById('eff-tbody');
+    if (tbodyErr) tbodyErr.innerHTML = '<tr><td colspan="9" style="text-align:center;color:var(--red);padding:1.5rem">Erreur de chargement. Vérifiez votre connexion et réessayez.</td></tr>';
   }
 };
 
