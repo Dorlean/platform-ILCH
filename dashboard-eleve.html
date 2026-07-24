@@ -209,6 +209,7 @@
     <div class="sb-item" onclick="showPanel('msgs',this)"><i class="ti ti-message" aria-hidden="true"></i>Messages<span class="sb-badge-count">2</span></div>
     <div class="sb-section">Compte</div>
     <div class="sb-item" onclick="showPanel('numerique',this)"><i class="ti ti-device-tablet" aria-hidden="true"></i>Bibliothèque numérique ILCH</div>
+    <div class="sb-item" id="sb-item-jeux" style="display:none" onclick="showPanel('jeux',this)"><i class="ti ti-puzzle" aria-hidden="true"></i>Jeux éducatifs</div>
     <div class="sb-item" onclick="showPanel('profil',this)"><i class="ti ti-user" aria-hidden="true"></i>Mon profil</div>
   </nav>
   <div class="sb-user">
@@ -439,6 +440,38 @@
       </div>
     </div>
 
+    <!-- JEUX ÉDUCATIFS (Préscolaire) -->
+    <div class="panel" id="panel-jeux">
+      <div class="section-hdr"><div class="section-hdr-title">🎈 Jeux éducatifs</div></div>
+
+      <div id="jeux-menu" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:16px;max-width:760px">
+        <div class="jeu-carte" onclick="lancerJeu('lettres')" style="background:linear-gradient(135deg,#60A5FA,#3B82F6);border-radius:20px;padding:2rem 1.5rem;text-align:center;cursor:pointer;color:#fff;box-shadow:0 6px 16px rgba(59,130,246,0.3)">
+          <div style="font-size:48px;margin-bottom:10px">🔤</div>
+          <div style="font-size:18px;font-weight:800">Les Lettres</div>
+        </div>
+        <div class="jeu-carte" onclick="lancerJeu('chiffres')" style="background:linear-gradient(135deg,#FBBF24,#F59E0B);border-radius:20px;padding:2rem 1.5rem;text-align:center;cursor:pointer;color:#fff;box-shadow:0 6px 16px rgba(245,158,11,0.3)">
+          <div style="font-size:48px;margin-bottom:10px">🔢</div>
+          <div style="font-size:18px;font-weight:800">Compter</div>
+        </div>
+        <div class="jeu-carte" onclick="lancerJeu('formes')" style="background:linear-gradient(135deg,#4ADE80,#16A34A);border-radius:20px;padding:2rem 1.5rem;text-align:center;cursor:pointer;color:#fff;box-shadow:0 6px 16px rgba(22,163,74,0.3)">
+          <div style="font-size:48px;margin-bottom:10px">🔺</div>
+          <div style="font-size:18px;font-weight:800">Formes &amp; Couleurs</div>
+        </div>
+      </div>
+
+      <div id="jeux-jouer" style="display:none;max-width:640px;text-align:center;margin-top:1rem">
+        <button onclick="quitterJeu()" style="background:none;border:none;color:var(--gray);font-size:13px;cursor:pointer;margin-bottom:1.5rem">← Retour aux jeux</button>
+
+        <div style="background:var(--white);border-radius:24px;padding:2.5rem 1.5rem;box-shadow:0 8px 24px rgba(0,0,0,0.08)">
+          <div id="jeu-score" style="font-size:13px;color:var(--gray);font-weight:700;margin-bottom:1rem">Score : 0 ✓</div>
+          <div id="jeu-question" style="font-size:100px;line-height:1;margin-bottom:1.5rem">?</div>
+          <div id="jeu-consigne" style="font-size:16px;font-weight:700;color:var(--navy);margin-bottom:1.5rem">Chargement...</div>
+          <div id="jeu-choix" style="display:grid;grid-template-columns:repeat(3,1fr);gap:14px"></div>
+          <div id="jeu-feedback" style="font-size:22px;font-weight:800;margin-top:1.25rem;min-height:32px"></div>
+        </div>
+      </div>
+    </div>
+
     <div class="panel" id="panel-profil">
       <div style="background:var(--white);border:0.5px solid var(--border);max-width:520px;padding:2rem">
         <div style="display:flex;align-items:center;gap:16px;margin-bottom:1.5rem;padding-bottom:1.5rem;border-bottom:1px solid var(--border)">
@@ -462,7 +495,7 @@
 </div>
 
 <script>
-  var titles={dash:'Tableau de bord',videos:'Cours vidéo',notes:'Mes notes',msgs:'Messages',profil:'Mon profil',numerique:'Bibliothèque numérique ILCH'};
+  var titles={dash:'Tableau de bord',videos:'Cours vidéo',notes:'Mes notes',msgs:'Messages',profil:'Mon profil',numerique:'Bibliothèque numérique ILCH',jeux:'Jeux éducatifs'};
 
   function showPanel(id,el){
     document.querySelectorAll('.panel').forEach(function(p){p.classList.remove('active')});
@@ -965,6 +998,106 @@ function afficherResultatExamen(soumission) {
 }
 
 console.log('✓ Dashboard Élève connecté à Firebase');
+
+// ── JEUX ÉDUCATIFS (Préscolaire uniquement) ─────────────────
+(function initJeuxEducatifs() {
+  if (user && user.classe === 'Préscolaire') {
+    var item = document.getElementById('sb-item-jeux');
+    if (item) item.style.display = 'flex';
+  }
+})();
+
+var jeuActuel = null;
+var jeuScore = 0;
+var jeuBonneReponse = null;
+
+var LETTRES = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('');
+var OBJETS_COMPTER = ['🍎','⭐','🎈','🐠','🌸','🍓'];
+var FORMES = [
+  { emoji: '🔴', nom: 'le cercle rouge' }, { emoji: '🟦', nom: 'le carré bleu' },
+  { emoji: '🟡', nom: 'le cercle jaune' }, { emoji: '🟩', nom: 'le carré vert' },
+  { emoji: '🔺', nom: 'le triangle rouge' }, { emoji: '🟣', nom: 'le cercle violet' },
+  { emoji: '🟧', nom: 'le carré orange' }
+];
+
+function melanger(tableau) {
+  var copie = tableau.slice();
+  for (var i = copie.length - 1; i > 0; i--) {
+    var j = Math.floor(Math.random() * (i + 1));
+    var t = copie[i]; copie[i] = copie[j]; copie[j] = t;
+  }
+  return copie;
+}
+
+window.lancerJeu = function(type) {
+  jeuActuel = type;
+  jeuScore = 0;
+  document.getElementById('jeux-menu').style.display = 'none';
+  document.getElementById('jeux-jouer').style.display = 'block';
+  document.getElementById('jeu-score').textContent = 'Score : 0 ✓';
+  nouvelleQuestion();
+};
+
+window.quitterJeu = function() {
+  jeuActuel = null;
+  document.getElementById('jeux-menu').style.display = 'grid';
+  document.getElementById('jeux-jouer').style.display = 'none';
+};
+
+function nouvelleQuestion() {
+  document.getElementById('jeu-feedback').textContent = '';
+  var questionEl = document.getElementById('jeu-question');
+  var consigneEl = document.getElementById('jeu-consigne');
+  var choixEl = document.getElementById('jeu-choix');
+  var options, correct;
+
+  if (jeuActuel === 'lettres') {
+    correct = LETTRES[Math.floor(Math.random() * LETTRES.length)];
+    questionEl.textContent = correct;
+    consigneEl.textContent = 'Trouve cette lettre !';
+    var autresLettres = melanger(LETTRES.filter(function(l) { return l !== correct; })).slice(0, 2);
+    options = melanger([correct].concat(autresLettres));
+  } else if (jeuActuel === 'chiffres') {
+    var nb = Math.floor(Math.random() * 8) + 2;
+    var objet = OBJETS_COMPTER[Math.floor(Math.random() * OBJETS_COMPTER.length)];
+    questionEl.textContent = objet.repeat(nb);
+    questionEl.style.fontSize = '46px';
+    consigneEl.textContent = 'Combien en vois-tu ?';
+    correct = String(nb);
+    var autresNb = melanger([nb - 1, nb + 1, nb + 2].filter(function(n) { return n > 0 && n !== nb; })).slice(0, 2);
+    options = melanger([correct].concat(autresNb.map(String)));
+  } else if (jeuActuel === 'formes') {
+    var forme = FORMES[Math.floor(Math.random() * FORMES.length)];
+    questionEl.textContent = '❓';
+    questionEl.style.fontSize = '80px';
+    consigneEl.textContent = 'Trouve ' + forme.nom + ' !';
+    correct = forme.emoji;
+    var autresFormes = melanger(FORMES.filter(function(f) { return f.emoji !== forme.emoji; })).slice(0, 2).map(function(f) { return f.emoji; });
+    options = melanger([correct].concat(autresFormes));
+  }
+
+  if (jeuActuel !== 'chiffres') questionEl.style.fontSize = '100px';
+  jeuBonneReponse = correct;
+  choixEl.innerHTML = options.map(function(opt) {
+    return '<button onclick="verifierReponse(this,\'' + opt.replace(/'/g, "\\'") + '\')" style="font-size:32px;padding:1.25rem;border:3px solid var(--border,#E5E7EB);border-radius:16px;background:var(--cream,#FAFAF8);cursor:pointer;transition:all 0.15s">' + opt + '</button>';
+  }).join('');
+}
+
+window.verifierReponse = function(btn, valeur) {
+  var feedback = document.getElementById('jeu-feedback');
+  if (valeur === jeuBonneReponse) {
+    jeuScore++;
+    document.getElementById('jeu-score').textContent = 'Score : ' + jeuScore + ' ✓';
+    feedback.textContent = '🎉 Bravo !';
+    feedback.style.color = '#16A34A';
+    setTimeout(nouvelleQuestion, 1100);
+  } else {
+    feedback.textContent = '🤔 Essaie encore !';
+    feedback.style.color = '#DC2626';
+    btn.style.borderColor = '#DC2626';
+    setTimeout(function() { btn.style.borderColor = 'var(--border,#E5E7EB)'; feedback.textContent = ''; }, 900);
+  }
+};
 
 // ── BIBLIOTHÈQUE NUMÉRIQUE ──────────────────────────────────
 var livresNumeriquesTousDisponibles = [];
