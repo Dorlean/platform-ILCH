@@ -1,0 +1,4 @@
+;/*FB_PKG_DELIM*/
+
+__d("WebPixelRatio",["SiteData"],(function(t,n,r,o,a,i,l){function e(){return r("SiteData").pr!=null&&r("SiteData").pr>0?r("SiteData").pr:window.devicePixelRatio||1}l.get=e}),98);
+__d("isTruthy",[],(function(t,n,r,o,a,i){"use strict";function e(e){return e!=null&&!!e}i.default=e}),66);
