@@ -600,7 +600,7 @@ Sophie&#9;Marc&#9;Terminale A&#9;Robert Marc&#9;+509 3X XX XX XX"></textarea>
 
       <table class="data-table">
         <thead><tr>
-          <th>Classe</th><th>Filles présentes</th><th>Filles absentes</th><th>Garçons présents</th><th>Garçons absents</th><th>Total filles</th><th>Total garçons</th><th>Total présents/absents</th>
+          <th>Classe</th><th>Filles présentes</th><th>Filles absentes</th><th>Garçons présents</th><th>Garçons absents</th><th>Total filles</th><th>Total garçons</th><th>Total présents/absents</th><th>Actions</th>
         </tr></thead>
         <tbody id="eff-tbody"></tbody>
       </table>
@@ -1799,11 +1799,14 @@ window.afficherEffectifGlobal = async function(mode) {
       effSnap = await getDocs(query(collection(db, 'effectifManuel'), where('date', '>=', moisPrefix + '-01'), where('date', '<=', moisPrefix + '-31')));
     }
     var entries = effSnap.docs.map(function(d) { return d.data(); });
-    var classesAvecDonnees = Array.from(new Set(entries.map(function(e) { return e.classe; }))).sort();
+    // Toutes les classes de l'établissement doivent apparaître, même sans saisie
+    var toutesLesClasses = JSON.parse(localStorage.getItem('ilch_classes') || '[]').map(function(c) { return c.nom; });
+    var classesAvecDonnees = Array.from(new Set(entries.map(function(e) { return e.classe; })));
+    var classesAffichees = Array.from(new Set(toutesLesClasses.concat(classesAvecDonnees))).sort();
 
     var tbody = document.getElementById('eff-tbody');
     var totalFillesG = 0, totalGarconsG = 0, totalPresG = 0, totalAbsG = 0;
-    var rows = classesAvecDonnees.map(function(c) {
+    var rows = classesAffichees.map(function(c) {
       var entreesClasse = entries.filter(function(e) { return e.classe === c; });
       var fillesPresentes = entreesClasse.reduce(function(s, e) { return s + Number(e.fillesPresentes || 0); }, 0);
       var fillesAbsentes = entreesClasse.reduce(function(s, e) { return s + Number(e.fillesAbsentes || 0); }, 0);
@@ -1816,17 +1819,39 @@ window.afficherEffectifGlobal = async function(mode) {
       totalPresG += fillesPresentes + garconsPresents;
       totalAbsG += fillesAbsentes + garconsAbsents;
 
+      // En mode "jour" une seule saisie existe pour la classe : suppression directe possible.
+      // En mode "mois" plusieurs saisies sont cumulées : suppression proposée seulement s'il n'y en a qu'une.
+      var actionCell = entreesClasse.length === 1
+        ? '<button class="btn btn-danger" style="padding:5px 8px" onclick="supprimerEffectifManuelAdmin(\'' + c.replace(/'/g, "\\'") + '\',\'' + entreesClasse[0].date + '\')"><i class="ti ti-trash" aria-hidden="true"></i></button>'
+        : (entreesClasse.length > 1 ? '<span style="font-size:11px;color:var(--muted)">' + entreesClasse.length + ' saisies</span>' : '<span style="font-size:11px;color:var(--muted)">—</span>');
+
       return '<tr><td>' + c + '</td><td>' + fillesPresentes + '</td><td>' + fillesAbsentes + '</td><td>' + garconsPresents + '</td><td>' + garconsAbsents + '</td>' +
-        '<td>' + totalFilles + '</td><td>' + totalGarcons + '</td><td>' + (fillesPresentes + garconsPresents) + ' / ' + (fillesAbsentes + garconsAbsents) + '</td></tr>';
+        '<td>' + totalFilles + '</td><td>' + totalGarcons + '</td><td>' + (fillesPresentes + garconsPresents) + ' / ' + (fillesAbsentes + garconsAbsents) + '</td>' +
+        '<td>' + actionCell + '</td></tr>';
     });
 
-    tbody.innerHTML = rows.join('') || '<tr><td colspan="8" style="text-align:center;color:var(--muted);padding:1.5rem">Aucune donnée saisie pour cette période.</td></tr>';
+    tbody.innerHTML = rows.join('') || '<tr><td colspan="9" style="text-align:center;color:var(--muted);padding:1.5rem">Aucune classe enregistrée. Créez d\'abord des classes.</td></tr>';
     document.getElementById('eff-total-filles').textContent = totalFillesG;
     document.getElementById('eff-total-garcons').textContent = totalGarconsG;
     document.getElementById('eff-total-presents').textContent = totalPresG;
     document.getElementById('eff-total-absents').textContent = totalAbsG;
   } catch (e) {
     console.error('Erreur chargement effectif global:', e);
+  }
+};
+
+window.supprimerEffectifManuelAdmin = async function(classe, date) {
+  if (!confirm('Supprimer la saisie d\'effectif de "' + classe + '" (' + date + ') ?')) return;
+  try {
+    var docId = classe.replace(/\s+/g, '_') + '_' + date;
+    await deleteDoc(doc(db, 'effectifManuel', docId));
+    if (typeof enregistrerActivite === 'function') enregistrerActivite('Effectif supprimé', classe + ' (' + date + ')');
+    if (typeof showToast === 'function') showToast('Saisie d\'effectif supprimée ✓');
+    var modeActif = document.getElementById('eff-btn-mois').classList.contains('btn-primary') ? 'mois' : 'jour';
+    afficherEffectifGlobal(modeActif);
+  } catch (e) {
+    console.error('Erreur suppression effectif:', e);
+    if (typeof showToast === 'function') showToast('Erreur lors de la suppression');
   }
 };
 

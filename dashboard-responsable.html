@@ -515,7 +515,7 @@
 
       <table class="data-table">
         <thead><tr>
-          <th>Classe</th><th>Filles présentes</th><th>Filles absentes</th><th>Garçons présents</th><th>Garçons absents</th><th>Total filles</th><th>Total garçons</th><th>Total présents/absents</th>
+          <th>Classe</th><th>Filles présentes</th><th>Filles absentes</th><th>Garçons présents</th><th>Garçons absents</th><th>Total filles</th><th>Total garçons</th><th>Total présents/absents</th><th>Actions</th>
         </tr></thead>
         <tbody id="eff-tbody"></tbody>
       </table>
@@ -1554,17 +1554,38 @@ window.afficherEffectif = async function(mode) {
       totalPresG += fillesPresentes + garconsPresents;
       totalAbsG += fillesAbsentes + garconsAbsents;
 
+      // En mode "jour" une seule saisie existe pour la classe : suppression directe possible.
+      // En mode "mois" plusieurs saisies sont cumulées : suppression proposée seulement s'il n'y en a qu'une.
+      var actionCell = entreesClasse.length === 1
+        ? '<button class="btn btn-danger" style="padding:5px 8px" onclick="supprimerEffectifManuel(\'' + c.replace(/'/g, "\\'") + '\',\'' + entreesClasse[0].date + '\')"><i class="ti ti-trash" aria-hidden="true"></i></button>'
+        : (entreesClasse.length > 1 ? '<span style="font-size:11px;color:var(--muted)">' + entreesClasse.length + ' saisies</span>' : '<span style="font-size:11px;color:var(--muted)">—</span>');
+
       return '<tr><td>' + c + '</td><td>' + fillesPresentes + '</td><td>' + fillesAbsentes + '</td><td>' + garconsPresents + '</td><td>' + garconsAbsents + '</td>' +
-        '<td>' + totalFilles + '</td><td>' + totalGarcons + '</td><td>' + (fillesPresentes + garconsPresents) + ' / ' + (fillesAbsentes + garconsAbsents) + '</td></tr>';
+        '<td>' + totalFilles + '</td><td>' + totalGarcons + '</td><td>' + (fillesPresentes + garconsPresents) + ' / ' + (fillesAbsentes + garconsAbsents) + '</td>' +
+        '<td>' + actionCell + '</td></tr>';
     });
 
-    tbody.innerHTML = rows.join('') || '<tr><td colspan="8" style="text-align:center;color:var(--muted);padding:1.5rem">Aucune donnée saisie pour cette période.</td></tr>';
+    tbody.innerHTML = rows.join('') || '<tr><td colspan="9" style="text-align:center;color:var(--muted);padding:1.5rem">Aucune donnée saisie pour cette période.</td></tr>';
     document.getElementById('eff-total-filles').textContent = totalFillesG;
     document.getElementById('eff-total-garcons').textContent = totalGarconsG;
     document.getElementById('eff-total-presents').textContent = totalPresG;
     document.getElementById('eff-total-absents').textContent = totalAbsG;
   } catch (e) {
     console.error('Erreur chargement effectif:', e);
+  }
+};
+
+window.supprimerEffectifManuel = async function(classe, date) {
+  if (!confirm('Supprimer la saisie d\'effectif de "' + classe + '" (' + date + ') ?')) return;
+  try {
+    var docId = classe.replace(/\s+/g, '_') + '_' + date;
+    await deleteDoc(doc(db, 'effectifManuel', docId));
+    if (typeof showToast === 'function') showToast('Saisie d\'effectif supprimée ✓');
+    var modeActif = (document.getElementById('eff-btn-mois').classList.contains('btn-primary')) ? 'mois' : 'jour';
+    afficherEffectif(modeActif);
+  } catch (e) {
+    console.error('Erreur suppression effectif:', e);
+    if (typeof showToast === 'function') showToast('Erreur lors de la suppression');
   }
 };
 
