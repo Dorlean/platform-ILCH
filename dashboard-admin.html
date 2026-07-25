@@ -252,6 +252,7 @@
         <div class="tag-list" id="p-classes"></div>
       </div>
       <div class="form-group"><label>Téléphone</label><input type="text" id="p-tel" placeholder="+509 XX XX XX XX"></div>
+      <div class="form-group"><label>Adresse e-mail (optionnel — nécessaire pour la réinitialisation du mot de passe)</label><input type="email" id="p-email" placeholder="prof@email.com"></div>
       <div class="form-group"><label>Identifiant de connexion</label><input type="text" id="p-id" placeholder="Ex: marie.celeste"></div>
       <div class="form-group"><label>Mot de passe</label>
         <div class="pw-field">
@@ -389,6 +390,7 @@
     <div class="sb-section">Structure scolaire</div>
     <div class="sb-item" onclick="showPanel('classes',this)"><i class="ti ti-door" aria-hidden="true"></i>Classes</div>
     <div class="sb-item" onclick="showPanel('matieres',this)"><i class="ti ti-book" aria-hidden="true"></i>Matières</div>
+    <div class="sb-item" onclick="showPanel('emploidutemps',this);chargerEmploiDuTempsAdmin()"><i class="ti ti-calendar-time" aria-hidden="true"></i>Emploi du temps</div>
     <div class="sb-item" onclick="showPanel('effectif',this);remplirClassesEffectifAdmin(true);afficherEffectifGlobal('jour')"><i class="ti ti-users-group" aria-hidden="true"></i>Effectif global</div>
     <div class="sb-item" id="sb-item-journal" onclick="showPanel('journal',this)"><i class="ti ti-history" aria-hidden="true"></i>Journal d'activité</div>
     <div class="sb-section">Sécurité</div>
@@ -562,6 +564,24 @@ Sophie&#9;Marc&#9;Terminale A&#9;Robert Marc&#9;+509 3X XX XX XX"></textarea>
         <thead><tr><th>Nom de la matière</th><th>Coefficient</th><th>Nb professeurs</th><th>Actions</th></tr></thead>
         <tbody id="tbody-matieres"></tbody>
       </table>
+    </div>
+
+    <!-- EMPLOI DU TEMPS (CONSULTATION — géré par la Responsable pédagogique) -->
+    <div class="panel" id="panel-emploidutemps">
+      <div class="section-hdr">
+        <div class="section-hdr-title">Emploi du temps — consultation</div>
+        <div style="display:flex;gap:8px">
+          <button class="btn btn-sm" onclick="window.print()"><i class="ti ti-printer" aria-hidden="true"></i>Imprimer</button>
+        </div>
+      </div>
+      <div style="font-size:12px;color:var(--muted);margin-bottom:1rem"><i class="ti ti-info-circle" aria-hidden="true"></i> Les emplois du temps sont créés et modifiés par la Responsable pédagogique de chaque section. L'Administration peut consulter toutes les classes ici.</div>
+      <div class="form-row" style="margin-bottom:1.25rem;max-width:500px">
+        <div class="form-group"><label>Classe</label><select id="admin-edt-classe" onchange="chargerEmploiDuTempsAdmin()"><option value="">-- Choisir une classe --</option></select></div>
+        <div class="form-group"></div>
+      </div>
+      <div id="admin-edt-contenu">
+        <div style="font-size:13px;color:var(--muted);padding:2rem 0;text-align:center">Choisissez une classe pour afficher son emploi du temps.</div>
+      </div>
     </div>
 
     <!-- EFFECTIF GLOBAL -->
@@ -860,6 +880,9 @@ function renderProfs(){
   if(!profs.length){ tb.innerHTML='<tr><td colspan="6"><div class="empty-state"><i class="ti ti-chalkboard" aria-hidden="true"></i><p>Aucun professeur dans Firebase.</p></div></td></tr>'; return; }
   tb.innerHTML = profs.map(function(p){
     var mats = ((p.matieres||[]).map(function(m){return '<span class="badge badge-prof">'+m+'</span>';}).join(' ')) || '—';
+    var btnReset = p.email
+      ? '<button class="btn btn-edit" onclick="reinitialiserMotDePasseProf(\''+p.email.replace(/'/g,"")+'\',\''+(p.prenom+' '+p.nom).replace(/'/g,"\\'")+'\')" title="Envoyer un lien de réinitialisation sécurisé par e-mail"><i class="ti ti-key" aria-hidden="true"></i></button>'
+      : '<button class="btn btn-edit" onclick="showToast(\'Ajoutez d\\'abord une adresse e-mail à ce professeur (bouton Modifier) pour activer la réinitialisation sécurisée\')" title="Aucun e-mail — modifiez le professeur pour en ajouter un" style="opacity:0.5"><i class="ti ti-key" aria-hidden="true"></i></button>';
     return '<tr data-search="'+((p.prenom+' '+p.nom+' '+((p.matieres||[]).join(' '))).toLowerCase())+'">'+
       '<td><strong>'+p.prenom+' '+p.nom+'</strong></td>'+
       '<td>'+mats+'</td>'+
@@ -869,7 +892,7 @@ function renderProfs(){
       '<td><div class="tbl-actions">'+
         '<button class="btn btn-edit" onclick="editProf(\''+p.id+'\')"><i class="ti ti-pencil" aria-hidden="true"></i></button>'+
         '<button class="btn btn-danger" onclick="deleteItem(\'profs\',\''+p.id+'\',renderProfs)"><i class="ti ti-trash" aria-hidden="true"></i></button>'+
-        '<button class="btn btn-edit" onclick="openResetPw(\''+p.id+'\',\''+(p.prenom+' '+p.nom).replace(/'/g,"\\'")+'\',\'Professeur\')"><i class="ti ti-key" aria-hidden="true"></i></button>'+
+        btnReset+
       '</div></td></tr>';
   }).join('');
   document.getElementById('ds-profs').textContent = profs.length;
@@ -1177,7 +1200,7 @@ function openModalProf(){
   document.getElementById('modal-prof-title').textContent='Ajouter un professeur';
   document.getElementById('prof-edit-id').value='';
   profMatieres=[]; profClasses=[];
-  ['p-prenom','p-nom','p-tel','p-id','p-pw'].forEach(function(id){document.getElementById(id).value='';});
+  ['p-prenom','p-nom','p-tel','p-email','p-id','p-pw'].forEach(function(id){document.getElementById(id).value='';});
   document.getElementById('p-matieres').innerHTML='';
   document.getElementById('p-classes').innerHTML='';
   // Populate matières input datalist
@@ -1192,6 +1215,7 @@ function editProf(id){
   document.getElementById('p-prenom').value=p.prenom;
   document.getElementById('p-nom').value=p.nom;
   document.getElementById('p-tel').value=p.tel||'';
+  document.getElementById('p-email').value=p.email||'';
   document.getElementById('p-id').value=p.identifiant;
   document.getElementById('p-pw').value=p.motDePasse||'';
   profMatieres=p.matieres?[].concat(p.matieres):[];
@@ -1337,7 +1361,7 @@ function exportData(){
 }
 
 // ─── UI ────────────────────────────────────────────────────
-var titles={dash:'Tableau de bord',eleves:'Gestion des élèves',profs:'Gestion des professeurs',parents:'Gestion des parents',personnel:'Personnel & Direction',classes:'Gestion des classes',matieres:'Gestion des matières',effectif:'Effectif global',journal:"Journal d'activité",motsdepasse:'Mots de passe',annonces:'Actualités',profil:'Mon profil',import:'Importer depuis Excel',releve:'Relevé de notes'};
+var titles={dash:'Tableau de bord',eleves:'Gestion des élèves',profs:'Gestion des professeurs',parents:'Gestion des parents',personnel:'Personnel & Direction',classes:'Gestion des classes',matieres:'Gestion des matières',emploidutemps:'Emploi du temps (toutes classes)',effectif:'Effectif global',journal:"Journal d'activité",motsdepasse:'Mots de passe',annonces:'Actualités',profil:'Mon profil',import:'Importer depuis Excel',releve:'Relevé de notes'};
 function showPanel(id,el){
   var restreints = ['personnel','journal','motsdepasse'];
   if (restreints.indexOf(id) !== -1) {
@@ -1771,6 +1795,51 @@ function classesEffectifDisponibles() {
   return CLASSES_SEED_DEFAUT.map(function(c) { return c.nom; });
 }
 
+// ── EMPLOI DU TEMPS (consultation, toutes classes) ──────────
+var JOURS_SEMAINE_ADMIN = ['Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi'];
+function remplirClassesEmploiDuTempsAdmin() {
+  var sel = document.getElementById('admin-edt-classe');
+  if (!sel) return;
+  var valeurActuelle = sel.value;
+  var classes = classesEffectifDisponibles();
+  sel.innerHTML = '<option value="">-- Choisir une classe --</option>' + classes.map(function(c) { return '<option value="' + c + '">' + c + '</option>'; }).join('');
+  if (valeurActuelle && classes.indexOf(valeurActuelle) !== -1) sel.value = valeurActuelle;
+}
+window.chargerEmploiDuTempsAdmin = async function() {
+  remplirClassesEmploiDuTempsAdmin();
+  var classe = document.getElementById('admin-edt-classe').value;
+  var conteneur = document.getElementById('admin-edt-contenu');
+  if (!classe) { conteneur.innerHTML = '<div style="font-size:13px;color:var(--muted);padding:2rem 0;text-align:center">Choisissez une classe pour afficher son emploi du temps.</div>'; return; }
+  conteneur.innerHTML = '<div style="font-size:13px;color:var(--muted);padding:2rem 0;text-align:center">Chargement...</div>';
+  try {
+    var snap = await getDocs(query(collection(db, 'emploisDuTemps'), where('classe', '==', classe)));
+    var parJour = {};
+    JOURS_SEMAINE_ADMIN.forEach(function(j) { parJour[j] = []; });
+    snap.forEach(function(d) {
+      var data = d.data();
+      if (parJour[data.jour]) parJour[data.jour] = (data.creneaux || []).slice();
+    });
+    var aDesCours = JOURS_SEMAINE_ADMIN.some(function(j) { return parJour[j].length > 0; });
+    if (!aDesCours) {
+      conteneur.innerHTML = '<div style="font-size:13px;color:var(--muted);padding:2rem 0;text-align:center">L\'emploi du temps de ' + classe + ' n\'a pas encore été créé par la Responsable pédagogique.</div>';
+      return;
+    }
+    conteneur.innerHTML = '<div style="display:grid;grid-template-columns:repeat(5,1fr);gap:12px">' +
+      JOURS_SEMAINE_ADMIN.map(function(j) {
+        var cours = parJour[j].slice().sort(function(a, b) { return a.heureDebut.localeCompare(b.heureDebut); });
+        return '<div><div style="font-weight:700;font-size:12px;color:var(--navy);margin-bottom:8px;text-transform:uppercase;letter-spacing:0.04em">' + j + '</div>' +
+          (cours.length ? cours.map(function(c) {
+            return '<div style="background:var(--white);border:0.5px solid var(--border);padding:10px;margin-bottom:8px;font-size:12px">' +
+              '<div style="font-weight:600;color:var(--navy)">' + c.heureDebut + '–' + c.heureFin + '</div><div>' + c.matiere + '</div>' +
+              (c.professeurNom ? '<div style="color:var(--muted);font-size:11px">' + c.professeurNom + '</div>' : '') + '</div>';
+          }).join('') : '<div style="font-size:11px;color:var(--muted)">Aucun cours</div>') + '</div>';
+      }).join('') + '</div>';
+  } catch (e) {
+    console.error('Erreur chargement emploi du temps (admin):', e);
+    conteneur.innerHTML = '<div style="color:var(--red);font-size:13px">Erreur de chargement. Vérifiez votre connexion et réessayez.</div>';
+  }
+};
+
 function remplirClassesEffectifAdmin(force) {
   var sel = document.getElementById('me-classe-admin');
   var dateInp = document.getElementById('me-date-admin');
@@ -2184,6 +2253,23 @@ window.reinitialiserMotDePassePersonnel = async function(email, nomComplet) {
     if (typeof showToast === 'function') showToast("Erreur lors de l'envoi du lien de réinitialisation");
   }
 };
+
+window.reinitialiserMotDePasseProf = async function(email, nomComplet) {
+  if (!email) { if (typeof showToast === 'function') showToast('Aucune adresse e-mail associée à ce professeur'); return; }
+  if (!confirm('Envoyer un lien de réinitialisation de mot de passe à ' + nomComplet + ' (' + email + ') ?\n\nLe professeur recevra un e-mail lui permettant de choisir un nouveau mot de passe en toute sécurité.')) return;
+  try {
+    await sendPasswordResetEmail(auth, email);
+    enregistrerActivite('Réinitialisation mot de passe demandée', nomComplet + ' — Professeur (' + email + ')');
+    if (typeof showToast === 'function') showToast('✓ Lien de réinitialisation envoyé par e-mail');
+  } catch (e) {
+    console.error('Erreur envoi lien réinitialisation professeur:', e);
+    if (e.code === 'auth/user-not-found') {
+      if (typeof showToast === 'function') showToast("Ce professeur n'a pas encore de connexion sécurisée activée — modifiez puis réenregistrez son compte");
+    } else {
+      if (typeof showToast === 'function') showToast("Erreur lors de l'envoi du lien de réinitialisation");
+    }
+  }
+};
 </script>
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
@@ -2284,6 +2370,15 @@ async function verifierDoublonAvantCreation2(nomCollection, prenom, nom, identif
   return { existe: true, id: docExistant.id, remplacer: remplacer };
 }
 
+function explicationErreurAuth(err) {
+  var code = err && err.code;
+  if (code === 'auth/email-already-in-use') return 'cet identifiant est déjà utilisé par un autre compte (peut-être un autre rôle) — choisissez un identifiant différent';
+  if (code === 'auth/weak-password') return 'le mot de passe est trop court (6 caractères minimum requis par Firebase)';
+  if (code === 'auth/invalid-email') return 'l\'identifiant génère une adresse invalide — évitez les caractères spéciaux';
+  if (code === 'auth/network-request-failed') return 'problème de connexion internet';
+  return (err && err.message) ? err.message : 'erreur inconnue';
+}
+
 window.saveEleve = async function() {
   try {
     var editId = document.getElementById('eleve-edit-id').value;
@@ -2298,6 +2393,7 @@ window.saveEleve = async function() {
       identifiant: document.getElementById('e-id').value.trim(),
       motDePasse: document.getElementById('e-pw').value.trim(),
       role: 'eleve',
+      actif: true,
       updatedAt: new Date().toISOString()
     };
     if (!data.prenom || !data.nom || !data.classe || !data.identifiant || !data.motDePasse) {
@@ -2312,10 +2408,13 @@ window.saveEleve = async function() {
         if (typeof showToast === 'function') showToast('Enregistrement annulé — informations existantes conservées');
         return;
       }
+      var authOkE = false, authErrMsgE = '';
       try {
         data.authUid = await creerCompteAuthSansDeconnexion(identifiantVersEmail(data.identifiant), data.motDePasse, 'eleve');
+        authOkE = true;
       } catch (authErr) {
         console.error('Erreur création compte sécurisé élève:', authErr);
+        authErrMsgE = explicationErreurAuth(authErr);
       }
       if (verifE.existe && verifE.remplacer) {
         await updateDoc(doc(db, 'eleves', verifE.id), data);
@@ -2324,6 +2423,10 @@ window.saveEleve = async function() {
         data.createdAt = new Date().toISOString();
         await addDoc(collection(db, 'eleves'), data);
         if (typeof enregistrerActivite === 'function') enregistrerActivite('Élève créé', data.prenom + ' ' + data.nom + ' (' + data.classe + ')');
+      }
+      if (!authOkE) {
+        if (typeof showToast === 'function') showToast('⚠ Compte enregistré, mais la connexion ne fonctionnera pas : ' + authErrMsgE, 6000);
+        alert('Attention : le compte "' + data.prenom + ' ' + data.nom + '" a été enregistré, mais la connexion sécurisée n\'a pas pu être créée.\n\nRaison : ' + authErrMsgE + '\n\nCorrigez le problème puis modifiez ce compte pour réessayer (par exemple changez l\'identifiant s\'il est déjà utilisé, ou utilisez un mot de passe d\'au moins 6 caractères).');
       }
     }
     if (typeof showToast === 'function') showToast('✓ Élève sauvegardé dans Firebase');
@@ -2344,11 +2447,13 @@ window.saveProf = async function() {
       prenom: document.getElementById('p-prenom').value.trim(),
       nom: document.getElementById('p-nom').value.trim(),
       tel: document.getElementById('p-tel').value.trim(),
+      email: document.getElementById('p-email') ? document.getElementById('p-email').value.trim().toLowerCase() : '',
       identifiant: document.getElementById('p-id').value.trim(),
       motDePasse: document.getElementById('p-pw').value.trim(),
       matieres: window.profMatieres || [],
       classes: window.profClasses || [],
       role: 'professeur',
+      actif: true,
       updatedAt: new Date().toISOString()
     };
     if (!data.prenom || !data.nom || !data.identifiant || !data.motDePasse) {
@@ -2363,10 +2468,14 @@ window.saveProf = async function() {
         if (typeof showToast === 'function') showToast('Enregistrement annulé — informations existantes conservées');
         return;
       }
+      data.doitChangerMdp = true;
+      var authOkP = false, authErrMsgP = '';
       try {
         data.authUid = await creerCompteAuthSansDeconnexion(identifiantVersEmail(data.identifiant), data.motDePasse, 'prof');
+        authOkP = true;
       } catch (authErr) {
         console.error('Erreur création compte sécurisé professeur:', authErr);
+        authErrMsgP = explicationErreurAuth(authErr);
       }
       if (verifP.existe && verifP.remplacer) {
         await updateDoc(doc(db, 'professeurs', verifP.id), data);
@@ -2375,6 +2484,9 @@ window.saveProf = async function() {
         data.createdAt = new Date().toISOString();
         await addDoc(collection(db, 'professeurs'), data);
         if (typeof enregistrerActivite === 'function') enregistrerActivite('Professeur créé', data.prenom + ' ' + data.nom);
+      }
+      if (!authOkP) {
+        alert('Attention : le compte "' + data.prenom + ' ' + data.nom + '" a été enregistré, mais la connexion sécurisée n\'a pas pu être créée.\n\nRaison : ' + authErrMsgP + '\n\nCorrigez le problème puis modifiez ce compte pour réessayer.');
       }
     }
     if (typeof showToast === 'function') showToast('✓ Professeur sauvegardé dans Firebase');
@@ -2402,6 +2514,7 @@ window.saveParent = async function() {
       motDePasse: document.getElementById('par-pw').value.trim(),
       enfantsIds: enfantsIds,
       role: 'parent',
+      actif: true,
       updatedAt: new Date().toISOString()
     };
     if (!data.prenom || !data.nom || !data.identifiant || !data.motDePasse) {
@@ -2416,10 +2529,13 @@ window.saveParent = async function() {
         if (typeof showToast === 'function') showToast('Enregistrement annulé — informations existantes conservées');
         return;
       }
+      var authOkPa = false, authErrMsgPa = '';
       try {
         data.authUid = await creerCompteAuthSansDeconnexion(identifiantVersEmail(data.identifiant), data.motDePasse, 'parent');
+        authOkPa = true;
       } catch (authErr) {
         console.error('Erreur création compte sécurisé parent:', authErr);
+        authErrMsgPa = explicationErreurAuth(authErr);
       }
       if (verifPa.existe && verifPa.remplacer) {
         await updateDoc(doc(db, 'parents', verifPa.id), data);
@@ -2428,6 +2544,9 @@ window.saveParent = async function() {
         data.createdAt = new Date().toISOString();
         await addDoc(collection(db, 'parents'), data);
         if (typeof enregistrerActivite === 'function') enregistrerActivite('Parent créé', data.prenom + ' ' + data.nom);
+      }
+      if (!authOkPa) {
+        alert('Attention : le compte "' + data.prenom + ' ' + data.nom + '" a été enregistré, mais la connexion sécurisée n\'a pas pu être créée.\n\nRaison : ' + authErrMsgPa + '\n\nCorrigez le problème puis modifiez ce compte pour réessayer.');
       }
     }
     if (typeof showToast === 'function') showToast('✓ Parent sauvegardé dans Firebase');

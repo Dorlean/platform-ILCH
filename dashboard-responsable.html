@@ -201,6 +201,12 @@
     .toast{position:fixed;bottom:1.5rem;right:1.5rem;background:var(--navy);color:var(--white);padding:11px 20px;font-size:13px;font-weight:500;z-index:999;display:none;align-items:center;gap:8px;border-left:3px solid var(--teal)}
     .toast.show{display:flex}
     .toast i{color:var(--teal-light);font-size:17px}
+    @media print {
+      .sidebar, .topbar, .hamburger, .sidebar-overlay, .no-print { display: none !important; }
+      .main { margin-left: 0 !important; }
+      .panel { display: none !important; }
+      .panel.active { display: block !important; }
+    }
   </style>
 </head>
 <body>
@@ -337,6 +343,7 @@
     <div class="sb-item" onclick="showPanel('eleves',this)"><i class="ti ti-users" aria-hidden="true"></i>Mes élèves</div>
     <div class="sb-item" onclick="showPanel('profs',this)"><i class="ti ti-chalkboard" aria-hidden="true"></i>Mes professeurs</div>
     <div class="sb-item" onclick="showPanel('affectations',this)"><i class="ti ti-arrows-shuffle" aria-hidden="true"></i>Affectations</div>
+    <div class="sb-item" onclick="showPanel('emploidutemps',this);chargerEmploiDuTempsJour()"><i class="ti ti-calendar-time" aria-hidden="true"></i>Emploi du temps</div>
     <div class="sb-section">Suivi</div>
     <div class="sb-item" onclick="showPanel('notes',this)"><i class="ti ti-chart-bar" aria-hidden="true"></i>Notes d'évaluation</div>
     <div class="sb-item" onclick="showPanel('absences',this)"><i class="ti ti-calendar-x" aria-hidden="true"></i>Absences<span class="sb-count" id="abs-count">0</span></div>
@@ -431,6 +438,84 @@
     <div class="panel" id="panel-affectations">
       <div class="section-hdr"><div class="section-hdr-title">Affectations — Professeurs aux matières et classes</div></div>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px" id="affectations-grid"></div>
+    </div>
+
+    <!-- EMPLOI DU TEMPS -->
+    <div class="panel" id="panel-emploidutemps">
+      <div class="section-hdr">
+        <div class="section-hdr-title">Emploi du temps — <span id="edt-section-label">Ma section</span></div>
+        <div style="display:flex;gap:8px">
+          <button class="btn btn-sm" onclick="window.print()"><i class="ti ti-printer" aria-hidden="true"></i>Imprimer / PDF</button>
+        </div>
+      </div>
+
+      <div style="background:var(--white);border:0.5px solid var(--border);padding:1.25rem;margin-bottom:1.25rem" class="no-print">
+        <div class="form-row" style="margin-bottom:10px">
+          <div class="form-group"><label>Classe</label><select id="edt-classe" onchange="chargerEmploiDuTempsJour()"></select></div>
+          <div class="form-group"><label>Jour</label>
+            <select id="edt-jour" onchange="chargerEmploiDuTempsJour()">
+              <option value="Lundi">Lundi</option><option value="Mardi">Mardi</option><option value="Mercredi">Mercredi</option>
+              <option value="Jeudi">Jeudi</option><option value="Vendredi">Vendredi</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-row" style="margin-bottom:10px">
+          <div class="form-group"><label>Année scolaire</label><input type="text" id="edt-annee" value="2025-2026" placeholder="Ex: 2025-2026"></div>
+          <div class="form-group"><label>Période (optionnel)</label><input type="text" id="edt-periode" placeholder="Ex: Trimestre 1"></div>
+        </div>
+        <div class="form-row" style="margin-bottom:10px">
+          <div class="form-group"><label>Heure d'entrée</label><input type="time" id="edt-heure-entree" value="08:00"></div>
+          <div class="form-group"><label>Heure de sortie / renvoi</label><input type="time" id="edt-heure-renvoi" value="15:00"></div>
+        </div>
+      </div>
+
+      <div style="background:var(--white);border:0.5px solid var(--border);padding:1.25rem;margin-bottom:1.25rem" class="no-print">
+        <div style="font-size:12px;font-weight:600;color:var(--navy);margin-bottom:12px">Ajouter une matière / activité</div>
+        <div class="form-row" style="margin-bottom:10px">
+          <div class="form-group"><label>Heure de début</label><input type="time" id="edt-creneau-debut" value="08:15"></div>
+          <div class="form-group"><label>Durée (minutes)</label><input type="number" id="edt-creneau-duree" value="45" min="5" step="5"></div>
+        </div>
+        <div class="form-row" style="margin-bottom:10px">
+          <div class="form-group"><label>Matière / Activité</label>
+            <input type="text" id="edt-creneau-matiere" list="edt-matieres-datalist" placeholder="Ex: Éveil, Mathématiques...">
+            <datalist id="edt-matieres-datalist"></datalist>
+          </div>
+          <div class="form-group"><label>Heure de fin (calculée automatiquement)</label><input type="text" id="edt-creneau-fin" readonly style="background:var(--gray-light);font-weight:600"></div>
+        </div>
+        <div class="form-row" style="margin-bottom:10px" id="edt-type-enseignant-row">
+          <div class="form-group"><label>Enseignant</label>
+            <select id="edt-creneau-type-ens" onchange="toggleSelectProfEdt()">
+              <option value="titulaire">Titulaire de la classe</option>
+              <option value="autre">Autre professeur</option>
+            </select>
+          </div>
+          <div class="form-group" id="edt-creneau-prof-row" style="display:none">
+            <label>Professeur</label>
+            <select id="edt-creneau-prof"><option value="">-- Choisir un professeur --</option></select>
+          </div>
+        </div>
+        <div class="form-row" style="margin-bottom:10px" id="edt-prof-obligatoire-row">
+          <div class="form-group"><label>Professeur responsable du cours</label>
+            <select id="edt-creneau-prof-obligatoire"><option value="">-- Choisir un professeur --</option></select>
+          </div>
+          <div class="form-group"></div>
+        </div>
+        <div id="edt-conflit-alerte" style="display:none;background:#FEF2F2;border:1px solid #FECACA;color:#DC2626;font-size:12px;padding:10px 14px;margin-bottom:10px"></div>
+        <button class="btn btn-teal" onclick="ajouterCreneauEdt()"><i class="ti ti-plus" aria-hidden="true"></i>Ajouter ce créneau</button>
+      </div>
+
+      <div class="section-hdr no-print"><div class="section-hdr-title">Créneaux du jour sélectionné</div></div>
+      <table class="data-table" style="margin-bottom:1.5rem">
+        <thead><tr><th>Heure début</th><th>Heure fin</th><th>Durée</th><th>Matière / Activité</th><th>Professeur</th><th class="no-print">Actions</th></tr></thead>
+        <tbody id="edt-creneaux-tbody"><tr><td colspan="6" style="text-align:center;color:var(--muted);padding:1rem">Choisissez une classe et un jour.</td></tr></tbody>
+      </table>
+      <button class="btn btn-gold no-print" style="margin-bottom:1.5rem" onclick="enregistrerJourneeEdt()"><i class="ti ti-device-floppy" aria-hidden="true"></i>Enregistrer la journée</button>
+
+      <div class="section-hdr"><div class="section-hdr-title">Vue de la semaine — <span id="edt-semaine-classe-label">—</span></div></div>
+      <table class="data-table">
+        <thead><tr><th>Lundi</th><th>Mardi</th><th>Mercredi</th><th>Jeudi</th><th>Vendredi</th></tr></thead>
+        <tbody><tr id="edt-semaine-row"><td colspan="5" style="text-align:center;color:var(--muted);padding:1rem">Choisissez une classe.</td></tr></tbody>
+      </table>
     </div>
 
     <!-- NOTES -->
@@ -1104,7 +1189,7 @@ function showPanel(id,el){
   document.getElementById('panel-'+id).classList.add('active');
   document.querySelectorAll('.sb-item').forEach(function(i){i.classList.remove('active')});
   if(el)el.classList.add('active');
-  var titles={dash:'Tableau de bord',eleves:'Mes élèves',profs:'Mes professeurs',affectations:'Affectations',notes:"Notes d'évaluation",absences:'Absences',presence:'Prise de présence',effectif:'Effectif de section',messages:'Messages',annonces:'Annonces',rapports:'Rapport de section',profil:'Mon profil',import:'Importer depuis Excel'};
+  var titles={dash:'Tableau de bord',eleves:'Mes élèves',profs:'Mes professeurs',affectations:'Affectations',emploidutemps:'Emploi du temps',notes:"Notes d'évaluation",absences:'Absences',presence:'Prise de présence',effectif:'Effectif de section',messages:'Messages',annonces:'Annonces',rapports:'Rapport de section',profil:'Mon profil',import:'Importer depuis Excel'};
   document.getElementById('topbar-title').textContent=titles[id]||id;
   renderAll();
 }
@@ -1137,7 +1222,7 @@ window.onload=function(){
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
 import { getAuth, onAuthStateChanged, createUserWithEmailAndPassword, signOut } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
 import {
-  getFirestore, collection, doc,
+  getFirestore, collection, doc, getDoc,
   addDoc, updateDoc, deleteDoc, onSnapshot, query, where, getDocs, setDoc, limit
 } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
@@ -1355,6 +1440,279 @@ onSnapshot(collection(db, 'matieres'), function(snap) {
   localStorage.setItem('ilch_matieres', JSON.stringify(matieres));
   if (typeof updateClasseSelects === 'function') { try { updateClasseSelects(); } catch (e) {} }
 });
+
+// ══════════════════════════════════════════════════════════
+//  EMPLOI DU TEMPS
+// ══════════════════════════════════════════════════════════
+var edtCreneauxCourants = []; // créneaux du jour en cours d'édition (pas encore enregistrés)
+var JOURS_SEMAINE_EDT = ['Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi'];
+
+function edtMinutes(hhmm) {
+  var parts = (hhmm || '00:00').split(':');
+  return parseInt(parts[0], 10) * 60 + parseInt(parts[1], 10);
+}
+function edtHeureDepuisMinutes(min) {
+  min = ((min % 1440) + 1440) % 1440;
+  var h = Math.floor(min / 60), m = min % 60;
+  return (h < 10 ? '0' : '') + h + ':' + (m < 10 ? '0' : '') + m;
+}
+function edtChevauchent(d1, f1, d2, f2) {
+  return d1 < f2 && d2 < f1;
+}
+
+// Détermine le mode d'affichage du formulaire selon la section de la classe choisie
+function edtModePourClasse(nomClasse) {
+  var classes = JSON.parse(localStorage.getItem('ilch_classes') || '[]');
+  var c = classes.find(function(x) { return x.nom === nomClasse; });
+  var section = c ? c.section : currentSection;
+  if (section === 'prescolaire') return 'prescolaire';
+  if (section === 'cycle1' || section === 'cycle2') return 'cycle12';
+  return 'cycle3plus'; // cycle3, secondaire (Nouveau Secondaire, Rhétorique, Terminale)
+}
+
+function edtRemplirSelects() {
+  var classesSection = window.getClassesForSection ? window.getClassesForSection(currentSection) : sections[currentSection].classes;
+  var selClasse = document.getElementById('edt-classe');
+  if (selClasse) {
+    var valeurActuelle = selClasse.value;
+    selClasse.innerHTML = classesSection.map(function(c) { return '<option value="' + c + '">' + c + '</option>'; }).join('');
+    if (valeurActuelle && classesSection.indexOf(valeurActuelle) !== -1) selClasse.value = valeurActuelle;
+  }
+  var profs = JSON.parse(localStorage.getItem('ilch_profs') || '[]');
+  var optsProfs = '<option value="">-- Choisir un professeur --</option>' + profs.map(function(p) { return '<option value="' + p.id + '">' + p.prenom + ' ' + p.nom + '</option>'; }).join('');
+  ['edt-creneau-prof', 'edt-creneau-prof-obligatoire'].forEach(function(id) {
+    var el = document.getElementById(id);
+    if (el) el.innerHTML = optsProfs;
+  });
+  var matieres = JSON.parse(localStorage.getItem('ilch_matieres') || '[]');
+  var dl = document.getElementById('edt-matieres-datalist');
+  if (dl) dl.innerHTML = matieres.map(function(m) { return '<option value="' + m.nom + '">'; }).join('');
+
+  var lbl = document.getElementById('edt-section-label');
+  if (lbl && sections[currentSection]) lbl.textContent = sections[currentSection].name;
+
+  edtAppliquerModeAffichage();
+}
+
+function edtAppliquerModeAffichage() {
+  var classe = document.getElementById('edt-classe') ? document.getElementById('edt-classe').value : '';
+  var mode = edtModePourClasse(classe);
+  var rowTypeEns = document.getElementById('edt-type-enseignant-row');
+  var rowProfOblig = document.getElementById('edt-prof-obligatoire-row');
+  if (mode === 'prescolaire') {
+    if (rowTypeEns) rowTypeEns.style.display = 'none';
+    if (rowProfOblig) rowProfOblig.style.display = 'none';
+  } else if (mode === 'cycle12') {
+    if (rowTypeEns) rowTypeEns.style.display = 'grid';
+    if (rowProfOblig) rowProfOblig.style.display = 'none';
+  } else {
+    if (rowTypeEns) rowTypeEns.style.display = 'none';
+    if (rowProfOblig) rowProfOblig.style.display = 'grid';
+  }
+}
+
+window.toggleSelectProfEdt = function() {
+  var type = document.getElementById('edt-creneau-type-ens').value;
+  var row = document.getElementById('edt-creneau-prof-row');
+  if (row) row.style.display = (type === 'autre') ? 'grid' : 'none';
+};
+
+// Recalcule automatiquement l'heure de fin dès que l'heure de début ou la durée changent
+function edtMajHeureFinPreview() {
+  var debut = document.getElementById('edt-creneau-debut').value;
+  var duree = parseInt(document.getElementById('edt-creneau-duree').value, 10) || 0;
+  if (debut) document.getElementById('edt-creneau-fin').value = edtHeureDepuisMinutes(edtMinutes(debut) + duree);
+}
+
+window.chargerEmploiDuTempsJour = async function() {
+  edtRemplirSelects();
+  var classe = document.getElementById('edt-classe').value;
+  var jour = document.getElementById('edt-jour').value;
+  var annee = document.getElementById('edt-annee').value.trim();
+  edtCreneauxCourants = [];
+  if (!classe || !jour) { edtRenderCreneaux(); return; }
+
+  try {
+    var docId = (classe + '_' + jour + '_' + annee).replace(/\s+/g, '_');
+    var snap = await getDoc(doc(db, 'emploisDuTemps', docId));
+    if (snap.exists()) {
+      var d = snap.data();
+      edtCreneauxCourants = d.creneaux || [];
+      if (d.heureEntree) document.getElementById('edt-heure-entree').value = d.heureEntree;
+      if (d.heureRenvoi) document.getElementById('edt-heure-renvoi').value = d.heureRenvoi;
+      if (d.periode) document.getElementById('edt-periode').value = d.periode;
+    }
+  } catch (e) {
+    console.error('Erreur chargement emploi du temps:', e);
+  }
+  edtRenderCreneaux();
+  edtChargerVueSemaine();
+};
+
+function edtRenderCreneaux() {
+  var tbody = document.getElementById('edt-creneaux-tbody');
+  if (!edtCreneauxCourants.length) {
+    tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;color:var(--muted);padding:1rem">Aucun créneau pour ce jour. Ajoutez-en un ci-dessus.</td></tr>';
+    return;
+  }
+  var tries = edtCreneauxCourants.slice().sort(function(a, b) { return edtMinutes(a.heureDebut) - edtMinutes(b.heureDebut); });
+  tbody.innerHTML = tries.map(function(c) {
+    var indexReel = edtCreneauxCourants.indexOf(c);
+    var profLabel = c.professeurNom ? c.professeurNom : (c.typeEnseignant === 'titulaire' ? 'Titulaire de la classe' : '—');
+    return '<tr><td>' + c.heureDebut + '</td><td>' + c.heureFin + '</td><td>' + c.dureeMinutes + ' min</td><td>' + c.matiere + '</td><td>' + profLabel + '</td>' +
+      '<td class="no-print"><button class="btn btn-danger" style="padding:5px 8px" onclick="supprimerCreneauEdt(' + indexReel + ')"><i class="ti ti-trash" aria-hidden="true"></i></button></td></tr>';
+  }).join('');
+}
+
+window.supprimerCreneauEdt = function(index) {
+  edtCreneauxCourants.splice(index, 1);
+  edtRenderCreneaux();
+};
+
+window.ajouterCreneauEdt = async function() {
+  var classe = document.getElementById('edt-classe').value;
+  var jour = document.getElementById('edt-jour').value;
+  var annee = document.getElementById('edt-annee').value.trim();
+  var heureDebut = document.getElementById('edt-creneau-debut').value;
+  var duree = parseInt(document.getElementById('edt-creneau-duree').value, 10) || 0;
+  var matiere = document.getElementById('edt-creneau-matiere').value.trim();
+  var alerte = document.getElementById('edt-conflit-alerte');
+  alerte.style.display = 'none';
+
+  if (!classe) { showToast('Choisissez une classe'); return; }
+  if (!heureDebut || !duree || !matiere) { showToast('Remplissez l\'heure de début, la durée et la matière'); return; }
+
+  var heureFin = edtHeureDepuisMinutes(edtMinutes(heureDebut) + duree);
+  var mode = edtModePourClasse(classe);
+
+  var professeurId = '', professeurNom = '', typeEnseignant = null;
+  if (mode === 'cycle12') {
+    typeEnseignant = document.getElementById('edt-creneau-type-ens').value;
+    if (typeEnseignant === 'autre') {
+      var selProf = document.getElementById('edt-creneau-prof');
+      professeurId = selProf.value;
+      professeurNom = selProf.options[selProf.selectedIndex] ? selProf.options[selProf.selectedIndex].text : '';
+      if (!professeurId) { showToast('Choisissez le professeur remplaçant'); return; }
+    }
+  } else if (mode === 'cycle3plus') {
+    var selProfOb = document.getElementById('edt-creneau-prof-obligatoire');
+    professeurId = selProfOb.value;
+    professeurNom = selProfOb.options[selProfOb.selectedIndex] ? selProfOb.options[selProfOb.selectedIndex].text : '';
+    if (!professeurId) { showToast('Le professeur est obligatoire pour cette classe'); return; }
+  }
+
+  var nouveauCreneau = {
+    heureDebut: heureDebut, heureFin: heureFin, dureeMinutes: duree, matiere: matiere,
+    typeEnseignant: typeEnseignant, professeurId: professeurId || null, professeurNom: professeurNom || null
+  };
+
+  // 1. Conflit dans la MÊME classe (chevauchement d'horaires)
+  var conflitClasse = edtCreneauxCourants.find(function(c) {
+    return edtChevauchent(edtMinutes(heureDebut), edtMinutes(heureFin), edtMinutes(c.heureDebut), edtMinutes(c.heureFin));
+  });
+  if (conflitClasse) {
+    alerte.textContent = '⚠ Conflit : cette classe a déjà « ' + conflitClasse.matiere + ' » de ' + conflitClasse.heureDebut + ' à ' + conflitClasse.heureFin + ' à cette heure.';
+    alerte.style.display = 'block';
+    return;
+  }
+
+  // 2. Conflit de PROFESSEUR (même professeur, même jour, autre classe, horaire chevauchant)
+  if (professeurId) {
+    try {
+      var snapJour = await getDocs(query(collection(db, 'emploisDuTemps'), where('jour', '==', jour), where('anneeScolaire', '==', annee)));
+      var conflitProf = null;
+      snapJour.forEach(function(d) {
+        if (conflitProf) return;
+        var data = d.data();
+        if (data.classe === classe) return; // on compare uniquement avec les AUTRES classes
+        (data.creneaux || []).forEach(function(c) {
+          if (conflitProf) return;
+          if (c.professeurId === professeurId && edtChevauchent(edtMinutes(heureDebut), edtMinutes(heureFin), edtMinutes(c.heureDebut), edtMinutes(c.heureFin))) {
+            conflitProf = { classe: data.classe, creneau: c };
+          }
+        });
+      });
+      if (conflitProf) {
+        alerte.textContent = '⚠ Conflit : ' + professeurNom + ' donne déjà cours en ' + conflitProf.classe + ' (« ' + conflitProf.creneau.matiere + ' », ' + conflitProf.creneau.heureDebut + '–' + conflitProf.creneau.heureFin + ') à ' + jour + ' à cette heure.';
+        alerte.style.display = 'block';
+        return;
+      }
+    } catch (e) {
+      console.error('Erreur vérification conflit professeur:', e);
+    }
+  }
+
+  edtCreneauxCourants.push(nouveauCreneau);
+  edtRenderCreneaux();
+  document.getElementById('edt-creneau-matiere').value = '';
+  showToast('Créneau ajouté — pensez à « Enregistrer la journée »');
+};
+
+window.enregistrerJourneeEdt = async function() {
+  var classe = document.getElementById('edt-classe').value;
+  var jour = document.getElementById('edt-jour').value;
+  var annee = document.getElementById('edt-annee').value.trim();
+  if (!classe || !jour || !annee) { showToast('Choisissez une classe, un jour et une année scolaire'); return; }
+
+  var classes = JSON.parse(localStorage.getItem('ilch_classes') || '[]');
+  var classeObj = classes.find(function(c) { return c.nom === classe; });
+
+  try {
+    var docId = (classe + '_' + jour + '_' + annee).replace(/\s+/g, '_');
+    await setDoc(doc(db, 'emploisDuTemps', docId), {
+      classe: classe, section: classeObj ? classeObj.section : currentSection, jour: jour, anneeScolaire: annee,
+      periode: document.getElementById('edt-periode').value.trim() || null,
+      heureEntree: document.getElementById('edt-heure-entree').value,
+      heureRenvoi: document.getElementById('edt-heure-renvoi').value,
+      creneaux: edtCreneauxCourants,
+      modifiePar: (function() { var u = JSON.parse(sessionStorage.getItem('ilch_user') || '{}'); return ((u.prenom || '') + ' ' + (u.nom || '')).trim() || 'Responsable Pédagogique'; })(),
+      dateModification: new Date().toISOString()
+    });
+    if (typeof enregistrerActiviteResp === 'function') enregistrerActiviteResp('Emploi du temps modifié', classe + ' — ' + jour + ' (' + annee + ')');
+    showToast('✓ Emploi du temps de ' + jour + ' enregistré pour ' + classe);
+    edtChargerVueSemaine();
+  } catch (e) {
+    console.error('Erreur enregistrement emploi du temps:', e);
+    showToast('Erreur lors de l\'enregistrement');
+  }
+};
+
+window.edtChargerVueSemaine = async function() {
+  var classe = document.getElementById('edt-classe').value;
+  var annee = document.getElementById('edt-annee').value.trim();
+  var lbl = document.getElementById('edt-semaine-classe-label');
+  if (lbl) lbl.textContent = classe || '—';
+  var row = document.getElementById('edt-semaine-row');
+  if (!classe) { row.innerHTML = '<td colspan="5" style="text-align:center;color:var(--muted);padding:1rem">Choisissez une classe.</td>'; return; }
+
+  row.innerHTML = JOURS_SEMAINE_EDT.map(function() { return '<td style="vertical-align:top;font-size:11px;color:var(--muted)">Chargement...</td>'; }).join('');
+
+  try {
+    var cellules = [];
+    for (var i = 0; i < JOURS_SEMAINE_EDT.length; i++) {
+      var jourBoucle = JOURS_SEMAINE_EDT[i];
+      var docId = (classe + '_' + jourBoucle + '_' + annee).replace(/\s+/g, '_');
+      var snap = await getDoc(doc(db, 'emploisDuTemps', docId));
+      if (snap.exists() && (snap.data().creneaux || []).length) {
+        var creneaux = snap.data().creneaux.slice().sort(function(a, b) { return edtMinutes(a.heureDebut) - edtMinutes(b.heureDebut); });
+        cellules.push('<td style="vertical-align:top;font-size:11px;padding:8px">' + creneaux.map(function(c) {
+          return '<div style="margin-bottom:8px;padding-bottom:8px;border-bottom:0.5px solid var(--gray-light)"><strong>' + c.heureDebut + '–' + c.heureFin + '</strong><br>' + c.matiere + (c.professeurNom ? '<br><span style="color:var(--muted)">' + c.professeurNom + '</span>' : '') + '</div>';
+        }).join('') + '</td>');
+      } else {
+        cellules.push('<td style="vertical-align:top;font-size:11px;color:var(--muted);padding:8px">—</td>');
+      }
+    }
+    row.innerHTML = cellules.join('');
+  } catch (e) {
+    console.error('Erreur chargement vue semaine:', e);
+    row.innerHTML = '<td colspan="5" style="text-align:center;color:var(--red);padding:1rem">Erreur de chargement.</td>';
+  }
+};
+
+document.getElementById('edt-creneau-debut') && document.getElementById('edt-creneau-debut').addEventListener('input', edtMajHeureFinPreview);
+document.getElementById('edt-creneau-duree') && document.getElementById('edt-creneau-duree').addEventListener('input', edtMajHeureFinPreview);
+
+
 
 onSnapshot(query(collection(db, 'notifications'), where('destinataireRole', 'in', [MON_ROLE_NOTIF, 'tous']), limit(50)), function(snap) {
   var items = snap.docs.map(function(d) { return { id: d.id, ...d.data() }; });

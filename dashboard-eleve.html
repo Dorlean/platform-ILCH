@@ -200,6 +200,7 @@
   <nav class="sb-nav">
     <div class="sb-section">Principal</div>
     <div class="sb-item active" onclick="showPanel('dash',this)"><i class="ti ti-home" aria-hidden="true"></i>Tableau de bord</div>
+    <div class="sb-item" onclick="showPanel('emploidutemps',this);chargerMonEmploiDuTempsEleve()"><i class="ti ti-calendar-time" aria-hidden="true"></i>Emploi du temps</div>
     <div class="sb-item" onclick="showPanel('videos',this)"><i class="ti ti-video" aria-hidden="true"></i>Cours vidéo</div>
     <div class="sb-item" onclick="showPanel('direct',this)"><i class="ti ti-broadcast" aria-hidden="true"></i>Cours en direct<span class="sb-badge-count" id="eleve-direct-count" style="display:none;background:var(--red)">●</span></div>
     <div class="sb-item" onclick="showPanel('examens',this)"><i class="ti ti-clipboard-text" aria-hidden="true"></i>Examens en direct<span class="sb-badge-count" id="eleve-exam-count" style="display:none;background:#7C2D12">●</span></div>
@@ -350,6 +351,17 @@
       </div>
     </div>
 
+    <!-- EMPLOI DU TEMPS -->
+    <div class="panel" id="panel-emploidutemps">
+      <div class="section-header-row">
+        <div><h2>Emploi du temps</h2><p style="font-size:12px;color:var(--gray);margin-top:4px">Synchronisé automatiquement par la Responsable pédagogique.</p></div>
+        <button class="btn btn-sm" onclick="window.print()"><i class="ti ti-printer" aria-hidden="true"></i>Imprimer</button>
+      </div>
+      <div id="eleve-edt-contenu">
+        <div style="font-size:13px;color:var(--gray);padding:2rem 0;text-align:center">Chargement...</div>
+      </div>
+    </div>
+
     <!-- COURS VIDÉO -->
     <div class="panel" id="panel-videos">
       <div class="filter-bar">
@@ -495,7 +507,7 @@
 </div>
 
 <script>
-  var titles={dash:'Tableau de bord',videos:'Cours vidéo',notes:'Mes notes',msgs:'Messages',profil:'Mon profil',numerique:'Bibliothèque numérique ILCH',jeux:'Jeux éducatifs'};
+  var titles={dash:'Tableau de bord',emploidutemps:'Emploi du temps',videos:'Cours vidéo',notes:'Mes notes',msgs:'Messages',profil:'Mon profil',numerique:'Bibliothèque numérique ILCH',jeux:'Jeux éducatifs'};
 
   function showPanel(id,el){
     document.querySelectorAll('.panel').forEach(function(p){p.classList.remove('active')});
@@ -683,6 +695,46 @@ onAuthStateChanged(auth, function(fbUser) {
 });
 
 const user = JSON.parse(sessionStorage.getItem('ilch_user') || '{}');
+
+// ── EMPLOI DU TEMPS (lecture seule, filtré sur la classe de l'élève) ──
+var JOURS_SEMAINE_ELEVE = ['Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi'];
+window.chargerMonEmploiDuTempsEleve = async function() {
+  var conteneur = document.getElementById('eleve-edt-contenu');
+  if (!conteneur) return;
+  if (!user || !user.classe) { conteneur.innerHTML = '<div style="color:var(--gray);font-size:13px">Classe non disponible.</div>'; return; }
+  conteneur.innerHTML = '<div style="font-size:13px;color:var(--gray);padding:2rem 0;text-align:center">Chargement...</div>';
+
+  try {
+    var snap = await getDocs(query(collection(db, 'emploisDuTemps'), where('classe', '==', user.classe)));
+    var parJour = {};
+    JOURS_SEMAINE_ELEVE.forEach(function(j) { parJour[j] = []; });
+    snap.forEach(function(d) {
+      var data = d.data();
+      if (parJour[data.jour]) parJour[data.jour] = (data.creneaux || []).slice();
+    });
+
+    var aDesCours = JOURS_SEMAINE_ELEVE.some(function(j) { return parJour[j].length > 0; });
+    if (!aDesCours) {
+      conteneur.innerHTML = '<div style="font-size:13px;color:var(--gray);padding:2rem 0;text-align:center">L\'emploi du temps de votre classe (' + user.classe + ') n\'a pas encore été publié.</div>';
+      return;
+    }
+
+    conteneur.innerHTML = '<div style="display:grid;grid-template-columns:repeat(5,1fr);gap:12px">' +
+      JOURS_SEMAINE_ELEVE.map(function(j) {
+        var cours = parJour[j].slice().sort(function(a, b) { return a.heureDebut.localeCompare(b.heureDebut); });
+        return '<div><div style="font-weight:700;font-size:12px;color:var(--navy);margin-bottom:8px;text-transform:uppercase;letter-spacing:0.04em">' + j + '</div>' +
+          (cours.length ? cours.map(function(c) {
+            return '<div style="background:var(--white);border:0.5px solid var(--border);padding:10px;margin-bottom:8px;font-size:12px">' +
+              '<div style="font-weight:600;color:var(--navy)">' + c.heureDebut + '–' + c.heureFin + '</div>' +
+              '<div>' + c.matiere + '</div>' + (c.professeurNom ? '<div style="color:var(--gray);font-size:11px">' + c.professeurNom + '</div>' : '') + '</div>';
+          }).join('') : '<div style="font-size:11px;color:var(--gray)">Aucun cours</div>') +
+          '</div>';
+      }).join('') + '</div>';
+  } catch (e) {
+    console.error('Erreur chargement emploi du temps élève:', e);
+    conteneur.innerHTML = '<div style="color:var(--red);font-size:13px">Erreur de chargement. Vérifiez votre connexion et réessayez.</div>';
+  }
+};
 
 // ── Afficher les vraies infos de l'élève connecté dans la barre latérale ──
 (function initSidebarUser() {

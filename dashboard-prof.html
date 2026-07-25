@@ -259,6 +259,24 @@
 
 <div class="toast" id="toast"><i class="ti ti-check" aria-hidden="true"></i><span id="toast-msg"></span></div>
 
+<!-- CHANGEMENT DE MOT DE PASSE OBLIGATOIRE (première connexion après réinitialisation) -->
+<div id="modal-changer-mdp-overlay" style="display:none;position:fixed;inset:0;background:rgba(13,43,78,0.85);z-index:9999;align-items:center;justify-content:center">
+  <div style="background:var(--white);max-width:420px;width:92%;padding:2rem;border-radius:4px">
+    <div style="font-family:'Playfair Display',serif;font-size:18px;font-weight:700;color:var(--navy);margin-bottom:8px"><i class="ti ti-shield-lock" aria-hidden="true"></i> Nouveau mot de passe requis</div>
+    <div style="font-size:13px;color:var(--gray);margin-bottom:1.25rem;line-height:1.6">Pour votre sécurité, vous devez choisir un nouveau mot de passe avant de continuer.</div>
+    <div style="margin-bottom:1rem">
+      <label style="display:block;font-size:11px;font-weight:600;color:var(--navy);margin-bottom:4px;text-transform:uppercase">Nouveau mot de passe (6 caractères minimum)</label>
+      <input type="password" id="changer-mdp-nouveau" style="width:100%;padding:10px 12px;border:1px solid var(--border);font-size:14px;outline:none">
+    </div>
+    <div style="margin-bottom:1.25rem">
+      <label style="display:block;font-size:11px;font-weight:600;color:var(--navy);margin-bottom:4px;text-transform:uppercase">Confirmer le mot de passe</label>
+      <input type="password" id="changer-mdp-confirmer" style="width:100%;padding:10px 12px;border:1px solid var(--border);font-size:14px;outline:none">
+    </div>
+    <div id="changer-mdp-erreur" style="display:none;background:#FEF2F2;border:1px solid #FECACA;color:#DC2626;font-size:12px;padding:8px 12px;margin-bottom:1rem"></div>
+    <button class="btn btn-gold" style="width:100%;justify-content:center" onclick="confirmerChangementMdp()"><i class="ti ti-check" aria-hidden="true"></i>Valider mon nouveau mot de passe</button>
+  </div>
+</div>
+
 <!-- SIDEBAR -->
 <aside class="sidebar">
   <div class="sb-logo">
@@ -270,6 +288,7 @@
   <nav class="sb-nav">
     <div class="sb-section">Principal</div>
     <div class="sb-item active" onclick="showPanel('dash',this)"><i class="ti ti-home" aria-hidden="true"></i>Tableau de bord</div>
+    <div class="sb-item" onclick="showPanel('emploidutemps',this);chargerMonEmploiDuTemps()"><i class="ti ti-calendar-time" aria-hidden="true"></i>Mon emploi du temps</div>
     <div class="sb-item" onclick="showPanel('videos',this)"><i class="ti ti-video" aria-hidden="true"></i>Cours vidéo</div>
     <div class="sb-item" onclick="showPanel('direct',this)"><i class="ti ti-broadcast" aria-hidden="true"></i>Cours en direct</div>
     <div class="sb-item" onclick="showPanel('examens',this)"><i class="ti ti-clipboard-text" aria-hidden="true"></i>Examens en direct</div>
@@ -348,6 +367,17 @@
           <div class="recent-info"><p>Message de Sophie Marc</p><span>« Merci professeure, très bon cours ! »</span></div>
           <span class="badge badge-done">Lu</span>
         </div>
+      </div>
+    </div>
+
+    <!-- MON EMPLOI DU TEMPS -->
+    <div class="panel" id="panel-emploidutemps">
+      <div class="section-header-row">
+        <div><h2>Mon emploi du temps</h2><p style="font-size:12px;color:var(--gray);margin-top:4px">Synchronisé automatiquement avec la Responsable pédagogique — consultation uniquement.</p></div>
+        <button class="btn btn-sm" onclick="window.print()"><i class="ti ti-printer" aria-hidden="true"></i>Imprimer</button>
+      </div>
+      <div id="prof-edt-contenu">
+        <div style="font-size:13px;color:var(--gray);padding:2rem 0;text-align:center">Chargement de votre emploi du temps...</div>
       </div>
     </div>
 
@@ -569,7 +599,7 @@
 </div>
 
 <script>
-  var titles={dash:'Tableau de bord',videos:'Cours vidéo',notes:'Saisie des notes',msgs:'Messages élèves',profil:'Mon profil'};
+  var titles={dash:'Tableau de bord',emploidutemps:'Mon emploi du temps',videos:'Cours vidéo',notes:'Saisie des notes',msgs:'Messages élèves',profil:'Mon profil'};
 
   function showPanel(id,el){
     document.querySelectorAll('.panel').forEach(function(p){p.classList.remove('active')});
@@ -853,7 +883,7 @@ document.addEventListener("DOMContentLoaded",function(){
 <!-- Copiez ce bloc juste avant </body> dans dashboard-prof.html -->
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+import { getAuth, onAuthStateChanged, updatePassword } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
 import { getStorage, ref as storageRef, uploadBytesResumable, getDownloadURL, deleteObject } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-storage.js";
 import {
   getFirestore, collection, doc,
@@ -881,8 +911,52 @@ onAuthStateChanged(auth, function(fbUser) {
     sessionStorage.removeItem('ilch_user');
     sessionStorage.removeItem('ilch_role');
     window.location.href = '/login';
+    return;
+  }
+  // ── Obligation de changer le mot de passe à la première connexion ──
+  var userSession = JSON.parse(sessionStorage.getItem('ilch_user') || '{}');
+  if (userSession && userSession.doitChangerMdp) {
+    var overlay = document.getElementById('modal-changer-mdp-overlay');
+    if (overlay) overlay.style.display = 'flex';
   }
 });
+
+window.confirmerChangementMdp = async function() {
+  var nouveau = document.getElementById('changer-mdp-nouveau').value;
+  var confirmer = document.getElementById('changer-mdp-confirmer').value;
+  var erreurBox = document.getElementById('changer-mdp-erreur');
+  erreurBox.style.display = 'none';
+
+  if (!nouveau || nouveau.length < 6) {
+    erreurBox.textContent = 'Le mot de passe doit contenir au moins 6 caractères.';
+    erreurBox.style.display = 'block';
+    return;
+  }
+  if (nouveau !== confirmer) {
+    erreurBox.textContent = 'Les deux mots de passe ne correspondent pas.';
+    erreurBox.style.display = 'block';
+    return;
+  }
+  try {
+    await updatePassword(auth.currentUser, nouveau);
+    var userSession = JSON.parse(sessionStorage.getItem('ilch_user') || '{}');
+    if (userSession && userSession.id) {
+      await updateDoc(doc(db, 'professeurs', userSession.id), { doitChangerMdp: false });
+      userSession.doitChangerMdp = false;
+      sessionStorage.setItem('ilch_user', JSON.stringify(userSession));
+    }
+    document.getElementById('modal-changer-mdp-overlay').style.display = 'none';
+    if (typeof showToast === 'function') showToast('✓ Mot de passe mis à jour avec succès');
+  } catch (e) {
+    console.error('Erreur changement de mot de passe:', e);
+    if (e.code === 'auth/requires-recent-login') {
+      erreurBox.textContent = 'Cette action nécessite une reconnexion récente. Déconnectez-vous puis reconnectez-vous, puis réessayez.';
+    } else {
+      erreurBox.textContent = 'Erreur lors du changement de mot de passe. Réessayez.';
+    }
+    erreurBox.style.display = 'block';
+  }
+};
 
 // ── Récupérer infos prof connecté ──────────────────────────
 const user = JSON.parse(sessionStorage.getItem('ilch_user') || '{}');
@@ -890,6 +964,51 @@ if (!user || !user.id) {
   // Mode démo - pas de redirection forcée
   console.log('Mode démo - pas de session Firebase');
 }
+
+// ── MON EMPLOI DU TEMPS (lecture seule, filtré sur ce professeur) ──
+var JOURS_SEMAINE_PROF = ['Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi'];
+window.chargerMonEmploiDuTemps = async function() {
+  var conteneur = document.getElementById('prof-edt-contenu');
+  if (!conteneur) return;
+  if (!user || !user.id) { conteneur.innerHTML = '<div style="color:var(--gray);font-size:13px">Session non disponible.</div>'; return; }
+  conteneur.innerHTML = '<div style="font-size:13px;color:var(--gray);padding:2rem 0;text-align:center">Chargement...</div>';
+
+  try {
+    var snap = await getDocs(collection(db, 'emploisDuTemps'));
+    var parJour = {};
+    JOURS_SEMAINE_PROF.forEach(function(j) { parJour[j] = []; });
+
+    snap.forEach(function(d) {
+      var data = d.data();
+      (data.creneaux || []).forEach(function(c) {
+        if (c.professeurId === user.id && parJour[data.jour]) {
+          parJour[data.jour].push({ classe: data.classe, heureDebut: c.heureDebut, heureFin: c.heureFin, matiere: c.matiere });
+        }
+      });
+    });
+
+    var aDesCours = JOURS_SEMAINE_PROF.some(function(j) { return parJour[j].length > 0; });
+    if (!aDesCours) {
+      conteneur.innerHTML = '<div style="font-size:13px;color:var(--gray);padding:2rem 0;text-align:center">Aucun cours ne vous a encore été affecté dans l\'emploi du temps.</div>';
+      return;
+    }
+
+    conteneur.innerHTML = '<div style="display:grid;grid-template-columns:repeat(5,1fr);gap:12px">' +
+      JOURS_SEMAINE_PROF.map(function(j) {
+        var cours = parJour[j].sort(function(a, b) { return a.heureDebut.localeCompare(b.heureDebut); });
+        return '<div><div style="font-weight:700;font-size:12px;color:var(--navy);margin-bottom:8px;text-transform:uppercase;letter-spacing:0.04em">' + j + '</div>' +
+          (cours.length ? cours.map(function(c) {
+            return '<div style="background:var(--white);border:0.5px solid var(--border);padding:10px;margin-bottom:8px;font-size:12px">' +
+              '<div style="font-weight:600;color:var(--navy)">' + c.heureDebut + '–' + c.heureFin + '</div>' +
+              '<div>' + c.matiere + '</div><div style="color:var(--gray);font-size:11px">' + c.classe + '</div></div>';
+          }).join('') : '<div style="font-size:11px;color:var(--gray)">Aucun cours</div>') +
+          '</div>';
+      }).join('') + '</div>';
+  } catch (e) {
+    console.error('Erreur chargement emploi du temps professeur:', e);
+    conteneur.innerHTML = '<div style="color:var(--red);font-size:13px">Erreur de chargement. Vérifiez votre connexion et réessayez.</div>';
+  }
+};
 
 // ── Afficher les vraies infos du prof connecté dans la barre latérale ──
 (function initSidebarUser() {

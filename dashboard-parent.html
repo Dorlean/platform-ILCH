@@ -187,6 +187,7 @@
   <nav class="sb-nav">
     <div class="sb-section">Suivi de l'enfant</div>
     <div class="sb-item active" onclick="showPanel('dash',this)"><i class="ti ti-home" aria-hidden="true"></i>Tableau de bord</div>
+    <div class="sb-item" onclick="showPanel('emploidutemps',this);chargerEmploiDuTempsParent()"><i class="ti ti-calendar-time" aria-hidden="true"></i>Emploi du temps</div>
     <div class="sb-item" onclick="showPanel('notes',this)"><i class="ti ti-chart-bar" aria-hidden="true"></i>Notes & bulletins</div>
     <div class="sb-item" onclick="showPanel('absences',this)"><i class="ti ti-calendar-x" aria-hidden="true"></i>Absences & présence</div>
     <div class="sb-section">Communication</div>
@@ -271,6 +272,17 @@
           <div class="recent-info"><p>Message de Prof. Marie Céleste</p><span>« Jean progresse bien en mathématiques »</span></div>
           <span class="badge badge-done">Lu</span>
         </div>
+      </div>
+    </div>
+
+    <!-- EMPLOI DU TEMPS -->
+    <div class="panel" id="panel-emploidutemps">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem">
+        <div><h2 style="font-family:'Playfair Display',serif;font-size:18px;color:var(--navy)">Emploi du temps</h2><p style="font-size:12px;color:var(--gray);margin-top:4px">Emploi du temps de chacun de vos enfants, selon sa classe.</p></div>
+        <button class="btn btn-sm" onclick="window.print()"><i class="ti ti-printer" aria-hidden="true"></i>Imprimer</button>
+      </div>
+      <div id="parent-edt-contenu">
+        <div style="font-size:13px;color:var(--gray);padding:2rem 0;text-align:center">Chargement...</div>
       </div>
     </div>
 
@@ -417,7 +429,7 @@
 </div>
 
 <script>
-  var titles={dash:'Tableau de bord',notes:'Notes & bulletins',absences:'Absences & présence',annonces:'Annonces de l\'école',msgs:'Messages',profil:'Mon profil'};
+  var titles={dash:'Tableau de bord',emploidutemps:'Emploi du temps',notes:'Notes & bulletins',absences:'Absences & présence',annonces:'Annonces de l\'école',msgs:'Messages',profil:'Mon profil'};
   function showPanel(id,el){
     document.querySelectorAll('.panel').forEach(function(p){p.classList.remove('active')});
     document.getElementById('panel-'+id).classList.add('active');
@@ -532,6 +544,50 @@ async function getEnfants() {
   }
   return enfants;
 }
+
+// ── EMPLOI DU TEMPS — un bloc par enfant, filtré sur sa classe ──
+var JOURS_SEMAINE_PARENT = ['Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi'];
+window.chargerEmploiDuTempsParent = async function() {
+  var conteneur = document.getElementById('parent-edt-contenu');
+  if (!conteneur) return;
+  conteneur.innerHTML = '<div style="font-size:13px;color:var(--gray);padding:2rem 0;text-align:center">Chargement...</div>';
+
+  try {
+    var enfants = await getEnfants();
+    if (!enfants.length) { conteneur.innerHTML = '<div style="font-size:13px;color:var(--gray);padding:2rem 0;text-align:center">Aucun enfant associé à ce compte.</div>'; return; }
+
+    var blocs = [];
+    for (var i = 0; i < enfants.length; i++) {
+      var enfant = enfants[i];
+      var snap = await getDocs(query(collection(db, 'emploisDuTemps'), where('classe', '==', enfant.classe)));
+      var parJour = {};
+      JOURS_SEMAINE_PARENT.forEach(function(j) { parJour[j] = []; });
+      snap.forEach(function(d) {
+        var data = d.data();
+        if (parJour[data.jour]) parJour[data.jour] = (data.creneaux || []).slice();
+      });
+      var aDesCours = JOURS_SEMAINE_PARENT.some(function(j) { return parJour[j].length > 0; });
+
+      blocs.push('<div style="margin-bottom:2rem">' +
+        '<div style="font-weight:700;font-size:14px;color:var(--navy);margin-bottom:10px">' + enfant.prenom + ' ' + enfant.nom + ' <span style="font-weight:400;color:var(--gray);font-size:12px">(' + (enfant.classe || '—') + ')</span></div>' +
+        (aDesCours
+          ? '<div style="display:grid;grid-template-columns:repeat(5,1fr);gap:12px">' + JOURS_SEMAINE_PARENT.map(function(j) {
+              var cours = parJour[j].slice().sort(function(a, b) { return a.heureDebut.localeCompare(b.heureDebut); });
+              return '<div><div style="font-weight:700;font-size:11px;color:var(--navy);margin-bottom:6px;text-transform:uppercase;letter-spacing:0.04em">' + j + '</div>' +
+                (cours.length ? cours.map(function(c) {
+                  return '<div style="background:var(--white);border:0.5px solid var(--border);padding:8px;margin-bottom:6px;font-size:11px">' +
+                    '<div style="font-weight:600;color:var(--navy)">' + c.heureDebut + '–' + c.heureFin + '</div><div>' + c.matiere + '</div></div>';
+                }).join('') : '<div style="font-size:10px;color:var(--gray)">Aucun cours</div>') + '</div>';
+            }).join('') + '</div>'
+          : '<div style="font-size:12px;color:var(--gray)">L\'emploi du temps de cette classe n\'a pas encore été publié.</div>') +
+        '</div>');
+    }
+    conteneur.innerHTML = blocs.join('<hr style="border:none;border-top:1px solid var(--border);margin-bottom:1.5rem">');
+  } catch (e) {
+    console.error('Erreur chargement emploi du temps parent:', e);
+    conteneur.innerHTML = '<div style="color:var(--red);font-size:13px">Erreur de chargement. Vérifiez votre connexion et réessayez.</div>';
+  }
+};
 
 // ── Afficher les vraies infos du parent connecté ──────────
 (async function initSidebarEtProfilParent() {

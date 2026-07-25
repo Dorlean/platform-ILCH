@@ -220,6 +220,7 @@
     <div class="sb-section">Gestion complète</div>
     <div class="sb-item" onclick="showPanel('comptes',this)"><i class="ti ti-users" aria-hidden="true"></i>Tous les comptes</div>
     <div class="sb-item" onclick="showPanel('effectif',this)"><i class="ti ti-users-group" aria-hidden="true"></i>Effectif</div>
+    <div class="sb-item" onclick="showPanel('emploidutemps',this);chargerEmploiDuTempsOwner()"><i class="ti ti-calendar-time" aria-hidden="true"></i>Emploi du temps</div>
     <div class="sb-item" onclick="showPanel('notes',this)"><i class="ti ti-chart-bar" aria-hidden="true"></i>Notes de tous les élèves</div>
     <div class="sb-item" onclick="showPanel('cours',this)"><i class="ti ti-video" aria-hidden="true"></i>Tous les cours vidéo</div>
     <div class="sb-section">Finances</div>
@@ -382,6 +383,22 @@
           <thead><tr><th>Nom et prénom</th><th>Sexe</th><th>Classe</th><th>Date d'absence</th></tr></thead>
           <tbody id="own-eff-absents-tbody"></tbody>
         </table>
+      </div>
+    </div>
+
+    <!-- EMPLOI DU TEMPS (LECTURE SEULE) -->
+    <div class="panel" id="panel-emploidutemps">
+      <div class="section-hdr">
+        <div class="section-hdr-title">Emploi du temps — consultation uniquement</div>
+        <button class="btn-sm" onclick="window.print()"><i class="ti ti-printer" aria-hidden="true"></i>Imprimer</button>
+      </div>
+      <div style="font-size:12px;color:var(--muted);margin-bottom:1rem"><i class="ti ti-info-circle" aria-hidden="true"></i> Emplois du temps créés par la Responsable pédagogique de chaque section. Consultation uniquement.</div>
+      <div class="form-row" style="margin-bottom:1.25rem;max-width:500px">
+        <div class="form-group"><label>Classe</label><select id="own-edt-classe" onchange="chargerEmploiDuTempsOwner()"><option value="">-- Choisir une classe --</option></select></div>
+        <div class="form-group"></div>
+      </div>
+      <div id="own-edt-contenu">
+        <div style="font-size:13px;color:var(--muted);padding:2rem 0;text-align:center">Choisissez une classe pour afficher son emploi du temps.</div>
       </div>
     </div>
 
@@ -557,7 +574,7 @@
 
 
 <script>
-  var titles={dash:'Tableau de bord — Vue propriétaire',stats:'Statistiques globales',activite:'Activité en temps réel',comptes:'Tous les comptes',effectif:'Effectif (lecture seule)',notes:'Notes de tous les élèves',cours:'Tous les cours vidéo',finances:'Frais scolaires',messages:'Tous les messages',annonces:'Annonces prioritaires',rapports:'Rapports & exports',profil:'Mon profil'};
+  var titles={dash:'Tableau de bord — Vue propriétaire',stats:'Statistiques globales',activite:'Activité en temps réel',comptes:'Tous les comptes',effectif:'Effectif (lecture seule)',emploidutemps:'Emploi du temps (lecture seule)',notes:'Notes de tous les élèves',cours:'Tous les cours vidéo',finances:'Frais scolaires',messages:'Tous les messages',annonces:'Annonces prioritaires',rapports:'Rapports & exports',profil:'Mon profil'};
 
   function showPanel(id,el){
     document.querySelectorAll('.panel').forEach(function(p){p.classList.remove('active')});
@@ -810,14 +827,53 @@ onSnapshot(collection(db, 'utilisateurs'), function(snap) { syncPersonnel = snap
 onSnapshot(collection(db, 'classes'), function(snap) {
   syncClasses = snap.docs.map(function(d) { return { id: d.id, ...d.data() }; });
   majStatsEtComptesOwner();
-  var sel = document.getElementById('own-eff-classe');
-  if (sel) {
-    var valeurActuelle = sel.value;
-    sel.innerHTML = '<option value="">-- Choisir une classe --</option>' + syncClasses.map(function(c) { return '<option value="' + c.nom + '">' + c.nom + '</option>'; }).join('');
-    if (valeurActuelle) sel.value = valeurActuelle;
-  }
+  var optionsClasses = '<option value="">-- Choisir une classe --</option>' + syncClasses.map(function(c) { return '<option value="' + c.nom + '">' + c.nom + '</option>'; }).join('');
+  ['own-eff-classe', 'own-edt-classe'].forEach(function(id) {
+    var sel = document.getElementById(id);
+    if (sel) {
+      var valeurActuelle = sel.value;
+      sel.innerHTML = optionsClasses;
+      if (valeurActuelle) sel.value = valeurActuelle;
+    }
+  });
 });
 onSnapshot(collection(db, 'matieres'), function(snap) { syncMatieres = snap.docs.map(function(d) { return { id: d.id, ...d.data() }; }); majStatsEtComptesOwner(); });
+
+// ── EMPLOI DU TEMPS (lecture seule) ─────────────────────────
+var JOURS_SEMAINE_OWNER = ['Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi'];
+window.chargerEmploiDuTempsOwner = async function() {
+  var classe = document.getElementById('own-edt-classe').value;
+  var conteneur = document.getElementById('own-edt-contenu');
+  if (!classe) { conteneur.innerHTML = '<div style="font-size:13px;color:var(--muted);padding:2rem 0;text-align:center">Choisissez une classe pour afficher son emploi du temps.</div>'; return; }
+  conteneur.innerHTML = '<div style="font-size:13px;color:var(--muted);padding:2rem 0;text-align:center">Chargement...</div>';
+  try {
+    var snap = await getDocs(query(collection(db, 'emploisDuTemps'), where('classe', '==', classe)));
+    var parJour = {};
+    JOURS_SEMAINE_OWNER.forEach(function(j) { parJour[j] = []; });
+    snap.forEach(function(d) {
+      var data = d.data();
+      if (parJour[data.jour]) parJour[data.jour] = (data.creneaux || []).slice();
+    });
+    var aDesCours = JOURS_SEMAINE_OWNER.some(function(j) { return parJour[j].length > 0; });
+    if (!aDesCours) {
+      conteneur.innerHTML = '<div style="font-size:13px;color:var(--muted);padding:2rem 0;text-align:center">L\'emploi du temps de ' + classe + ' n\'a pas encore été créé.</div>';
+      return;
+    }
+    conteneur.innerHTML = '<div style="display:grid;grid-template-columns:repeat(5,1fr);gap:12px">' +
+      JOURS_SEMAINE_OWNER.map(function(j) {
+        var cours = parJour[j].slice().sort(function(a, b) { return a.heureDebut.localeCompare(b.heureDebut); });
+        return '<div><div style="font-weight:700;font-size:12px;color:var(--navy);margin-bottom:8px;text-transform:uppercase;letter-spacing:0.04em">' + j + '</div>' +
+          (cours.length ? cours.map(function(c) {
+            return '<div style="background:var(--white);border:0.5px solid var(--border);padding:10px;margin-bottom:8px;font-size:12px">' +
+              '<div style="font-weight:600;color:var(--navy)">' + c.heureDebut + '–' + c.heureFin + '</div><div>' + c.matiere + '</div>' +
+              (c.professeurNom ? '<div style="color:var(--muted);font-size:11px">' + c.professeurNom + '</div>' : '') + '</div>';
+          }).join('') : '<div style="font-size:11px;color:var(--muted)">Aucun cours</div>') + '</div>';
+      }).join('') + '</div>';
+  } catch (e) {
+    console.error('Erreur chargement emploi du temps (owner):', e);
+    conteneur.innerHTML = '<div style="color:var(--red);font-size:13px">Erreur de chargement. Vérifiez votre connexion et réessayez.</div>';
+  }
+};
 
 // ── Journal d'activité (Administration) ─────────────────────
 function rendreActiviteOwner(entries, targetId, max) {

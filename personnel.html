@@ -378,6 +378,12 @@ async function doLogin() {
       if (!snap.empty) {
         const user = {id: snap.docs[0].id, ...snap.docs[0].data(), role: currentRole};
         if (col==='utilisateurs' && user.role && user.role !== currentRole) continue;
+        if (user.actif === false) {
+          await signOut(auth);
+          showErr('Ce compte a été désactivé. Contactez l\'administration pour le réactiver.');
+          resetBtn();
+          return;
+        }
         sessionStorage.setItem('ilch_user', JSON.stringify(user));
         sessionStorage.setItem('ilch_role', currentRole);
         showOk('Connexion réussie ! Redirection...');
@@ -392,17 +398,26 @@ async function doLogin() {
     if (!found) {
       // Compte authentifié mais profil introuvable pour ce rôle → déconnexion
       await signOut(auth);
-      showErr("Ce compte n'a pas de profil pour le rôle sélectionné.");
+      showErr("Compte trouvé, mais aucun profil n'existe pour le rôle « " + roleConfig[currentRole].name + " ». Vérifiez que vous avez choisi le bon profil, ou contactez l'administration.");
       resetBtn();
     }
   } catch(e) {
     console.error('Erreur de connexion:', e.code || e);
+    // Remarque sécurité : Firebase ne distingue volontairement pas « compte inexistant » de
+    // « mot de passe incorrect » pour ce type d'erreur — les distinguer permettrait à
+    // quiconque de deviner quels identifiants existent dans la base (énumération de comptes).
     if (e.code === 'auth/user-not-found' || e.code === 'auth/invalid-credential' || e.code === 'auth/wrong-password') {
-      showErr('Identifiant ou mot de passe incorrect.');
+      showErr('Identifiant ou mot de passe incorrect. Vérifiez vos informations ou contactez l\'administration si le problème persiste.');
     } else if (e.code === 'auth/too-many-requests') {
-      showErr('Trop de tentatives. Veuillez réessayer dans quelques minutes.');
+      showErr('Trop de tentatives de connexion. Veuillez réessayer dans quelques minutes.');
+    } else if (e.code === 'auth/user-disabled') {
+      showErr('Ce compte a été désactivé. Contactez l\'administration.');
+    } else if (e.code === 'auth/network-request-failed') {
+      showErr('Impossible de contacter le serveur. Vérifiez votre connexion internet.');
+    } else if (e.code === 'auth/invalid-email') {
+      showErr('Format d\'identifiant invalide.');
     } else {
-      showErr('Erreur de connexion. Vérifiez votre connexion internet.');
+      showErr('Erreur de connexion (' + (e.code || 'inconnue') + '). Si le problème persiste, contactez l\'administration.');
     }
     resetBtn();
   }
