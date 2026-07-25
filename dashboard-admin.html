@@ -677,6 +677,14 @@ Sophie&#9;Marc&#9;Terminale A&#9;Robert Marc&#9;+509 3X XX XX XX"></textarea>
         </div>
         <button class="btn btn-primary" onclick="creerComptePersonnel()"><i class="ti ti-user-plus" aria-hidden="true"></i>Créer le compte</button>
       </div>
+
+      <div id="per-credentials-box" style="display:none;background:var(--gold-bg);border:1px solid var(--gold-light);padding:1.25rem;margin-bottom:1.25rem;max-width:680px">
+        <div style="font-size:12px;font-weight:700;color:var(--navy);margin-bottom:8px"><i class="ti ti-alert-triangle" aria-hidden="true"></i> Identifiants de connexion — à noter maintenant</div>
+        <div style="font-size:12px;color:var(--navy);margin-bottom:10px">Ce mot de passe ne sera plus jamais affiché ensuite (stockage sécurisé). Communiquez-le à l'utilisateur dès maintenant, puis fermez ce panneau.</div>
+        <div style="background:var(--white);border:0.5px solid var(--border);padding:12px;font-size:13px;font-family:monospace" id="per-credentials-text"></div>
+        <button class="btn btn-sm" style="margin-top:10px" onclick="document.getElementById('per-credentials-box').style.display='none'">J'ai noté les identifiants — Fermer</button>
+      </div>
+
       <div class="section-hdr"><div class="section-hdr-title">Comptes Personnel &amp; Direction existants</div></div>
       <div id="liste-comptes-personnel"></div>
     </div>
@@ -2009,27 +2017,47 @@ window.creerComptePersonnel = async function() {
       return;
     }
     var authUid = null;
+    var authOk = false;
     try {
       var emailAuth = estSensible ? email : identifiantVersEmail(identifiant);
       authUid = await creerCompteAuthSansDeconnexion(emailAuth, motDePasse, role);
+      authOk = true;
     } catch (authErr) {
       console.error('Erreur création compte sécurisé personnel:', authErr);
     }
     await addDoc(collection(db, 'utilisateurs'), {
-      prenom: prenom, nom: nom, identifiant: identifiant, motDePasse: motDePasse,
+      prenom: prenom, nom: nom, identifiant: identifiant,
+      // Le mot de passe n'est PAS stocké en clair : l'authentification réelle passe par
+      // Firebase Auth (haché côté serveur). Il n'est affiché qu'une seule fois ci-dessous.
       titre: titre || roleLabelsPersonnel[role], role: role, authUid: authUid,
       fonction: role === 'admin' ? (niveauAcces || 'Direction') : null,
       email: estSensible ? email : null,
       dateCreation: new Date().toISOString()
     });
     enregistrerActivite('Compte personnel créé', prenom + ' ' + nom + ' (' + (roleLabelsPersonnel[role] || role) + (role === 'admin' ? ' · ' + (niveauAcces || 'Direction') : '') + ', identifiant : ' + identifiant + ')');
+
+    // Affiche les identifiants UNE SEULE FOIS — plus jamais récupérables ensuite
+    var boiteCred = document.getElementById('per-credentials-box');
+    var texteCred = document.getElementById('per-credentials-text');
+    if (boiteCred && texteCred) {
+      texteCred.innerHTML =
+        'Nom : ' + prenom + ' ' + nom + '<br>' +
+        'Rôle : ' + (roleLabelsPersonnel[role] || role) + '<br>' +
+        (estSensible ? ('Adresse e-mail de connexion : ' + email + '<br>') : '') +
+        'Identifiant : ' + identifiant + '<br>' +
+        'Mot de passe temporaire : ' + motDePasse +
+        (!authOk ? '<br><br><strong style="color:var(--red)">⚠ La connexion sécurisée n\'a pas pu être activée (vérifiez la connexion internet). Le compte existe mais ne pourra pas se connecter tant que ce point n\'est pas résolu.</strong>' : '');
+      boiteCred.style.display = 'block';
+      boiteCred.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }
+
     document.getElementById('per-titre').value = '';
     document.getElementById('per-prenom').value = '';
     document.getElementById('per-nom').value = '';
     document.getElementById('per-id').value = '';
     document.getElementById('per-pw').value = '';
     if (document.getElementById('per-email')) document.getElementById('per-email').value = '';
-    if (typeof showToast === 'function') showToast('Compte créé ✓');
+    if (typeof showToast === 'function') showToast(authOk ? 'Compte créé ✓' : 'Compte créé, mais la connexion sécurisée a échoué — voir avertissement');
   } catch (e) {
     console.error('Erreur création compte personnel:', e);
     if (typeof showToast === 'function') showToast('Erreur lors de la création du compte');
@@ -2056,13 +2084,16 @@ onSnapshot(collection(db, 'utilisateurs'), function(snap) {
   snap.forEach(function(d) {
     var c = d.data();
     var row = document.createElement('div');
-    row.style.cssText = 'display:flex;justify-content:space-between;align-items:center;padding:10px 12px;border:0.5px solid var(--border);margin-bottom:6px;font-size:12px;background:var(--white)';
+    row.style.cssText = 'display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;padding:10px 12px;border:0.5px solid var(--border);margin-bottom:6px;font-size:12px;background:var(--white)';
     var badge = '<span style="background:var(--gold-bg);color:var(--navy);font-size:10px;font-weight:700;padding:2px 8px;margin-left:8px">' + (roleLabelsPersonnel[c.role] || c.role) + '</span>';
+    var ligneConnexion = c.email
+      ? '<div style="color:var(--muted);font-size:11px;margin-top:2px"><i class="ti ti-mail" aria-hidden="true"></i> Connexion par e-mail : <code style="background:var(--gray-light);padding:1px 5px">' + c.email + '</code></div>'
+      : '<div style="color:var(--red);font-size:11px;margin-top:2px"><i class="ti ti-alert-triangle" aria-hidden="true"></i> Aucune adresse e-mail — ce compte ne peut pas se connecter. Supprimez-le et recréez-le avec un e-mail.</div>';
     var btnReset = c.email
-      ? '<button onclick="reinitialiserMotDePassePersonnel(\'' + c.email.replace(/'/g, "") + '\',\'' + (c.prenom + ' ' + c.nom).replace(/'/g, "") + '\')" style="background:none;border:none;color:var(--navy);cursor:pointer;font-size:11px;margin-right:12px" title="Envoyer un lien de réinitialisation par e-mail">Réinitialiser le mot de passe</button>'
+      ? '<button onclick="reinitialiserMotDePassePersonnel(\'' + c.email.replace(/'/g, "") + '\',\'' + (c.prenom + ' ' + c.nom).replace(/'/g, "") + '\')" style="background:none;border:none;color:var(--navy);cursor:pointer;font-size:11px;margin-right:12px" title="Envoyer un lien de réinitialisation par e-mail"><i class="ti ti-key" aria-hidden="true"></i> Réinitialiser le mot de passe</button>'
       : '';
-    row.innerHTML = '<span>' + c.prenom + ' ' + c.nom + ' <span style="color:var(--muted)">(' + c.identifiant + ')</span>' + badge + '</span>' +
-      '<span>' + btnReset + '<button onclick="supprimerComptePersonnel(\'' + d.id + '\',\'' + (c.prenom + ' ' + c.nom).replace(/'/g, "") + '\')" style="background:none;border:none;color:var(--red);cursor:pointer;font-size:11px">Supprimer</button></span>';
+    row.innerHTML = '<span><strong>' + c.prenom + ' ' + c.nom + '</strong>' + badge + ligneConnexion + '</span>' +
+      '<span style="white-space:nowrap">' + btnReset + '<button onclick="supprimerComptePersonnel(\'' + d.id + '\',\'' + (c.prenom + ' ' + c.nom).replace(/'/g, "") + '\')" style="background:none;border:none;color:var(--red);cursor:pointer;font-size:11px">Supprimer</button></span>';
     list.appendChild(row);
   });
 });
