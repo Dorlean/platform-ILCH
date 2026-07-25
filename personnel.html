@@ -184,7 +184,7 @@
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-import { getFirestore, collection, getDocs, query, where } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+import { getFirestore, collection, getDocs, addDoc, query, where } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 import { getAuth, signInWithEmailAndPassword, signOut } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
 
 const firebaseConfig = {
@@ -210,23 +210,78 @@ function identifiantVersEmail(id) {
 const EMAILJS_PUBLIC_KEY  = 'VOTRE_CLE_PUBLIQUE_EMAILJS';
 const EMAILJS_SERVICE_ID  = 'VOTRE_SERVICE_ID';
 const EMAILJS_TEMPLATE_ID = 'VOTRE_TEMPLATE_ID';
+const NOM_ETABLISSEMENT   = 'Institution Louis Chauvet (ILCH)';
 
 if (typeof emailjs !== 'undefined' && EMAILJS_PUBLIC_KEY !== 'VOTRE_CLE_PUBLIQUE_EMAILJS') {
   emailjs.init({ publicKey: EMAILJS_PUBLIC_KEY });
 }
 
-function envoyerAlerteConnexion(user, role) {
+var ROLE_LABELS_SENSIBLES = {
+  admin: 'Administrateur', responsable: 'Responsable Pédagogique', owner: 'Propriétaire',
+  comptable: 'Comptable', infirmiere: 'Infirmière', bibliotheque: 'Bibliothécaire'
+};
+
+function libelleRoleSensible(user, role) {
+  // "Directeur" et "Secrétaire" sont des fonctions du rôle admin, pas des rôles séparés
+  if (role === 'admin' && user.fonction === 'Secrétariat') return 'Secrétaire';
+  if (role === 'admin' && user.titre && /directeur/i.test(user.titre)) return 'Directeur';
+  return ROLE_LABELS_SENSIBLES[role] || role;
+}
+
+function detecterAppareil() {
+  var ua = navigator.userAgent || '';
+  var navigateur = 'Navigateur inconnu';
+  if (/Edg\//.test(ua)) navigateur = 'Microsoft Edge';
+  else if (/Chrome\//.test(ua) && !/Chromium/.test(ua)) navigateur = 'Google Chrome';
+  else if (/Firefox\//.test(ua)) navigateur = 'Mozilla Firefox';
+  else if (/Safari\//.test(ua) && !/Chrome/.test(ua)) navigateur = 'Safari';
+  var type = /Mobi|Android/i.test(ua) ? 'Mobile' : 'Ordinateur';
+  var os = /Windows/.test(ua) ? 'Windows' : /Mac OS/.test(ua) ? 'macOS' : /Android/.test(ua) ? 'Android' : /iPhone|iPad/.test(ua) ? 'iOS' : /Linux/.test(ua) ? 'Linux' : 'Système inconnu';
+  return navigateur + ' · ' + os + ' · ' + type;
+}
+
+async function recupererAdresseIP() {
+  try {
+    var res = await fetch('https://api.ipify.org?format=json');
+    var data = await res.json();
+    return data.ip || 'Non disponible';
+  } catch (e) {
+    return 'Non disponible';
+  }
+}
+
+async function envoyerAlerteConnexion(user, role) {
+  var ip = await recupererAdresseIP();
+  var appareil = detecterAppareil();
+  var maintenant = new Date().toLocaleString('fr-FR', { dateStyle: 'long', timeStyle: 'medium' });
+  var roleLabel = libelleRoleSensible(user, role);
+  var messageAlerte = "Une connexion vient d'être effectuée sur votre compte. Si vous n'êtes pas à l'origine de cette connexion, veuillez contacter immédiatement l'administrateur de l'établissement et modifier votre mot de passe.";
+
+  // Journal d'activité — chaque connexion à un poste sensible est enregistrée, e-mail envoyé ou non
+  try {
+    await addDoc(collection(db, 'journal_activite'), {
+      auteur: ((user.prenom || '') + ' ' + (user.nom || '')).trim() || (user.email || 'Inconnu'),
+      role: role, action: 'Connexion',
+      details: roleLabel + ' — IP : ' + ip + ' — ' + appareil,
+      dateCreation: new Date().toISOString()
+    });
+  } catch (e) {
+    console.error('[Journal] Échec enregistrement de la connexion:', e);
+  }
+
   if (typeof emailjs === 'undefined' || EMAILJS_PUBLIC_KEY === 'VOTRE_CLE_PUBLIQUE_EMAILJS') {
     console.log('[Alerte connexion] EmailJS non configuré — email non envoyé.');
     return;
   }
-  var roleLabels = { admin:'Administrateur', responsable:'Responsable Pédagogique', owner:'Propriétaire', comptable:'Comptable' };
-  var maintenant = new Date().toLocaleString('fr-FR', { dateStyle:'long', timeStyle:'short' });
   emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_TEMPLATE_ID, {
     to_email: user.email || '',
-    to_name: (user.prenom || '') + ' ' + (user.nom || ''),
-    role: roleLabels[role] || role,
-    date_connexion: maintenant
+    to_name: ((user.prenom || '') + ' ' + (user.nom || '')).trim(),
+    etablissement: NOM_ETABLISSEMENT,
+    role: roleLabel,
+    date_connexion: maintenant,
+    ip_address: ip,
+    device_info: appareil,
+    message: messageAlerte
   }).then(function() {
     console.log('[Alerte connexion] E-mail envoyé.');
   }).catch(function(err) {
@@ -251,10 +306,10 @@ const roleConfig = {
   parent:      {name:'Espace Parent',           icon:'ti-heart',             bg:'rgba(22,163,74,0.2)',    color:'#4ADE80', dest:'/parent'},
   admin:       {name:'Administration',          icon:'ti-settings',          bg:'rgba(220,38,38,0.15)',   color:'#F87171', dest:'/admin', emailLogin:true},
   responsable: {name:'Responsable Pédagogique', icon:'ti-book',              bg:'rgba(13,148,136,0.2)',   color:'#2DD4BF', dest:'/responsable', emailLogin:true},
-  infirmiere:  {name:'Infirmière',             icon:'ti-heart-rate-monitor', bg:'rgba(225,29,72,0.15)',   color:'#FB7185', dest:'/infirmerie'},
+  infirmiere:  {name:'Infirmière',             icon:'ti-heart-rate-monitor', bg:'rgba(225,29,72,0.15)',   color:'#FB7185', dest:'/infirmerie', emailLogin:true},
   owner:       {name:'Espace Propriétaire',     icon:'ti-crown',             bg:'rgba(201,169,110,0.25)', color:'#C9A96E', dest:'/proprietaire', emailLogin:true},
   comptable:   {name:'Comptabilité',            icon:'ti-calculator',        bg:'rgba(124,58,237,0.2)',   color:'#A78BFA', dest:'/comptabilite', emailLogin:true},
-  bibliotheque:{name:'Bibliothèque',            icon:'ti-books',             bg:'rgba(146,64,14,0.2)',    color:'#FCD34D', dest:'/bibliotheque'},
+  bibliotheque:{name:'Bibliothèque',            icon:'ti-books',             bg:'rgba(146,64,14,0.2)',    color:'#FCD34D', dest:'/bibliotheque', emailLogin:true},
 };
 
 let currentRole = '';

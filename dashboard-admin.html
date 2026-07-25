@@ -1403,7 +1403,7 @@ if("serviceWorker" in navigator){
 <script type="module">
 // ── Connexion Firebase pour Dashboard Admin ────────────────
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-import { getAuth, onAuthStateChanged, createUserWithEmailAndPassword, signOut } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+import { getAuth, onAuthStateChanged, createUserWithEmailAndPassword, signOut, sendPasswordResetEmail } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
 import {
   getFirestore, collection, getDocs, addDoc, updateDoc, deleteDoc, doc, onSnapshot, query, where, setDoc, orderBy, limit
 } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
@@ -1977,7 +1977,7 @@ window.toggleNiveauAccesAdmin = function() {
   var row = document.getElementById('per-niveau-row');
   var emailRow = document.getElementById('per-email-row');
   if (row) row.style.display = (role === 'admin') ? 'grid' : 'none';
-  var rolesSensibles = ['admin', 'responsable', 'owner', 'comptable'];
+  var rolesSensibles = ['admin', 'responsable', 'owner', 'comptable', 'infirmiere', 'bibliotheque'];
   if (emailRow) emailRow.style.display = (rolesSensibles.indexOf(role) !== -1) ? 'grid' : 'none';
 };
 
@@ -1990,7 +1990,7 @@ window.creerComptePersonnel = async function() {
   var identifiant = document.getElementById('per-id').value.trim();
   var motDePasse = document.getElementById('per-pw').value.trim();
   var email = document.getElementById('per-email') ? document.getElementById('per-email').value.trim().toLowerCase() : '';
-  var rolesSensibles = ['admin', 'responsable', 'owner', 'comptable'];
+  var rolesSensibles = ['admin', 'responsable', 'owner', 'comptable', 'infirmiere', 'bibliotheque'];
   var estSensible = rolesSensibles.indexOf(role) !== -1;
 
   if (!prenom || !nom || !identifiant || !motDePasse) {
@@ -2058,11 +2058,27 @@ onSnapshot(collection(db, 'utilisateurs'), function(snap) {
     var row = document.createElement('div');
     row.style.cssText = 'display:flex;justify-content:space-between;align-items:center;padding:10px 12px;border:0.5px solid var(--border);margin-bottom:6px;font-size:12px;background:var(--white)';
     var badge = '<span style="background:var(--gold-bg);color:var(--navy);font-size:10px;font-weight:700;padding:2px 8px;margin-left:8px">' + (roleLabelsPersonnel[c.role] || c.role) + '</span>';
+    var btnReset = c.email
+      ? '<button onclick="reinitialiserMotDePassePersonnel(\'' + c.email.replace(/'/g, "") + '\',\'' + (c.prenom + ' ' + c.nom).replace(/'/g, "") + '\')" style="background:none;border:none;color:var(--navy);cursor:pointer;font-size:11px;margin-right:12px" title="Envoyer un lien de réinitialisation par e-mail">Réinitialiser le mot de passe</button>'
+      : '';
     row.innerHTML = '<span>' + c.prenom + ' ' + c.nom + ' <span style="color:var(--muted)">(' + c.identifiant + ')</span>' + badge + '</span>' +
-      '<button onclick="supprimerComptePersonnel(\'' + d.id + '\',\'' + (c.prenom + ' ' + c.nom).replace(/'/g, "") + '\')" style="background:none;border:none;color:var(--red);cursor:pointer;font-size:11px">Supprimer</button>';
+      '<span>' + btnReset + '<button onclick="supprimerComptePersonnel(\'' + d.id + '\',\'' + (c.prenom + ' ' + c.nom).replace(/'/g, "") + '\')" style="background:none;border:none;color:var(--red);cursor:pointer;font-size:11px">Supprimer</button></span>';
     list.appendChild(row);
   });
 });
+
+window.reinitialiserMotDePassePersonnel = async function(email, nomComplet) {
+  if (!email) { if (typeof showToast === 'function') showToast('Aucune adresse e-mail associée à ce compte'); return; }
+  if (!confirm('Envoyer un lien de réinitialisation de mot de passe à ' + nomComplet + ' (' + email + ') ?')) return;
+  try {
+    await sendPasswordResetEmail(auth, email);
+    enregistrerActivite('Réinitialisation mot de passe demandée', nomComplet + ' (' + email + ')');
+    if (typeof showToast === 'function') showToast('✓ Lien de réinitialisation envoyé par e-mail');
+  } catch (e) {
+    console.error('Erreur envoi lien réinitialisation:', e);
+    if (typeof showToast === 'function') showToast("Erreur lors de l'envoi du lien de réinitialisation");
+  }
+};
 </script>
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
