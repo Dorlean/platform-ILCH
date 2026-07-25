@@ -620,6 +620,7 @@
         </div>
 
         <button class="btn btn-teal" onclick="analyserImport()"><i class="ti ti-file-search" aria-hidden="true"></i>Analyser les données</button>
+        <div id="import-erreurs" style="display:none;margin-top:12px;background:#FEF2F2;border:1px solid #FECACA;color:var(--red,#DC2626);padding:10px 14px;font-size:12px;white-space:pre-line"></div>
       </div>
 
       <div id="import-apercu" style="display:none">
@@ -636,6 +637,7 @@
 
       <div id="import-resultats" style="display:none;margin-top:1.5rem">
         <div class="section-hdr"><div class="section-hdr-title">Résultat de l'import</div></div>
+        <div id="import-progress" style="font-size:12px;color:var(--navy);margin-bottom:8px;font-weight:600"></div>
         <div id="import-log" style="background:var(--navy);color:var(--gold);padding:1rem;font-family:monospace;font-size:12px;max-height:300px;overflow-y:auto"></div>
       </div>
     </div>
@@ -908,12 +910,22 @@ async function saveEleve(){
       await updateDoc(doc(db,'eleves',eleveEditId),data);
       if(typeof enregistrerActiviteResp==='function') enregistrerActiviteResp('Élève modifié',prenom+' '+nom+' ('+classe+')');
     } else {
+      var verifEl = window.verifierDoublonAvantCreationResp ? await window.verifierDoublonAvantCreationResp('eleves', prenom, nom, id) : { existe: false };
+      if (verifEl.existe && !verifEl.remplacer) {
+        showToast('Enregistrement annulé — informations existantes conservées');
+        return;
+      }
       try{
         data.authUid=await creerCompteAuthSansDeconnexion(identifiantVersEmail(id),pw,'eleve');
       }catch(authErr){console.error('Erreur compte sécurisé:',authErr);}
-      data.createdAt=new Date().toISOString();
-      await addDoc(collection(db,'eleves'),data);
-      if(typeof enregistrerActiviteResp==='function') enregistrerActiviteResp('Élève créé',prenom+' '+nom+' ('+classe+')');
+      if (verifEl.existe && verifEl.remplacer) {
+        await updateDoc(doc(db,'eleves',verifEl.id),data);
+        if(typeof enregistrerActiviteResp==='function') enregistrerActiviteResp('Élève remplacé',prenom+' '+nom+' ('+classe+')');
+      } else {
+        data.createdAt=new Date().toISOString();
+        await addDoc(collection(db,'eleves'),data);
+        if(typeof enregistrerActiviteResp==='function') enregistrerActiviteResp('Élève créé',prenom+' '+nom+' ('+classe+')');
+      }
     }
     closeModal('modal-eleve');
     showToast(prenom+' '+nom+' '+(eleveEditId?'modifié':'ajouté')+'(e) ✓');
@@ -986,12 +998,22 @@ async function saveProf(){
       await updateDoc(doc(db,'professeurs',profEditId),data);
       if(typeof enregistrerActiviteResp==='function') enregistrerActiviteResp('Professeur modifié',prenom+' '+nom);
     } else {
+      var verifPr = window.verifierDoublonAvantCreationResp ? await window.verifierDoublonAvantCreationResp('professeurs', prenom, nom, id) : { existe: false };
+      if (verifPr.existe && !verifPr.remplacer) {
+        showToast('Enregistrement annulé — informations existantes conservées');
+        return;
+      }
       try{
         data.authUid=await creerCompteAuthSansDeconnexion(identifiantVersEmail(id),pw,'prof');
       }catch(authErr){console.error('Erreur compte sécurisé:',authErr);}
-      data.createdAt=new Date().toISOString();
-      await addDoc(collection(db,'professeurs'),data);
-      if(typeof enregistrerActiviteResp==='function') enregistrerActiviteResp('Professeur créé',prenom+' '+nom);
+      if (verifPr.existe && verifPr.remplacer) {
+        await updateDoc(doc(db,'professeurs',verifPr.id),data);
+        if(typeof enregistrerActiviteResp==='function') enregistrerActiviteResp('Professeur remplacé',prenom+' '+nom);
+      } else {
+        data.createdAt=new Date().toISOString();
+        await addDoc(collection(db,'professeurs'),data);
+        if(typeof enregistrerActiviteResp==='function') enregistrerActiviteResp('Professeur créé',prenom+' '+nom);
+      }
     }
     closeModal('modal-prof');
     showToast(prenom+' '+nom+' '+(profEditId?'modifié':'ajouté')+' ✓');
@@ -1168,6 +1190,59 @@ async function creerCompteAuthSansDeconnexion(email, password, role) {
   return uid;
 }
 
+// ── Vérification anti-doublon avant création (élèves, professeurs) ──
+async function verifierDoublonAvantCreationResp(nomCollection, prenom, nom, identifiant) {
+  var docExistant = null;
+  try {
+    if (identifiant) {
+      var snapId = await getDocs(query(collection(db, nomCollection), where('identifiant', '==', identifiant)));
+      if (!snapId.empty) docExistant = { id: snapId.docs[0].id, ...snapId.docs[0].data() };
+    }
+    if (!docExistant && prenom && nom) {
+      var snapAll = await getDocs(collection(db, nomCollection));
+      var pClean = prenom.trim().toLowerCase(), nClean = nom.trim().toLowerCase();
+      snapAll.forEach(function(d) {
+        if (docExistant) return;
+        var x = d.data();
+        if ((x.prenom || '').trim().toLowerCase() === pClean && (x.nom || '').trim().toLowerCase() === nClean) {
+          docExistant = { id: d.id, ...x };
+        }
+      });
+    }
+  } catch (e) {
+    console.error('Erreur vérification doublon:', e);
+    return { existe: false };
+  }
+  if (!docExistant) return { existe: false };
+  var remplacer = confirm(
+    'Ce nom existe déjà dans la base de données (' + (docExistant.prenom || '') + ' ' + (docExistant.nom || '') +
+    (docExistant.identifiant ? ', identifiant : ' + docExistant.identifiant : '') +
+    ').\n\nSouhaitez-vous remplacer les informations existantes ?\n\nOK = Oui, remplacer\nAnnuler = Non, conserver l\'existant'
+  );
+  return { existe: true, id: docExistant.id, remplacer: remplacer };
+}
+window.verifierDoublonAvantCreationResp = verifierDoublonAvantCreationResp;
+
+// ── Exposition globale — INDISPENSABLE ──────────────────────
+// Les fonctions saveEleve/saveProf/delEleve/delProf (et consorts) sont définies dans un
+// <script> classique séparé (pas un module), qui n'a normalement AUCUN accès aux constantes
+// Firebase déclarées ici (db, doc, updateDoc...) car les modules ES ne partagent pas leur
+// portée avec le reste de la page. Sans cette exposition, tout enregistrement/suppression
+// depuis ce script classique échoue avec une ReferenceError silencieuse dans la console.
+window.db = db;
+window.doc = doc;
+window.collection = collection;
+window.addDoc = addDoc;
+window.updateDoc = updateDoc;
+window.deleteDoc = deleteDoc;
+window.getDocs = getDocs;
+window.setDoc = setDoc;
+window.query = query;
+window.where = where;
+window.identifiantVersEmail = identifiantVersEmail;
+window.creerCompteAuthSansDeconnexion = creerCompteAuthSansDeconnexion;
+window.enregistrerActiviteResp = enregistrerActiviteResp;
+
 // ── VERROU DE SÉCURITÉ — session Firebase Auth obligatoire ──
 const auth = getAuth(app);
 onAuthStateChanged(auth, function(fbUser) {
@@ -1245,9 +1320,11 @@ function tempsEcouleNotif(dateStr) {
 }
 
 // ── CLASSES — synchronisées depuis la source unique Firebase ──
+var syncClassesResponsable = [];
 onSnapshot(collection(db, 'classes'), function(snap) {
   var classes = snap.docs.map(function(d) { return { id: d.id, ...d.data() }; });
   localStorage.setItem('ilch_classes', JSON.stringify(classes));
+  syncClassesResponsable = classes.map(function(c) { return c.nom; });
   if (typeof remplirClassesPresence === 'function') remplirClassesPresence();
   var panelEff = document.getElementById('panel-effectif');
   if (panelEff && panelEff.classList.contains('active') && typeof afficherEffectif === 'function') {
@@ -1259,8 +1336,25 @@ onSnapshot(collection(db, 'classes'), function(snap) {
 window.getClassesForSection = function(sid) {
   var classes = JSON.parse(localStorage.getItem('ilch_classes') || '[]');
   var filtered = classes.filter(function(c) { return c.section === sid; }).map(function(c) { return c.nom; });
-  return filtered.length ? filtered : (sections[sid] ? sections[sid].classes : []);
+  // Le filet de secours (classes par défaut) ne sert QUE tant qu'aucune donnée n'est encore
+  // arrivée de Firestore (chargement initial). Une fois les données chargées, on affiche
+  // la réalité exacte de la base — y compris une liste vide si toutes les classes d'une
+  // section ont été supprimées côté Administration. Sans cette distinction, des classes
+  // supprimées réapparaissaient « fantômes » côté Responsable.
+  if (classes.length === 0) {
+    return sections[sid] ? sections[sid].classes : [];
+  }
+  return filtered;
 };
+
+// ── MATIÈRES — synchronisées depuis la source unique Firebase ──
+// (absent auparavant : le Responsable dépendait d'un cache localStorage jamais rempli
+// sur cette page, ce qui pouvait laisser la liste des matières vide ou obsolète)
+onSnapshot(collection(db, 'matieres'), function(snap) {
+  var matieres = snap.docs.map(function(d) { return { id: d.id, ...d.data() }; });
+  localStorage.setItem('ilch_matieres', JSON.stringify(matieres));
+  if (typeof updateClasseSelects === 'function') { try { updateClasseSelects(); } catch (e) {} }
+});
 
 onSnapshot(query(collection(db, 'notifications'), where('destinataireRole', 'in', [MON_ROLE_NOTIF, 'tous']), limit(50)), function(snap) {
   var items = snap.docs.map(function(d) { return { id: d.id, ...d.data() }; });
@@ -1319,27 +1413,69 @@ onSnapshot(collection(db, 'professeurs'), function(snap) {
 // ── IMPORT EN MASSE (copier-coller depuis Excel) ────────────
 var donneesImportAnalysees = [];
 
-function decouperLigneImport(ligne) {
-  var parts = ligne.split('\t');
-  if (parts.length < 2) parts = ligne.split(',');
-  return parts.map(function(p) { return p.trim(); });
+function decouperLigneImport(ligne, separateur) {
+  return ligne.split(separateur).map(function(p) { return p.trim(); });
+}
+
+// Détecte automatiquement le séparateur utilisé (Excel = tabulation ; certains exports CSV
+// utilisent le point-virgule en français, ou la virgule en anglais)
+function detecterSeparateurImport(lignes) {
+  var echantillon = lignes.slice(0, 5).join('\n');
+  var nbTab = (echantillon.match(/\t/g) || []).length;
+  var nbPointVirgule = (echantillon.match(/;/g) || []).length;
+  var nbVirgule = (echantillon.match(/,/g) || []).length;
+  if (nbTab >= nbPointVirgule && nbTab >= nbVirgule && nbTab > 0) return '\t';
+  if (nbPointVirgule >= nbVirgule && nbPointVirgule > 0) return ';';
+  if (nbVirgule > 0) return ',';
+  return '\t';
 }
 
 window.analyserImport = function() {
-  var texte = document.getElementById('import-donnees').value.trim();
+  var texteBrut = document.getElementById('import-donnees').value;
+  var texte = texteBrut.trim();
+  var boiteErreurs = document.getElementById('import-erreurs');
+  boiteErreurs.style.display = 'none';
+  boiteErreurs.textContent = '';
+
   if (!texte) { if (typeof showToast === 'function') showToast('Colle des données avant d\'analyser'); return; }
 
-  var lignes = texte.split('\n').map(function(l) { return l.trim(); }).filter(function(l) { return l; });
-  donneesImportAnalysees = [];
+  // Normalise les fins de ligne Windows (\r\n) pour éviter des caractères invisibles parasites
+  var lignes = texte.replace(/\r\n/g, '\n').replace(/\r/g, '\n').split('\n')
+    .map(function(l) { return l.trim(); }).filter(function(l) { return l; });
 
-  lignes.forEach(function(ligne) {
-    var cols = decouperLigneImport(ligne);
+  if (!lignes.length) { if (typeof showToast === 'function') showToast('Aucune ligne détectée'); return; }
+
+  var separateur = detecterSeparateurImport(lignes);
+  donneesImportAnalysees = [];
+  var identifiantsVus = {};
+  var problemes = [];
+
+  lignes.forEach(function(ligne, index) {
+    var numLigne = index + 1;
+    var cols = decouperLigneImport(ligne, separateur);
     var prenom = cols[0] || '';
     var nom = cols[1] || '';
-    if (!prenom || !nom) return;
+    var classe = (cols[2] || '').trim();
+
+    if (!prenom || !nom) {
+      problemes.push('Ligne ' + numLigne + ' ignorée : prénom ou nom manquant (« ' + ligne.slice(0, 60) + ' »).');
+      return;
+    }
+    if (classe && syncClassesResponsable && syncClassesResponsable.length && syncClassesResponsable.indexOf(classe) === -1) {
+      problemes.push('Ligne ' + numLigne + ' : la classe « ' + classe + ' » n\'existe pas dans le système — vérifiez l\'orthographe (l\'élève sera importé quand même, sans classe assignée si vous ne corrigez pas).');
+    }
+
     var identifiant = nettoyerTexte(prenom) + '.' + nettoyerTexte(nom);
+    if (identifiantsVus[identifiant]) {
+      problemes.push('Ligne ' + numLigne + ' : doublon détecté dans le collage — « ' + prenom + ' ' + nom + ' » a le même identifiant qu\'une ligne précédente (' + identifiant + '). Les deux seront importés séparément avec un suffixe si vous confirmez.');
+      identifiantsVus[identifiant]++;
+      identifiant = identifiant + identifiantsVus[identifiant];
+    } else {
+      identifiantsVus[identifiant] = 1;
+    }
+
     donneesImportAnalysees.push({
-      prenom: prenom, nom: nom, classe: cols[2] || '', parentNom: cols[3] || '', tel: cols[4] || '',
+      prenom: prenom, nom: nom, classe: classe, parentNom: cols[3] || '', tel: cols[4] || '',
       identifiant: identifiant, motDePasse: genererMotDePasseSecuriseResp()
     });
   });
@@ -1351,6 +1487,15 @@ window.analyserImport = function() {
 
   document.getElementById('import-count').textContent = donneesImportAnalysees.length;
   document.getElementById('import-apercu').style.display = donneesImportAnalysees.length ? 'block' : 'none';
+
+  if (problemes.length) {
+    boiteErreurs.textContent = '⚠ ' + problemes.length + ' remarque(s) détectée(s) :\n' + problemes.slice(0, 30).join('\n') + (problemes.length > 30 ? '\n… et ' + (problemes.length - 30) + ' autre(s).' : '');
+    boiteErreurs.style.display = 'block';
+  }
+
+  if (typeof showToast === 'function') {
+    showToast(donneesImportAnalysees.length + ' ligne(s) valide(s) détectée(s)' + (problemes.length ? ' — voir les remarques' : ' ✓'));
+  }
 };
 
 window.annulerImport = function() {
@@ -1364,18 +1509,26 @@ window.confirmerImport = async function() {
   if (!donneesImportAnalysees.length) return;
   var logBox = document.getElementById('import-log');
   var resultBox = document.getElementById('import-resultats');
+  var progressBox = document.getElementById('import-progress');
+  var boutonConfirmer = document.querySelector('#import-apercu button.btn-teal');
   resultBox.style.display = 'block';
   logBox.innerHTML = '';
+  if (boutonConfirmer) boutonConfirmer.disabled = true;
   function log(msg) { var l = document.createElement('div'); l.textContent = msg; logBox.appendChild(l); logBox.scrollTop = logBox.scrollHeight; }
+  function majProgression(fait, total) {
+    if (progressBox) progressBox.textContent = 'Import en cours… ' + fait + ' / ' + total + ' (' + Math.round(fait / total * 100) + '%)';
+  }
 
-  log('🚀 Démarrage de l\'import de ' + donneesImportAnalysees.length + ' élève(s)...');
+  var total = donneesImportAnalysees.length;
+  log('🚀 Démarrage de l\'import de ' + total + ' élève(s)...');
+  majProgression(0, total);
   var crees = 0, doublons = 0, erreurs = 0;
 
   for (var i = 0; i < donneesImportAnalysees.length; i++) {
     var d = donneesImportAnalysees[i];
     try {
       var existant = await getDocs(query(collection(db, 'eleves'), where('identifiant', '==', d.identifiant)));
-      if (!existant.empty) { log('⚠️ Déjà existant, ignoré : ' + d.prenom + ' ' + d.nom); doublons++; continue; }
+      if (!existant.empty) { log('⚠️ Déjà existant, ignoré : ' + d.prenom + ' ' + d.nom); doublons++; majProgression(i + 1, total); continue; }
 
       var authUid = null;
       try { authUid = await creerCompteAuthSansDeconnexion(identifiantVersEmail(d.identifiant), d.motDePasse, 'eleve'); }
@@ -1393,10 +1546,13 @@ window.confirmerImport = async function() {
       log('❌ Erreur pour ' + d.prenom + ' ' + d.nom + ' : ' + e.message);
       erreurs++;
     }
+    majProgression(i + 1, total);
   }
 
   log('');
   log('🎉 Import terminé : ' + crees + ' créé(s), ' + doublons + ' déjà existant(s), ' + erreurs + ' erreur(s).');
+  if (progressBox) progressBox.textContent = 'Terminé — ' + total + ' ligne(s) traitée(s).';
+  if (boutonConfirmer) boutonConfirmer.disabled = false;
   document.getElementById('import-apercu').style.display = 'none';
   if (typeof showToast === 'function') showToast('Import terminé : ' + crees + ' élève(s) créé(s) ✓');
 };

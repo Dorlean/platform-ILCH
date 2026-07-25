@@ -1989,6 +1989,44 @@ window.toggleNiveauAccesAdmin = function() {
   if (emailRow) emailRow.style.display = (rolesSensibles.indexOf(role) !== -1) ? 'grid' : 'none';
 };
 
+// ── Vérification anti-doublon avant création ────────────────
+// Recherche par identifiant, e-mail, puis nom+prénom. Si une correspondance existe,
+// demande confirmation avant d'écraser les informations existantes.
+async function verifierDoublonAvantCreation(nomCollection, prenom, nom, identifiant, email) {
+  var docExistant = null;
+  try {
+    if (identifiant) {
+      var snapId = await getDocs(query(collection(db, nomCollection), where('identifiant', '==', identifiant)));
+      if (!snapId.empty) docExistant = { id: snapId.docs[0].id, ...snapId.docs[0].data() };
+    }
+    if (!docExistant && email) {
+      var snapEmail = await getDocs(query(collection(db, nomCollection), where('email', '==', email)));
+      if (!snapEmail.empty) docExistant = { id: snapEmail.docs[0].id, ...snapEmail.docs[0].data() };
+    }
+    if (!docExistant && prenom && nom) {
+      var snapAll = await getDocs(collection(db, nomCollection));
+      var pClean = prenom.trim().toLowerCase(), nClean = nom.trim().toLowerCase();
+      snapAll.forEach(function(d) {
+        if (docExistant) return;
+        var x = d.data();
+        if ((x.prenom || '').trim().toLowerCase() === pClean && (x.nom || '').trim().toLowerCase() === nClean) {
+          docExistant = { id: d.id, ...x };
+        }
+      });
+    }
+  } catch (e) {
+    console.error('Erreur vérification doublon:', e);
+    return { existe: false };
+  }
+  if (!docExistant) return { existe: false };
+  var remplacer = confirm(
+    'Ce nom existe déjà dans la base de données (' + (docExistant.prenom || '') + ' ' + (docExistant.nom || '') +
+    (docExistant.identifiant ? ', identifiant : ' + docExistant.identifiant : '') +
+    ').\n\nSouhaitez-vous remplacer les informations existantes ?\n\nOK = Oui, remplacer\nAnnuler = Non, conserver l\'existant'
+  );
+  return { existe: true, id: docExistant.id, remplacer: remplacer };
+}
+
 window.creerComptePersonnel = async function() {
   var role = document.getElementById('per-role').value;
   var titre = document.getElementById('per-titre').value.trim();
@@ -2011,11 +2049,47 @@ window.creerComptePersonnel = async function() {
   }
 
   try {
-    var existant = await getDocs(query(collection(db, 'utilisateurs'), where('identifiant', '==', identifiant)));
-    if (!existant.empty) {
-      if (typeof showToast === 'function') showToast('Cet identifiant existe déjà');
+    var verif = await verifierDoublonAvantCreation('utilisateurs', prenom, nom, identifiant, estSensible ? email : null);
+    if (verif.existe && !verif.remplacer) {
+      if (typeof showToast === 'function') showToast('Enregistrement annulé — informations existantes conservées');
       return;
     }
+    if (verif.existe && verif.remplacer) {
+      // Remplace le document existant plutôt que d'en créer un nouveau
+      var authUidMaj = null;
+      var authOkMaj = false;
+      try {
+        var emailAuthMaj = estSensible ? email : identifiantVersEmail(identifiant);
+        authUidMaj = await creerCompteAuthSansDeconnexion(emailAuthMaj, motDePasse, role);
+        authOkMaj = true;
+      } catch (authErr) { console.error('Erreur mise à jour compte sécurisé:', authErr); }
+      await updateDoc(doc(db, 'utilisateurs', verif.id), {
+        prenom: prenom, nom: nom, identifiant: identifiant,
+        titre: titre || roleLabelsPersonnel[role], role: role, authUid: authUidMaj,
+        fonction: role === 'admin' ? (niveauAcces || 'Direction') : null,
+        email: estSensible ? email : null,
+        dateModification: new Date().toISOString()
+      });
+      enregistrerActivite('Compte personnel remplacé', prenom + ' ' + nom + ' (' + (roleLabelsPersonnel[role] || role) + ')');
+      var boiteCredMaj = document.getElementById('per-credentials-box');
+      var texteCredMaj = document.getElementById('per-credentials-text');
+      if (boiteCredMaj && texteCredMaj) {
+        texteCredMaj.innerHTML = 'Compte existant mis à jour.<br>Nom : ' + prenom + ' ' + nom + '<br>Rôle : ' + (roleLabelsPersonnel[role] || role) + '<br>' +
+          (estSensible ? ('Adresse e-mail de connexion : ' + email + '<br>') : '') + 'Identifiant : ' + identifiant + '<br>Mot de passe temporaire : ' + motDePasse +
+          (!authOkMaj ? '<br><br><strong style="color:var(--red)">⚠ La connexion sécurisée n\'a pas pu être activée.</strong>' : '');
+        boiteCredMaj.style.display = 'block';
+        boiteCredMaj.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      }
+      document.getElementById('per-titre').value = '';
+      document.getElementById('per-prenom').value = '';
+      document.getElementById('per-nom').value = '';
+      document.getElementById('per-id').value = '';
+      document.getElementById('per-pw').value = '';
+      if (document.getElementById('per-email')) document.getElementById('per-email').value = '';
+      if (typeof showToast === 'function') showToast('Compte existant remplacé ✓');
+      return;
+    }
+
     var authUid = null;
     var authOk = false;
     try {
@@ -2174,6 +2248,42 @@ syncCollection('parents',     'parents', function(){ if(typeof renderParents==='
 // ── Interception des sauvegardes → Firebase ───────────────
 // Élèves
 var _origSaveEleve = window.saveEleve;
+// ── Vérification anti-doublon avant création (élèves, profs, parents) ──
+async function verifierDoublonAvantCreation2(nomCollection, prenom, nom, identifiant, email) {
+  var docExistant = null;
+  try {
+    if (identifiant) {
+      var snapId = await getDocs(query(collection(db, nomCollection), where('identifiant', '==', identifiant)));
+      if (!snapId.empty) docExistant = { id: snapId.docs[0].id, ...snapId.docs[0].data() };
+    }
+    if (!docExistant && email) {
+      var snapEmail = await getDocs(query(collection(db, nomCollection), where('email', '==', email)));
+      if (!snapEmail.empty) docExistant = { id: snapEmail.docs[0].id, ...snapEmail.docs[0].data() };
+    }
+    if (!docExistant && prenom && nom) {
+      var snapAll = await getDocs(collection(db, nomCollection));
+      var pClean = prenom.trim().toLowerCase(), nClean = nom.trim().toLowerCase();
+      snapAll.forEach(function(d) {
+        if (docExistant) return;
+        var x = d.data();
+        if ((x.prenom || '').trim().toLowerCase() === pClean && (x.nom || '').trim().toLowerCase() === nClean) {
+          docExistant = { id: d.id, ...x };
+        }
+      });
+    }
+  } catch (e) {
+    console.error('Erreur vérification doublon:', e);
+    return { existe: false };
+  }
+  if (!docExistant) return { existe: false };
+  var remplacer = confirm(
+    'Ce nom existe déjà dans la base de données (' + (docExistant.prenom || '') + ' ' + (docExistant.nom || '') +
+    (docExistant.identifiant ? ', identifiant : ' + docExistant.identifiant : '') +
+    ').\n\nSouhaitez-vous remplacer les informations existantes ?\n\nOK = Oui, remplacer\nAnnuler = Non, conserver l\'existant'
+  );
+  return { existe: true, id: docExistant.id, remplacer: remplacer };
+}
+
 window.saveEleve = async function() {
   try {
     var editId = document.getElementById('eleve-edit-id').value;
@@ -2197,14 +2307,24 @@ window.saveEleve = async function() {
       await updateDoc(doc(db, 'eleves', editId), data);
       if (typeof enregistrerActivite === 'function') enregistrerActivite('Élève modifié', data.prenom + ' ' + data.nom + ' (' + data.classe + ')');
     } else {
+      var verifE = await verifierDoublonAvantCreation2('eleves', data.prenom, data.nom, data.identifiant, null);
+      if (verifE.existe && !verifE.remplacer) {
+        if (typeof showToast === 'function') showToast('Enregistrement annulé — informations existantes conservées');
+        return;
+      }
       try {
         data.authUid = await creerCompteAuthSansDeconnexion(identifiantVersEmail(data.identifiant), data.motDePasse, 'eleve');
       } catch (authErr) {
         console.error('Erreur création compte sécurisé élève:', authErr);
       }
-      data.createdAt = new Date().toISOString();
-      await addDoc(collection(db, 'eleves'), data);
-      if (typeof enregistrerActivite === 'function') enregistrerActivite('Élève créé', data.prenom + ' ' + data.nom + ' (' + data.classe + ')');
+      if (verifE.existe && verifE.remplacer) {
+        await updateDoc(doc(db, 'eleves', verifE.id), data);
+        if (typeof enregistrerActivite === 'function') enregistrerActivite('Élève remplacé', data.prenom + ' ' + data.nom + ' (' + data.classe + ')');
+      } else {
+        data.createdAt = new Date().toISOString();
+        await addDoc(collection(db, 'eleves'), data);
+        if (typeof enregistrerActivite === 'function') enregistrerActivite('Élève créé', data.prenom + ' ' + data.nom + ' (' + data.classe + ')');
+      }
     }
     if (typeof showToast === 'function') showToast('✓ Élève sauvegardé dans Firebase');
   } catch(e) {
@@ -2238,14 +2358,24 @@ window.saveProf = async function() {
       await updateDoc(doc(db, 'professeurs', editId), data);
       if (typeof enregistrerActivite === 'function') enregistrerActivite('Professeur modifié', data.prenom + ' ' + data.nom);
     } else {
+      var verifP = await verifierDoublonAvantCreation2('professeurs', data.prenom, data.nom, data.identifiant, null);
+      if (verifP.existe && !verifP.remplacer) {
+        if (typeof showToast === 'function') showToast('Enregistrement annulé — informations existantes conservées');
+        return;
+      }
       try {
         data.authUid = await creerCompteAuthSansDeconnexion(identifiantVersEmail(data.identifiant), data.motDePasse, 'prof');
       } catch (authErr) {
         console.error('Erreur création compte sécurisé professeur:', authErr);
       }
-      data.createdAt = new Date().toISOString();
-      await addDoc(collection(db, 'professeurs'), data);
-      if (typeof enregistrerActivite === 'function') enregistrerActivite('Professeur créé', data.prenom + ' ' + data.nom);
+      if (verifP.existe && verifP.remplacer) {
+        await updateDoc(doc(db, 'professeurs', verifP.id), data);
+        if (typeof enregistrerActivite === 'function') enregistrerActivite('Professeur remplacé', data.prenom + ' ' + data.nom);
+      } else {
+        data.createdAt = new Date().toISOString();
+        await addDoc(collection(db, 'professeurs'), data);
+        if (typeof enregistrerActivite === 'function') enregistrerActivite('Professeur créé', data.prenom + ' ' + data.nom);
+      }
     }
     if (typeof showToast === 'function') showToast('✓ Professeur sauvegardé dans Firebase');
   } catch(e) {
@@ -2281,14 +2411,24 @@ window.saveParent = async function() {
       await updateDoc(doc(db, 'parents', editId), data);
       if (typeof enregistrerActivite === 'function') enregistrerActivite('Parent modifié', data.prenom + ' ' + data.nom);
     } else {
+      var verifPa = await verifierDoublonAvantCreation2('parents', data.prenom, data.nom, data.identifiant, data.email || null);
+      if (verifPa.existe && !verifPa.remplacer) {
+        if (typeof showToast === 'function') showToast('Enregistrement annulé — informations existantes conservées');
+        return;
+      }
       try {
         data.authUid = await creerCompteAuthSansDeconnexion(identifiantVersEmail(data.identifiant), data.motDePasse, 'parent');
       } catch (authErr) {
         console.error('Erreur création compte sécurisé parent:', authErr);
       }
-      data.createdAt = new Date().toISOString();
-      await addDoc(collection(db, 'parents'), data);
-      if (typeof enregistrerActivite === 'function') enregistrerActivite('Parent créé', data.prenom + ' ' + data.nom);
+      if (verifPa.existe && verifPa.remplacer) {
+        await updateDoc(doc(db, 'parents', verifPa.id), data);
+        if (typeof enregistrerActivite === 'function') enregistrerActivite('Parent remplacé', data.prenom + ' ' + data.nom);
+      } else {
+        data.createdAt = new Date().toISOString();
+        await addDoc(collection(db, 'parents'), data);
+        if (typeof enregistrerActivite === 'function') enregistrerActivite('Parent créé', data.prenom + ' ' + data.nom);
+      }
     }
     if (typeof showToast === 'function') showToast('✓ Parent sauvegardé dans Firebase');
   } catch(e) {
