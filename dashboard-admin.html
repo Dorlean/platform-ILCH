@@ -596,11 +596,12 @@ Sophie&#9;Marc&#9;Terminale A&#9;Robert Marc&#9;+509 3X XX XX XX"></textarea>
         <div class="stat-card"><div class="stat-label">Total garçons</div><div class="stat-val" id="eff-total-garcons">0</div></div>
         <div class="stat-card"><div class="stat-label">Présents</div><div class="stat-val" style="color:var(--green,#16A34A)" id="eff-total-presents">0</div></div>
         <div class="stat-card"><div class="stat-label">Absents</div><div class="stat-val" style="color:var(--red)" id="eff-total-absents">0</div></div>
+        <div class="stat-card"><div class="stat-label">Effectif total</div><div class="stat-val" style="color:var(--gold)" id="eff-total-general">0</div></div>
       </div>
 
       <table class="data-table">
         <thead><tr>
-          <th>Classe</th><th>Filles présentes</th><th>Filles absentes</th><th>Garçons présents</th><th>Garçons absents</th><th>Total filles</th><th>Total garçons</th><th>Total présents/absents</th><th>Actions</th>
+          <th>Classe</th><th>Filles présentes</th><th>Filles absentes</th><th>Garçons présents</th><th>Garçons absents</th><th>Total filles</th><th>Total garçons</th><th>Total présents/absents</th><th>Effectif total</th><th>Actions</th>
         </tr></thead>
         <tbody id="eff-tbody"></tbody>
       </table>
@@ -1404,7 +1405,7 @@ if("serviceWorker" in navigator){
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
 import { getAuth, onAuthStateChanged, createUserWithEmailAndPassword, signOut } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
 import {
-  getFirestore, collection, getDocs, addDoc, updateDoc, deleteDoc, doc, onSnapshot, query, where, setDoc
+  getFirestore, collection, getDocs, addDoc, updateDoc, deleteDoc, doc, onSnapshot, query, where, setDoc, orderBy, limit
 } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
 const firebaseConfig = {
@@ -1843,6 +1844,7 @@ window.afficherEffectifGlobal = async function(mode) {
       var garconsAbsents = entreesClasse.reduce(function(s, e) { return s + Number(e.garconsAbsents || 0); }, 0);
       var totalFilles = fillesPresentes + fillesAbsentes;
       var totalGarcons = garconsPresents + garconsAbsents;
+      var effectifTotalClasse = totalFilles + totalGarcons;
 
       totalFillesG += totalFilles; totalGarconsG += totalGarcons;
       totalPresG += fillesPresentes + garconsPresents;
@@ -1856,15 +1858,17 @@ window.afficherEffectifGlobal = async function(mode) {
 
       return '<tr><td>' + c + '</td><td>' + fillesPresentes + '</td><td>' + fillesAbsentes + '</td><td>' + garconsPresents + '</td><td>' + garconsAbsents + '</td>' +
         '<td>' + totalFilles + '</td><td>' + totalGarcons + '</td><td>' + (fillesPresentes + garconsPresents) + ' / ' + (fillesAbsentes + garconsAbsents) + '</td>' +
+        '<td><strong>' + effectifTotalClasse + '</strong></td>' +
         '<td>' + actionCell + '</td></tr>';
     });
 
-    var noticeErreur = erreurChargement ? '<tr><td colspan="9" style="text-align:center;color:var(--red);padding:8px;font-size:11px">⚠ Les saisies n\'ont pas pu être chargées (connexion). Les classes ci-dessous affichent 0 par défaut.</td></tr>' : '';
-    tbody.innerHTML = noticeErreur + (rows.join('') || '<tr><td colspan="9" style="text-align:center;color:var(--muted);padding:1.5rem">Aucune classe enregistrée. Créez d\'abord des classes.</td></tr>');
+    var noticeErreur = erreurChargement ? '<tr><td colspan="10" style="text-align:center;color:var(--red);padding:8px;font-size:11px">⚠ Les saisies n\'ont pas pu être chargées (connexion). Les classes ci-dessous affichent 0 par défaut.</td></tr>' : '';
+    tbody.innerHTML = noticeErreur + (rows.join('') || '<tr><td colspan="10" style="text-align:center;color:var(--muted);padding:1.5rem">Aucune classe enregistrée. Créez d\'abord des classes.</td></tr>');
     document.getElementById('eff-total-filles').textContent = totalFillesG;
     document.getElementById('eff-total-garcons').textContent = totalGarconsG;
     document.getElementById('eff-total-presents').textContent = totalPresG;
     document.getElementById('eff-total-absents').textContent = totalAbsG;
+    document.getElementById('eff-total-general').textContent = totalFillesG + totalGarconsG;
   } catch (e) {
     console.error('Erreur chargement effectif global:', e);
     var tbodyErr = document.getElementById('eff-tbody');
