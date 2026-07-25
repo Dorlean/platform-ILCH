@@ -123,6 +123,11 @@
     white-space: nowrap;
     -webkit-overflow-scrolling: touch;
   }
+  .notes-table {
+    display: block;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
 
   /* GRILLES — 1 colonne */
   .books-grid {

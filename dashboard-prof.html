@@ -156,7 +156,7 @@
     .status-draft{color:var(--muted)}
 
     /* NOTES MGT */
-    .notes-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem}
+    .notes-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem;flex-wrap:wrap;gap:10px}
     .class-select{border:1px solid var(--border);padding:7px 12px;font-size:13px;background:var(--white);font-family:'Inter',sans-serif;outline:none}
     .notes-table{width:100%;border-collapse:collapse;background:var(--white);border:0.5px solid var(--border)}
     .notes-table th{background:var(--navy);color:var(--white);font-size:11px;font-weight:600;letter-spacing:0.05em;text-transform:uppercase;padding:12px 16px;text-align:left}
@@ -186,7 +186,9 @@
     .thread-messages{flex:1;padding:14px 16px;overflow-y:auto;display:flex;flex-direction:column;gap:10px;background:var(--cream)}
     .msg-bubble{max-width:72%;padding:9px 13px;font-size:12px;line-height:1.55}
     .msg-bubble.received{background:var(--white);border:0.5px solid var(--border);color:var(--text);align-self:flex-start}
-    .msg-bubble.sent{background:var(--navy);color:rgba(255,255,255,0.9);align-self:flex-end}
+    .msg-bubble.sent{background:var(--navy);color:rgba(255,255,255,0.9);align-self:flex-end;padding-right:32px}
+    .msg-delete-btn{position:absolute;top:6px;right:6px;background:none;border:none;color:rgba(255,255,255,0.5);cursor:pointer;padding:2px;font-size:12px;transition:color 0.15s}
+    .msg-delete-btn:hover{color:#fff}
     .msg-time{font-size:10px;margin-top:4px;opacity:0.45}
     .thread-input{padding:10px 14px;border-top:0.5px solid var(--border);display:flex;gap:8px;align-items:center;background:var(--white)}
     .thread-input input{flex:1;border:1px solid var(--border);padding:9px 12px;font-size:13px;outline:none;background:var(--cream);font-family:'Inter',sans-serif;transition:border-color 0.15s}
@@ -515,22 +517,23 @@
         <div style="font-size:14px;font-weight:600;color:var(--navy)">Saisie des notes</div>
         <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
           <select class="class-select" id="notes-classe" onchange="chargerClasseNotes()"></select>
-          <select class="class-select" id="notes-matiere">
-            <option>Mathématiques</option><option>Français</option><option>Sciences</option>
-            <option>Histoire-Géographie</option><option>Anglais</option><option>Philosophie</option>
-          </select>
-          <select class="class-select" id="notes-trimestre">
+          <select class="class-select" id="notes-matiere" onchange="chargerClasseNotes()"></select>
+          <select class="class-select" id="notes-trimestre" onchange="chargerClasseNotes()">
             <option value="T1">Trimestre 1</option><option value="T2">Trimestre 2</option><option value="T3">Trimestre 3</option>
           </select>
-          <button class="save-notes-btn" onclick="saveNotes()">Enregistrer</button>
         </div>
       </div>
+      <div id="notes-alerte-securite" style="display:none;background:#FEF2F2;border:1px solid #FECACA;color:#DC2626;font-size:12px;padding:10px 14px;margin-bottom:10px"></div>
       <table class="notes-table">
-        <thead><tr><th>Élève</th><th>Note / 20</th><th>Appréciation</th></tr></thead>
+        <thead><tr><th>Élève</th><th>Note / 20</th><th>Appréciation</th><th>Statut</th></tr></thead>
         <tbody id="notes-tbody">
-          <tr><td colspan="3" style="text-align:center;color:var(--gray)">Choisissez une classe pour commencer.</td></tr>
+          <tr><td colspan="4" style="text-align:center;color:var(--gray)">Choisissez une classe pour commencer.</td></tr>
         </tbody>
       </table>
+      <div style="display:flex;gap:10px;margin-top:14px;flex-wrap:wrap">
+        <button class="save-notes-btn" onclick="saveNotes()"><i class="ti ti-device-floppy" aria-hidden="true"></i> Enregistrer</button>
+        <button class="save-notes-btn" style="background:var(--navy)" onclick="envoyerNotesResponsable()"><i class="ti ti-send" aria-hidden="true"></i> Envoyer au Responsable pédagogique</button>
+      </div>
     </div>
 
     <!-- MESSAGES -->
@@ -538,37 +541,18 @@
       <div class="msg-layout">
         <div class="msg-contacts">
           <div class="msg-contact-header">Élèves</div>
-          <div class="contact-item active" onclick="switchContact('Jean Pierre','Terminale A','JP',this)">
-            <div class="contact-avatar">JP</div>
-            <div style="min-width:0"><div class="contact-name">Jean Pierre</div><div class="contact-preview">Question exercice 3</div></div>
-            <div class="unread-dot"></div>
-          </div>
-          <div class="contact-item" onclick="switchContact('Marc Antoine','Terminale A','MA',this)">
-            <div class="contact-avatar" style="background:#1A3D6B">MA</div>
-            <div style="min-width:0"><div class="contact-name">Marc Antoine</div><div class="contact-preview">Puis-je remettre demain ?</div></div>
-            <div class="unread-dot"></div>
-          </div>
-          <div class="contact-item" onclick="switchContact('Sophie Marc','Terminale B','SM',this)">
-            <div class="contact-avatar" style="background:#0F3460">SM</div>
-            <div style="min-width:0"><div class="contact-name">Sophie Marc</div><div class="contact-preview">Merci professeure !</div></div>
-          </div>
-          <div class="contact-item" onclick="switchContact('Claire Dupont','Terminale A','CD',this)">
-            <div class="contact-avatar" style="background:#16213E">CD</div>
-            <div style="min-width:0"><div class="contact-name">Claire Dupont</div><div class="contact-preview">Bonjour professeure</div></div>
-          </div>
+          <div id="msg-contacts-liste"><div style="padding:1rem;font-size:12px;color:var(--gray)">Chargement des élèves...</div></div>
         </div>
         <div class="msg-thread">
           <div class="thread-header">
-            <div class="thread-avatar" id="thread-avatar">JP</div>
-            <div><strong id="thread-name">Jean Pierre</strong><br><span id="thread-sub">Terminale A</span></div>
+            <div class="thread-avatar" id="thread-avatar">—</div>
+            <div><strong id="thread-name">Choisissez un élève</strong><br><span id="thread-sub"></span></div>
           </div>
           <div class="thread-messages" id="thread-msgs">
-            <div class="msg-bubble received">Bonjour professeure, j'ai du mal avec l'exercice 3 du cours sur les équations. Je ne comprends pas la partie sur le discriminant.<div class="msg-time">Aujourd'hui, 10h12</div></div>
-            <div class="msg-bubble sent">Bonjour Jean, le discriminant est Δ = b² − 4ac. Si Δ > 0, il y a deux solutions. Essaie de refaire l'exercice avec cette formule.<div class="msg-time">Aujourd'hui, 10h40</div></div>
-            <div class="msg-bubble received">Merci professeure, je vais réessayer tout de suite !<div class="msg-time">Aujourd'hui, 10h45</div></div>
+            <div style="padding:2rem;text-align:center;font-size:12px;color:var(--gray)">Sélectionnez un élève à gauche pour voir la conversation.</div>
           </div>
           <div class="thread-input">
-            <input type="text" id="msg-input" placeholder="Répondre à l'élève...">
+            <input type="text" id="msg-input" placeholder="Répondre à l'élève..." disabled>
             <button class="send-btn" onclick="sendMsg()" aria-label="Envoyer"><i class="ti ti-send" aria-hidden="true"></i></button>
           </div>
         </div>
@@ -613,32 +597,6 @@
   function toggleUpload(){
     var f=document.getElementById('upload-form');
     f.classList.toggle('open');
-  }
-
-  function switchContact(name,sub,initials,el){
-    document.querySelectorAll('.contact-item').forEach(function(i){i.classList.remove('active')});
-    el.classList.add('active');
-    var dot=el.querySelector('.unread-dot');
-    if(dot)dot.remove();
-    document.getElementById('thread-name').textContent=name;
-    document.getElementById('thread-sub').textContent=sub;
-    document.getElementById('thread-avatar').textContent=initials;
-    var msgs=document.getElementById('thread-msgs');
-    msgs.innerHTML='<div class="msg-bubble received">Bonjour professeure, j\'ai une question.<div class="msg-time">Aujourd\'hui</div></div>';
-  }
-
-  function sendMsg(){
-    var inp=document.getElementById('msg-input');
-    var txt=inp.value.trim();
-    if(!txt)return;
-    var msgs=document.getElementById('thread-msgs');
-    var b=document.createElement('div');
-    b.className='msg-bubble sent';
-    b.innerHTML=txt+'<div class="msg-time">À l\'instant</div>';
-    msgs.appendChild(b);
-    msgs.scrollTop=msgs.scrollHeight;
-    inp.value='';
-    showToast('Message envoyé');
   }
 
   function showToast(msg){
@@ -1094,7 +1052,7 @@ window.deleteDevoirFirebase = async function(id) {
 
 // ── NOTES Firebase ─────────────────────────────────────────
 
-window.saveNoteFirebase = async function(data) {
+window.saveNoteFirebase = async function(data, statutForce) {
   try {
     const existing = await getDocs(
       query(collection(db, 'notes'),
@@ -1104,16 +1062,23 @@ window.saveNoteFirebase = async function(data) {
       )
     );
     if (!existing.empty) {
-      await updateDoc(doc(db, 'notes', existing.docs[0].id), data);
+      var docExistant = existing.docs[0].data();
+      var nouveauStatut = statutForce || docExistant.statut || 'brouillon';
+      var maj = Object.assign({}, data, { statut: nouveauStatut, updatedAt: new Date().toISOString() });
+      // Si on renvoie une note qui avait été rejetée, on efface l'ancien commentaire
+      if (nouveauStatut === 'en_attente') { maj.commentaireResponsable = null; maj.dateEnvoi = new Date().toISOString(); }
+      await updateDoc(doc(db, 'notes', existing.docs[0].id), maj);
+      return existing.docs[0].id;
     } else {
-      await addDoc(collection(db, 'notes'), {
+      var nouveauDoc = await addDoc(collection(db, 'notes'), {
         ...data,
+        statut: statutForce || 'brouillon',
         profId: user.id || 'demo',
         createdAt: new Date().toISOString()
       });
+      return nouveauDoc.id;
     }
-    if (typeof showToast === 'function') showToast('Note sauvegardée dans Firebase ✓');
-  } catch(e) { console.error('Erreur note Firebase:', e); }
+  } catch(e) { console.error('Erreur note Firebase:', e); return null; }
 };
 
 // ── SAISIE DES NOTES — classes réelles + envoi au responsable ──
@@ -1121,8 +1086,13 @@ onSnapshot(collection(db, 'matieres'), function(snap) {
   var matieres = snap.docs.map(function(d) { return d.data(); });
   if (!matieres.length) return;
 
+  // Sécurité : le professeur ne doit voir/choisir que les matières qu'il enseigne réellement
+  var mesMatieres = Array.isArray(user.matieres) && user.matieres.length
+    ? matieres.filter(function(m) { return user.matieres.indexOf(m.nom) !== -1; })
+    : matieres;
+
   var selNotes = document.getElementById('notes-matiere');
-  if (selNotes) selNotes.innerHTML = matieres.map(function(m) { return '<option value="' + m.nom + '" data-coef="' + (m.coefficient || 1) + '">' + m.nom + ' (coef. ' + (m.coefficient || 1) + ')</option>'; }).join('');
+  if (selNotes) selNotes.innerHTML = mesMatieres.map(function(m) { return '<option value="' + m.nom + '" data-coef="' + (m.coefficient || 1) + '">' + m.nom + ' (coef. ' + (m.coefficient || 1) + ')</option>'; }).join('') || '<option value="">Aucune matière attribuée</option>';
 
   var optionsSimples = matieres.map(function(m) { return '<option value="' + m.nom + '">' + m.nom + '</option>'; }).join('');
   var selDirect = document.getElementById('direct-matiere');
@@ -1134,33 +1104,73 @@ onSnapshot(collection(db, 'matieres'), function(snap) {
 function remplirClassesNotes() {
   var sel = document.getElementById('notes-classe');
   if (!sel) return;
-  var mesClasses = Array.isArray(user.classes) && user.classes.length ? user.classes : ['Terminale A', 'Terminale B'];
-  sel.innerHTML = mesClasses.map(function(c) { return '<option value="' + c + '">' + c + '</option>'; }).join('');
+  // Sécurité : uniquement les classes réellement attribuées à ce professeur — aucun repli
+  // vers des classes par défaut, pour ne jamais donner accès à une classe non assignée.
+  var mesClasses = Array.isArray(user.classes) ? user.classes : [];
+  sel.innerHTML = mesClasses.length
+    ? mesClasses.map(function(c) { return '<option value="' + c + '">' + c + '</option>'; }).join('')
+    : '<option value="">Aucune classe attribuée</option>';
 }
 setTimeout(remplirClassesNotes, 300);
 
+var STATUT_LABELS_NOTES = {
+  brouillon: '<span class="badge" style="background:var(--gray-light,#F3F4F6);color:var(--gray)">Non envoyée</span>',
+  en_attente: '<span class="badge" style="background:#FEF3C7;color:#92400E">⏳ En attente de validation</span>',
+  valide: '<span class="badge" style="background:#DCFCE7;color:#166534">✓ Validée</span>',
+  rejete: '<span class="badge" style="background:#FEE2E2;color:#991B1B">✗ Refusée</span>'
+};
+
 window.chargerClasseNotes = async function() {
   var classe = document.getElementById('notes-classe').value;
+  var matiere = document.getElementById('notes-matiere').value;
+  var trimestre = document.getElementById('notes-trimestre').value;
   var tbody = document.getElementById('notes-tbody');
-  tbody.innerHTML = '<tr><td colspan="3" style="text-align:center;color:var(--gray)">Chargement...</td></tr>';
+  var alerte = document.getElementById('notes-alerte-securite');
+  alerte.style.display = 'none';
+
+  // Sécurité : refuse toute classe qui n'est pas explicitement attribuée à ce professeur
+  var mesClasses = Array.isArray(user.classes) ? user.classes : [];
+  if (!classe || mesClasses.indexOf(classe) === -1) {
+    tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;color:var(--gray)">Choisissez une classe pour commencer.</td></tr>';
+    if (classe) {
+      alerte.textContent = "⚠ Accès refusé : cette classe ne vous est pas attribuée.";
+      alerte.style.display = 'block';
+    }
+    return;
+  }
+
+  tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;color:var(--gray)">Chargement...</td></tr>';
 
   try {
     var snap = await getDocs(query(collection(db, 'eleves'), where('classe', '==', classe)));
     var eleves = snap.docs.map(function(d) { return { id: d.id, ...d.data() }; });
     if (!eleves.length) {
-      tbody.innerHTML = '<tr><td colspan="3" style="text-align:center;color:var(--gray)">Aucun élève dans cette classe.</td></tr>';
+      tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;color:var(--gray)">Aucun élève dans cette classe.</td></tr>';
       return;
     }
+
+    // Charge les notes déjà saisies pour cette classe/matière/trimestre (pour préremplir + afficher le statut)
+    var notesExistantes = {};
+    if (matiere) {
+      var snapNotes = await getDocs(query(collection(db, 'notes'), where('classe', '==', classe), where('matiere', '==', matiere), where('trimestre', '==', trimestre)));
+      snapNotes.forEach(function(d) { notesExistantes[d.data().eleveId] = d.data(); });
+    }
+
     tbody.innerHTML = eleves.map(function(e) {
+      var existante = notesExistantes[e.id];
+      var statut = existante ? (existante.statut || 'brouillon') : null;
+      var commentaire = (existante && existante.statut === 'rejete' && existante.commentaireResponsable)
+        ? '<div style="font-size:11px;color:#991B1B;margin-top:4px"><i class="ti ti-message-report" aria-hidden="true"></i> ' + existante.commentaireResponsable + '</div>' : '';
       return '<tr data-eleve-id="' + e.id + '" data-eleve-nom="' + (e.prenom + ' ' + e.nom).replace(/"/g, '') + '">' +
         '<td>' + e.prenom + ' ' + e.nom + '</td>' +
-        '<td><input type="number" min="0" max="20" step="0.5" class="note-input" placeholder="—"></td>' +
-        '<td><input type="text" class="appreciation-input" placeholder="Appréciation" style="width:100%;border:1px solid var(--border);padding:5px 8px;font-size:13px;background:var(--cream);outline:none;font-family:\'Inter\',sans-serif"></td>' +
+        '<td><input type="number" min="0" max="20" step="0.5" class="note-input" placeholder="—" value="' + (existante ? existante.note : '') + '"></td>' +
+        '<td><input type="text" class="appreciation-input" placeholder="Appréciation" value="' + (existante && existante.appreciation ? existante.appreciation.replace(/"/g, '') : '') + '" style="width:100%;border:1px solid var(--border);padding:5px 8px;font-size:13px;background:var(--cream);outline:none;font-family:\'Inter\',sans-serif"></td>' +
+        '<td>' + (statut ? STATUT_LABELS_NOTES[statut] : '<span style="font-size:11px;color:var(--gray)">—</span>') + commentaire + '</td>' +
       '</tr>';
     }).join('');
   } catch (e) {
     console.error(e);
-    tbody.innerHTML = '<tr><td colspan="3" style="text-align:center;color:var(--red)">Erreur de chargement.</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;color:var(--red)">Erreur de chargement. Vérifiez votre connexion et réessayez.</td></tr>';
   }
 };
 
@@ -1170,7 +1180,20 @@ window.saveNotes = async function() {
   var matiere = selMatiere.value;
   var trimestre = document.getElementById('notes-trimestre').value;
   var rows = document.querySelectorAll('#notes-tbody tr[data-eleve-id]');
+  var alerte = document.getElementById('notes-alerte-securite');
+  alerte.style.display = 'none';
+
   if (!rows.length) { if (typeof showToast === 'function') showToast('Chargez une classe avant d\'enregistrer'); return; }
+  if (!matiere) { if (typeof showToast === 'function') showToast('Choisissez une matière'); return; }
+
+  // Sécurité : vérifie que la classe ET la matière sont bien attribuées à ce professeur
+  var mesClasses = Array.isArray(user.classes) ? user.classes : [];
+  var mesMatieres = Array.isArray(user.matieres) ? user.matieres : [];
+  if (mesClasses.indexOf(classe) === -1 || mesMatieres.indexOf(matiere) === -1) {
+    alerte.textContent = "⚠ Enregistrement refusé : vous n'êtes pas autorisé(e) pour cette classe ou cette matière.";
+    alerte.style.display = 'block';
+    return;
+  }
 
   var optionSelectionnee = selMatiere.options[selMatiere.selectedIndex];
   var coefficient = optionSelectionnee ? Number(optionSelectionnee.getAttribute('data-coef')) || 1 : 1;
@@ -1191,20 +1214,60 @@ window.saveNotes = async function() {
       coefficient: coefficient,
       trimestre: trimestre,
       note: Number(noteVal),
-      appreciation: appreciation,
-      envoyeResponsable: true
+      appreciation: appreciation
     });
     nbEnregistrees++;
   }
 
-  if (nbEnregistrees > 0 && typeof envoyerNotification === 'function') {
-    envoyerNotification('responsable', null, 'Notes reçues — ' + classe,
-      (user.prenom || 'Un professeur') + ' ' + (user.nom || '') + ' a transmis ' + nbEnregistrees + ' note(s) en ' + matiere + ' (coef. ' + coefficient + ', ' + trimestre + ') pour ' + classe + '.',
-      'info', (user.prenom || 'Professeur') + ' ' + (user.nom || '') + ' — Professeur');
+  if (typeof showToast === 'function') {
+    showToast(nbEnregistrees + ' note(s) enregistrée(s). Cliquez « Envoyer au Responsable pédagogique » quand vous êtes prêt(e) ✓');
+  }
+  chargerClasseNotes();
+};
+
+window.envoyerNotesResponsable = async function() {
+  var classe = document.getElementById('notes-classe').value;
+  var selMatiere = document.getElementById('notes-matiere');
+  var matiere = selMatiere.value;
+  var trimestre = document.getElementById('notes-trimestre').value;
+  var alerte = document.getElementById('notes-alerte-securite');
+  alerte.style.display = 'none';
+
+  if (!classe || !matiere) { if (typeof showToast === 'function') showToast('Choisissez une classe et une matière'); return; }
+
+  // Sécurité : mêmes vérifications que pour l'enregistrement
+  var mesClasses = Array.isArray(user.classes) ? user.classes : [];
+  var mesMatieres = Array.isArray(user.matieres) ? user.matieres : [];
+  if (mesClasses.indexOf(classe) === -1 || mesMatieres.indexOf(matiere) === -1) {
+    alerte.textContent = "⚠ Envoi refusé : vous n'êtes pas autorisé(e) pour cette classe ou cette matière.";
+    alerte.style.display = 'block';
+    return;
   }
 
-  if (typeof showToast === 'function') {
-    showToast(nbEnregistrees + ' note(s) enregistrée(s) et transmise(s) au responsable pédagogique ✓');
+  if (!confirm('Envoyer les notes de ' + classe + ' en ' + matiere + ' (' + trimestre + ') au Responsable pédagogique pour validation ?')) return;
+
+  try {
+    var snapNotes = await getDocs(query(collection(db, 'notes'), where('classe', '==', classe), where('matiere', '==', matiere), where('trimestre', '==', trimestre)));
+    if (snapNotes.empty) { if (typeof showToast === 'function') showToast('Aucune note enregistrée à envoyer — utilisez d\'abord « Enregistrer »'); return; }
+
+    var nb = 0;
+    for (var i = 0; i < snapNotes.docs.length; i++) {
+      await updateDoc(doc(db, 'notes', snapNotes.docs[i].id), {
+        statut: 'en_attente', commentaireResponsable: null, dateEnvoi: new Date().toISOString()
+      });
+      nb++;
+    }
+
+    if (typeof envoyerNotification === 'function') {
+      envoyerNotification('responsable', null, 'Notes en attente de validation — ' + classe,
+        (user.prenom || 'Un professeur') + ' ' + (user.nom || '') + ' a transmis ' + nb + ' note(s) en ' + matiere + ' (' + trimestre + ') pour ' + classe + '. En attente de votre validation.',
+        'info', (user.prenom || 'Professeur') + ' ' + (user.nom || '') + ' — Professeur');
+    }
+    if (typeof showToast === 'function') showToast(nb + ' note(s) envoyée(s) au Responsable pédagogique ✓');
+    chargerClasseNotes();
+  } catch (e) {
+    console.error('Erreur envoi notes:', e);
+    if (typeof showToast === 'function') showToast("L'envoi a échoué. Vérifiez votre connexion et réessayez.");
   }
 };
 
@@ -1222,6 +1285,130 @@ window.envoyerMessageFirebase = async function(destinataireId, contenu) {
       date: new Date().toISOString()
     });
   } catch(e) { console.error(e); }
+};
+
+// ── Messagerie réelle : liste des élèves de mes classes ─────
+var contactActifId = null;
+var contactActifNom = '';
+var desabonnerThread = null;
+
+async function chargerContactsMessagerie() {
+  var conteneur = document.getElementById('msg-contacts-liste');
+  var mesClasses = Array.isArray(user.classes) ? user.classes : [];
+  if (!mesClasses.length) {
+    conteneur.innerHTML = '<div style="padding:1rem;font-size:12px;color:var(--gray)">Aucune classe attribuée.</div>';
+    return;
+  }
+  try {
+    var tousLesEleves = [];
+    for (var i = 0; i < mesClasses.length; i++) {
+      var snap = await getDocs(query(collection(db, 'eleves'), where('classe', '==', mesClasses[i])));
+      snap.forEach(function(d) { tousLesEleves.push({ id: d.id, ...d.data() }); });
+    }
+    if (!tousLesEleves.length) {
+      conteneur.innerHTML = '<div style="padding:1rem;font-size:12px;color:var(--gray)">Aucun élève dans vos classes.</div>';
+      return;
+    }
+    tousLesEleves.sort(function(a, b) { return (a.nom || '').localeCompare(b.nom || ''); });
+    conteneur.innerHTML = tousLesEleves.map(function(e) {
+      var initiales = ((e.prenom || ' ')[0] || '') + ((e.nom || ' ')[0] || '');
+      return '<div class="contact-item" data-eleve-id="' + e.id + '" onclick="ouvrirConversation(\'' + e.id + '\',\'' + (e.prenom + ' ' + e.nom).replace(/'/g, "\\'") + '\',\'' + (e.classe || '').replace(/'/g, "\\'") + '\',\'' + initiales.toUpperCase() + '\',this)">' +
+        '<div class="contact-avatar">' + initiales.toUpperCase() + '</div>' +
+        '<div style="min-width:0"><div class="contact-name">' + e.prenom + ' ' + e.nom + '</div><div class="contact-preview">' + (e.classe || '') + '</div></div>' +
+        '</div>';
+    }).join('');
+  } catch (e) {
+    console.error('Erreur chargement contacts messagerie:', e);
+    conteneur.innerHTML = '<div style="padding:1rem;font-size:12px;color:var(--red)">Erreur de chargement.</div>';
+  }
+}
+setTimeout(chargerContactsMessagerie, 400);
+
+window.ouvrirConversation = function(eleveId, nomComplet, classe, initiales, el) {
+  document.querySelectorAll('#msg-contacts-liste .contact-item').forEach(function(i) { i.classList.remove('active'); });
+  if (el) el.classList.add('active');
+  contactActifId = eleveId;
+  contactActifNom = nomComplet;
+  document.getElementById('thread-name').textContent = nomComplet;
+  document.getElementById('thread-sub').textContent = classe;
+  document.getElementById('thread-avatar').textContent = initiales;
+  document.getElementById('msg-input').disabled = false;
+
+  var msgsBox = document.getElementById('thread-msgs');
+  msgsBox.innerHTML = '<div style="padding:1rem;text-align:center;font-size:12px;color:var(--gray)">Chargement de la conversation...</div>';
+
+  if (typeof desabonnerThread === 'function') desabonnerThread();
+
+  // Firestore n'autorise pas deux clauses "in" dans la même requête : on écoute donc
+  // séparément les messages envoyés et reçus, puis on les fusionne à l'affichage.
+  var messagesEnvoyes = [], messagesRecus = [];
+  function fusionnerEtAfficher() {
+    var tous = messagesEnvoyes.concat(messagesRecus);
+    tous.sort(function(a, b) { return new Date(a.date) - new Date(b.date); });
+    rendreThreadMessages(tous);
+  }
+  var stop1 = onSnapshot(
+    query(collection(db, 'messages'), where('expediteurId', '==', user.id), where('destinataireId', '==', eleveId)),
+    function(snap) { messagesEnvoyes = snap.docs.map(function(d) { return { id: d.id, ...d.data() }; }); fusionnerEtAfficher(); },
+    function(err) { console.error('Erreur écoute messages envoyés:', err); }
+  );
+  var stop2 = onSnapshot(
+    query(collection(db, 'messages'), where('expediteurId', '==', eleveId), where('destinataireId', '==', user.id)),
+    function(snap) { messagesRecus = snap.docs.map(function(d) { return { id: d.id, ...d.data() }; }); fusionnerEtAfficher(); },
+    function(err) { console.error('Erreur écoute messages reçus:', err); }
+  );
+  desabonnerThread = function() { stop1(); stop2(); };
+};
+
+function rendreThreadMessages(messages) {
+  var msgsBox = document.getElementById('thread-msgs');
+  if (!messages.length) {
+    msgsBox.innerHTML = '<div style="padding:2rem;text-align:center;font-size:12px;color:var(--gray)">Aucun message pour le moment. Écrivez le premier message ci-dessous.</div>';
+    return;
+  }
+  msgsBox.innerHTML = messages.map(function(m) {
+    var estMoi = m.expediteurId === user.id;
+    var heure = m.date ? new Date(m.date).toLocaleString('fr-FR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' }) : '';
+    var btnSupprimer = estMoi ? '<button class="msg-delete-btn" title="Supprimer ce message" onclick="supprimerMessage(\'' + m.id + '\')"><i class="ti ti-trash" aria-hidden="true"></i></button>' : '';
+    return '<div class="msg-bubble ' + (estMoi ? 'sent' : 'received') + '" style="position:relative">' + (m.contenu || '').replace(/</g, '&lt;') +
+      '<div class="msg-time">' + heure + '</div>' + btnSupprimer + '</div>';
+  }).join('');
+  msgsBox.scrollTop = msgsBox.scrollHeight;
+}
+
+window.sendMsg = async function() {
+  var inp = document.getElementById('msg-input');
+  var txt = inp.value.trim();
+  if (!txt) return;
+  if (!contactActifId) { if (typeof showToast === 'function') showToast('Choisissez un élève avant d\'envoyer un message'); return; }
+  inp.value = '';
+  try {
+    await envoyerMessageFirebase(contactActifId, txt);
+    // Le message apparaîtra automatiquement via l'écoute en temps réel (onSnapshot)
+  } catch (e) {
+    console.error('Erreur envoi message:', e);
+    if (typeof showToast === 'function') showToast("L'envoi du message a échoué. Vérifiez votre connexion.");
+  }
+};
+
+window.supprimerMessage = async function(messageId) {
+  if (!confirm('Êtes-vous sûr de vouloir supprimer ce message ?')) return;
+  try {
+    // Sécurité : on ne supprime que si le message appartient bien au professeur connecté
+    var snap = await getDocs(query(collection(db, 'messages'), where('__name__', '==', messageId)));
+    if (snap.empty) return;
+    var msgData = snap.docs[0].data();
+    if (msgData.expediteurId !== user.id) {
+      if (typeof showToast === 'function') showToast('Vous ne pouvez supprimer que vos propres messages.');
+      return;
+    }
+    await deleteDoc(doc(db, 'messages', messageId));
+    if (typeof showToast === 'function') showToast('Message supprimé ✓');
+    // La conversation se met à jour automatiquement (onSnapshot) sans recharger la page
+  } catch (e) {
+    console.error('Erreur suppression message:', e);
+    if (typeof showToast === 'function') showToast('La suppression a échoué. Réessayez.');
+  }
 };
 
 // ── ANNONCES Firebase ──────────────────────────────────────

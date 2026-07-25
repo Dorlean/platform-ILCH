@@ -521,6 +521,14 @@
     <!-- NOTES -->
     <div class="panel" id="panel-notes">
       <div class="section-hdr">
+        <div class="section-hdr-title">Notes en attente de validation</div>
+      </div>
+      <table class="data-table" id="tbl-notes-attente" style="margin-bottom:1.5rem">
+        <thead><tr><th>Professeur</th><th>Élève</th><th>Classe</th><th>Matière</th><th>Note / 20</th><th>Envoyée le</th><th>Actions</th></tr></thead>
+        <tbody id="tbody-notes-attente"><tr><td colspan="7" style="text-align:center;color:var(--muted);padding:1.5rem">Aucune note en attente pour le moment.</td></tr></tbody>
+      </table>
+
+      <div class="section-hdr">
         <div class="section-hdr-title">Notes d'évaluation — détail par matière</div>
         <button class="btn btn-teal" onclick="showToast('Export PDF téléchargé')"><i class="ti ti-download" aria-hidden="true"></i>Exporter PDF</button>
       </div>
@@ -529,11 +537,30 @@
         <tbody id="tbody-notes"></tbody>
       </table>
 
-      <div class="section-hdr" style="margin-top:1.5rem"><div class="section-hdr-title">Moyennes pondérées par élève (selon coefficient des matières)</div></div>
+      <div class="section-hdr" style="margin-top:1.5rem"><div class="section-hdr-title">Moyennes pondérées par élève (notes validées uniquement)</div></div>
       <table class="data-table" id="tbl-moyennes">
         <thead><tr><th>Élève</th><th>Classe</th><th>Matières évaluées</th><th>Moyenne pondérée / 20</th></tr></thead>
         <tbody id="tbody-moyennes"></tbody>
       </table>
+    </div>
+
+    <!-- Modale de refus avec commentaire -->
+    <div class="modal-overlay" id="modal-refus-note">
+      <div class="modal">
+        <div class="modal-header">
+          <div class="modal-title">Refuser cette note</div>
+          <button class="modal-close" onclick="closeModal('modal-refus-note')"><i class="ti ti-x" aria-hidden="true"></i></button>
+        </div>
+        <div class="modal-body">
+          <div class="form-group"><label>Commentaire pour le professeur (obligatoire)</label>
+            <textarea id="refus-note-commentaire" rows="4" placeholder="Expliquez la correction demandée..." style="width:100%;resize:vertical;border:1px solid var(--border);padding:8px;font-family:'Inter',sans-serif;font-size:13px"></textarea>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button class="btn btn-danger" onclick="confirmerRefusNote()"><i class="ti ti-x" aria-hidden="true"></i>Refuser et notifier le professeur</button>
+          <button class="btn btn-sm" onclick="closeModal('modal-refus-note')">Annuler</button>
+        </div>
+      </div>
     </div>
 
     <!-- ABSENCES -->
@@ -851,16 +878,48 @@ function renderProfs(){
   }).join('');
 }
 
+var STATUT_LABELS_NOTES_RESP = {
+  brouillon: '<span class="badge" style="background:var(--gray-light,#F3F4F6);color:var(--gray)">Non envoyée</span>',
+  en_attente: '<span class="badge" style="background:#FEF3C7;color:#92400E">⏳ En attente</span>',
+  valide: '<span class="badge badge-good">✓ Validée</span>',
+  rejete: '<span class="badge" style="background:#FEE2E2;color:#991B1B">✗ Refusée</span>'
+};
+
 function renderNotes(){
   var eleves=getElevesSection();
   var tb=document.getElementById('tbody-notes');
   var tbMoy=document.getElementById('tbody-moyennes');
+  var tbAttente=document.getElementById('tbody-notes-attente');
   if(!eleves.length){
     tb.innerHTML='<tr><td colspan="6"><div class="empty-state"><i class="ti ti-chart-bar" aria-hidden="true"></i><p>Aucun élève dans cette section.</p></div></td></tr>';
     if(tbMoy) tbMoy.innerHTML='<tr><td colspan="4"><div class="empty-state"><i class="ti ti-chart-bar" aria-hidden="true"></i><p>Aucun élève dans cette section.</p></div></td></tr>';
+    if(tbAttente) tbAttente.innerHTML='<tr><td colspan="7" style="text-align:center;color:var(--muted);padding:1.5rem">Aucun élève dans cette section.</td></tr>';
     return;
   }
   var notes=DB.get('notes').filter(function(n){return eleves.find(function(e){return e.id===n.eleveId;});});
+  var profs=DB.get('profs');
+
+  // ── File d'attente de validation ──
+  if(tbAttente){
+    var enAttente=notes.filter(function(n){return n.statut==='en_attente';});
+    if(!enAttente.length){
+      tbAttente.innerHTML='<tr><td colspan="7" style="text-align:center;color:var(--muted);padding:1.5rem">Aucune note en attente pour le moment.</td></tr>';
+    } else {
+      tbAttente.innerHTML=enAttente.map(function(n){
+        var e=eleves.find(function(x){return x.id===n.eleveId;})||{prenom:'?',nom:'',classe:''};
+        var p=profs.find(function(x){return x.id===n.profId;});
+        var profNom=p?(p.prenom+' '+p.nom):'—';
+        var dateEnvoi=n.dateEnvoi?new Date(n.dateEnvoi).toLocaleDateString('fr-FR'):'—';
+        return '<tr><td>'+profNom+'</td><td><strong>'+e.prenom+' '+e.nom+'</strong></td><td>'+e.classe+'</td><td>'+n.matiere+'</td>'+
+          '<td>'+n.note+'/20</td><td>'+dateEnvoi+'</td>'+
+          '<td><div class="tbl-actions">'+
+            '<button class="btn btn-teal" style="padding:5px 10px" onclick="validerNote(\''+n.id+'\')"><i class="ti ti-check" aria-hidden="true"></i> Valider</button>'+
+            '<button class="btn btn-danger" style="padding:5px 10px" onclick="ouvrirRefusNote(\''+n.id+'\')"><i class="ti ti-x" aria-hidden="true"></i> Refuser</button>'+
+          '</div></td></tr>';
+      }).join('');
+    }
+  }
+
   if(!notes.length){
     tb.innerHTML='<tr><td colspan="6"><div class="empty-state"><i class="ti ti-chart-bar" aria-hidden="true"></i><p>Aucune note enregistrée pour cette section.</p></div></td></tr>';
     if(tbMoy) tbMoy.innerHTML='<tr><td colspan="4"><div class="empty-state"><i class="ti ti-chart-bar" aria-hidden="true"></i><p>Aucune note enregistrée pour cette section.</p></div></td></tr>';
@@ -870,15 +929,17 @@ function renderNotes(){
     var e=eleves.find(function(x){return x.id===n.eleveId;})||{prenom:'?',nom:'',classe:''};
     var cls=n.note>=14?'badge-good':n.note>=10?'badge-mid':'badge-low';
     var app=n.note>=16?'Très bien':n.note>=14?'Bien':n.note>=10?'Passable':'Insuffisant';
-    var statut=n.envoyeResponsable?'<span class="badge badge-good">✓ Transmise</span>':'<span class="badge badge-mid">—</span>';
+    var statut=STATUT_LABELS_NOTES_RESP[n.statut||'brouillon'];
+    var commentaire=(n.statut==='rejete'&&n.commentaireResponsable)?'<div style="font-size:10px;color:#991B1B;margin-top:3px">'+n.commentaireResponsable+'</div>':'';
     return '<tr><td><strong>'+e.prenom+' '+e.nom+'</strong></td><td>'+e.classe+'</td><td>'+n.matiere+'</td>'+
-      '<td><span class="badge '+cls+'">'+n.note+'/20</span></td><td>'+app+'</td><td>'+statut+'</td></tr>';
+      '<td><span class="badge '+cls+'">'+n.note+'/20</span></td><td>'+app+'</td><td>'+statut+commentaire+'</td></tr>';
   }).join('');
 
-  // ── Moyennes pondérées par élève (selon coefficient de chaque matière) ──
+  // ── Moyennes pondérées par élève — uniquement les notes VALIDÉES ──
   if(tbMoy){
+    var notesValidees=notes.filter(function(n){return n.statut==='valide';});
     var parEleve={};
-    notes.forEach(function(n){
+    notesValidees.forEach(function(n){
       if(!parEleve[n.eleveId]) parEleve[n.eleveId]={sommeNotesCoef:0,sommeCoef:0,matieres:[]};
       var coef=n.coefficient||1;
       parEleve[n.eleveId].sommeNotesCoef+=n.note*coef;
@@ -894,9 +955,63 @@ function renderNotes(){
         '<td style="font-size:11px;color:var(--gray)">'+d.matieres.join(', ')+'</td>'+
         '<td><span class="badge '+cls+'">'+moyenne+'/20</span></td></tr>';
     });
-    tbMoy.innerHTML=lignesMoy.join('')||'<tr><td colspan="4"><div class="empty-state"><p>Aucune moyenne calculable.</p></div></td></tr>';
+    tbMoy.innerHTML=lignesMoy.join('')||'<tr><td colspan="4"><div class="empty-state"><p>Aucune note validée pour le moment — les moyennes n\'incluent que les notes validées.</p></div></td></tr>';
   }
 }
+
+// ── Validation / refus des notes ────────────────────────────
+var noteEnRefusId = null;
+
+window.validerNote = async function(noteId) {
+  if (!confirm('Valider cette note ? Elle deviendra disponible pour les bulletins et relevés.')) return;
+  try {
+    var respUser = JSON.parse(sessionStorage.getItem('ilch_user') || '{}');
+    var noteData = DB.get('notes').find(function(n){return n.id===noteId;});
+    await window.updateDoc(window.doc(window.db, 'notes', noteId), {
+      statut: 'valide', dateValidation: new Date().toISOString(),
+      validateurNom: ((respUser.prenom||'')+' '+(respUser.nom||'')).trim() || 'Responsable Pédagogique'
+    });
+    if (noteData && typeof envoyerNotification === 'function') {
+      envoyerNotification('prof', noteData.profId, 'Note validée — '+noteData.classe,
+        'Votre note de '+(noteData.eleveNom||'un élève')+' en '+noteData.matiere+' a été validée par le Responsable pédagogique.',
+        'info', ((respUser.prenom||'')+' '+(respUser.nom||'')).trim()+' — Responsable Pédagogique');
+    }
+    if (typeof showToast === 'function') showToast('Note validée ✓');
+  } catch (e) {
+    console.error('Erreur validation note:', e);
+    if (typeof showToast === 'function') showToast('Erreur lors de la validation. Réessayez.');
+  }
+};
+
+window.ouvrirRefusNote = function(noteId) {
+  noteEnRefusId = noteId;
+  document.getElementById('refus-note-commentaire').value = '';
+  openModal('modal-refus-note');
+};
+
+window.confirmerRefusNote = async function() {
+  var commentaire = document.getElementById('refus-note-commentaire').value.trim();
+  if (!commentaire) { showToast('Le commentaire est obligatoire pour expliquer le refus'); return; }
+  if (!noteEnRefusId) return;
+  try {
+    var respUser = JSON.parse(sessionStorage.getItem('ilch_user') || '{}');
+    var noteData = DB.get('notes').find(function(n){return n.id===noteEnRefusId;});
+    await window.updateDoc(window.doc(window.db, 'notes', noteEnRefusId), {
+      statut: 'rejete', commentaireResponsable: commentaire, dateValidation: new Date().toISOString(),
+      validateurNom: ((respUser.prenom||'')+' '+(respUser.nom||'')).trim() || 'Responsable Pédagogique'
+    });
+    if (noteData && typeof envoyerNotification === 'function') {
+      envoyerNotification('prof', noteData.profId, 'Note refusée — '+noteData.classe,
+        'Votre note de '+(noteData.eleveNom||'un élève')+' en '+noteData.matiere+' a été refusée. Motif : '+commentaire,
+        'urgent', ((respUser.prenom||'')+' '+(respUser.nom||'')).trim()+' — Responsable Pédagogique');
+    }
+    closeModal('modal-refus-note');
+    if (typeof showToast === 'function') showToast('Note refusée — le professeur a été notifié');
+  } catch (e) {
+    console.error('Erreur refus note:', e);
+    if (typeof showToast === 'function') showToast('Erreur lors du refus. Réessayez.');
+  }
+};
 
 function renderAbsences(){
   var abs=getAbsSection();

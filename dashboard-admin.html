@@ -2811,11 +2811,12 @@ window.genererReleve = async function() {
 
   try {
     var snap = await getDocs(query(collection(db, 'notes'), where('eleveId', '==', eleveId), where('trimestre', '==', trimestre)));
-    var notes = snap.docs.map(function(d) { return d.data(); });
+    // Seules les notes VALIDÉES par le Responsable pédagogique apparaissent sur le relevé officiel
+    var notes = snap.docs.map(function(d) { return d.data(); }).filter(function(n) { return n.statut === 'valide'; });
 
     var tbody = document.getElementById('rel-doc-matieres');
     if (!notes.length) {
-      tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;color:var(--muted)">Aucune note enregistrée pour cette période.</td></tr>';
+      tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;color:var(--muted)">Aucune note validée pour cette période. Les notes doivent d\'abord être validées par le Responsable pédagogique.</td></tr>';
       document.getElementById('rel-doc-moyenne').textContent = '—';
     } else {
       var sommeNotesCoef = 0, sommeCoef = 0;

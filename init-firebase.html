@@ -59,6 +59,7 @@
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
 import { getFirestore, collection, addDoc, getDocs, deleteDoc, doc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+import { getAuth, createUserWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
 
 const firebaseConfig = {
   apiKey: "AIzaSyDjrBnsTu7CNWnqeqSm29-arbs8MPoTBJ0",
@@ -75,16 +76,16 @@ const db  = getFirestore(app);
 // ── Données d'exemple ──────────────────────────────────────
 
 const utilisateurs = [
-  {identifiant:'admin',       motDePasse:'ilch2026',    role:'admin',        prenom:'Jean',    nom:'Baptiste',   titre:'Directeur'},
-  {identifiant:'proprietaire',motDePasse:'owner2026',   role:'owner',        prenom:'Louis',   nom:'Chauvet',    titre:'Propriétaire'},
-  {identifiant:'resp.cycle1', motDePasse:'resp2026',    role:'responsable',  prenom:'Marie',   nom:'Joseph',     section:'cycle1',    sectionNom:'Fondamental Cycle 1'},
-  {identifiant:'resp.cycle2', motDePasse:'resp2026',    role:'responsable',  prenom:'Pierre',  nom:'André',      section:'cycle2',    sectionNom:'Fondamental Cycle 2'},
-  {identifiant:'resp.cycle3', motDePasse:'resp2026',    role:'responsable',  prenom:'Claire',  nom:'Dupont',     section:'cycle3',    sectionNom:'Fondamental Cycle 3'},
-  {identifiant:'resp.secondaire',motDePasse:'resp2026', role:'responsable',  prenom:'Robert',  nom:'Michel',     section:'secondaire',sectionNom:'Secondaire'},
-  {identifiant:'resp.prescolaire',motDePasse:'resp2026',role:'responsable',  prenom:'Anne',    nom:'François',   section:'prescolaire',sectionNom:'Préscolaire'},
-  {identifiant:'infirmiere',  motDePasse:'inf2026',     role:'infirmiere',   prenom:'Nadège',  nom:'Pierre',     titre:'Infirmière scolaire'},
-  {identifiant:'comptable',   motDePasse:'compta2026',  role:'comptable',    prenom:'Carole',  nom:'Jean-Louis', titre:'Comptable'},
-  {identifiant:'bibliothecaire',motDePasse:'bib2026',   role:'bibliotheque', prenom:'Judith',  nom:'Marcelin',   titre:'Bibliothécaire'},
+  {identifiant:'admin',       motDePasse:'ilch2026',    role:'admin',        prenom:'Jean',    nom:'Baptiste',   titre:'Directeur',  email:'admin@ilch-demo.org'},
+  {identifiant:'proprietaire',motDePasse:'owner2026',   role:'owner',        prenom:'Louis',   nom:'Chauvet',    titre:'Propriétaire', email:'proprietaire@ilch-demo.org'},
+  {identifiant:'resp.cycle1', motDePasse:'resp2026',    role:'responsable',  prenom:'Marie',   nom:'Joseph',     section:'cycle1',    sectionNom:'Fondamental Cycle 1', email:'resp.cycle1@ilch-demo.org'},
+  {identifiant:'resp.cycle2', motDePasse:'resp2026',    role:'responsable',  prenom:'Pierre',  nom:'André',      section:'cycle2',    sectionNom:'Fondamental Cycle 2', email:'resp.cycle2@ilch-demo.org'},
+  {identifiant:'resp.cycle3', motDePasse:'resp2026',    role:'responsable',  prenom:'Claire',  nom:'Dupont',     section:'cycle3',    sectionNom:'Fondamental Cycle 3', email:'resp.cycle3@ilch-demo.org'},
+  {identifiant:'resp.secondaire',motDePasse:'resp2026', role:'responsable',  prenom:'Robert',  nom:'Michel',     section:'secondaire',sectionNom:'Secondaire', email:'resp.secondaire@ilch-demo.org'},
+  {identifiant:'resp.prescolaire',motDePasse:'resp2026',role:'responsable',  prenom:'Anne',    nom:'François',   section:'prescolaire',sectionNom:'Préscolaire', email:'resp.prescolaire@ilch-demo.org'},
+  {identifiant:'infirmiere',  motDePasse:'inf2026',     role:'infirmiere',   prenom:'Nadège',  nom:'Pierre',     titre:'Infirmière scolaire', email:'infirmiere@ilch-demo.org'},
+  {identifiant:'comptable',   motDePasse:'compta2026',  role:'comptable',    prenom:'Carole',  nom:'Jean-Louis', titre:'Comptable', email:'comptable@ilch-demo.org'},
+  {identifiant:'bibliothecaire',motDePasse:'bib2026',   role:'bibliotheque', prenom:'Judith',  nom:'Marcelin',   titre:'Bibliothécaire', email:'bibliothecaire@ilch-demo.org'},
 ];
 
 const professeurs = [
@@ -157,12 +158,40 @@ function setProgress(pct) {
   document.getElementById('progress-bar').style.width = pct + '%';
 }
 
-async function addAll(colName, items, countId) {
+function identifiantVersEmail(id) {
+  return id.trim().toLowerCase().replace(/[^a-z0-9.]/g, '') + '@ilch.local';
+}
+
+// Utilise une app Firebase secondaire pour créer chaque compte, afin de ne jamais
+// modifier une éventuelle session déjà active dans ce navigateur.
+async function creerCompteAuth(email, motDePasse) {
+  var secondaryApp = initializeApp(firebaseConfig, 'Init-' + Date.now() + '-' + Math.random().toString(36).slice(2));
+  var secondaryAuth = getAuth(secondaryApp);
+  var cred = await createUserWithEmailAndPassword(secondaryAuth, email, motDePasse);
+  return cred.user.uid;
+}
+
+async function addAll(colName, items, countId, creerConnexion) {
   log('📁 Création collection "' + colName + '" (' + items.length + ' documents)...', 'info');
   let count = 0;
   for (const item of items) {
     try {
-      await addDoc(collection(db, colName), { ...item, dateCreation: new Date().toISOString() });
+      var authUid = null;
+      if (creerConnexion) {
+        // Crée le vrai compte de connexion Firebase Auth — sans cette étape,
+        // le document Firestore existe mais la connexion échoue toujours.
+        var emailAuth = item.email ? item.email.toLowerCase() : identifiantVersEmail(item.identifiant);
+        try {
+          authUid = await creerCompteAuth(emailAuth, item.motDePasse);
+        } catch (authErr) {
+          if (authErr.code === 'auth/email-already-in-use') {
+            log('ℹ️ Connexion déjà existante pour ' + item.identifiant + ' (compte déjà initialisé)', 'info');
+          } else {
+            log('⚠️ Connexion non créée pour ' + item.identifiant + ' : ' + authErr.message, 'err');
+          }
+        }
+      }
+      await addDoc(collection(db, colName), { ...item, authUid: authUid, dateCreation: new Date().toISOString() });
       count++;
       document.getElementById(countId).textContent = count;
     } catch(e) {
@@ -184,19 +213,19 @@ window.initAll = async function() {
   try {
     setProgress(5);
     log('👥 Ajout des utilisateurs (admin, propriétaire, responsables, personnel)...', 'info');
-    await addAll('utilisateurs', utilisateurs, 'cnt-users');
+    await addAll('utilisateurs', utilisateurs, 'cnt-users', true);
     setProgress(20);
 
     log('🎓 Ajout des professeurs...', 'info');
-    await addAll('professeurs', professeurs, 'cnt-profs');
+    await addAll('professeurs', professeurs, 'cnt-profs', true);
     setProgress(40);
 
     log('📚 Ajout des élèves...', 'info');
-    await addAll('eleves', eleves, 'cnt-eleves');
+    await addAll('eleves', eleves, 'cnt-eleves', true);
     setProgress(60);
 
     log('👨‍👩‍👧 Ajout des parents...', 'info');
-    await addAll('parents', parents, 'cnt-parents');
+    await addAll('parents', parents, 'cnt-parents', true);
     setProgress(75);
 
     log('📖 Ajout du catalogue bibliothèque...', 'info');
@@ -217,15 +246,19 @@ window.initAll = async function() {
     log('════════════════════════════════════════', 'info');
     log('', 'info');
     log('📋 COMPTES DE CONNEXION :', 'info');
-    log('Admin          → admin / ilch2026', 'ok');
-    log('Propriétaire   → proprietaire / owner2026', 'ok');
+    log('— Postes sensibles (connexion par e-mail, page /personnel) —', 'info');
+    log('Admin          → admin@ilch-demo.org / ilch2026', 'ok');
+    log('Propriétaire   → proprietaire@ilch-demo.org / owner2026', 'ok');
+    log('Responsable    → resp.cycle1@ilch-demo.org / resp2026', 'ok');
+    log('Infirmière     → infirmiere@ilch-demo.org / inf2026', 'ok');
+    log('Comptable      → comptable@ilch-demo.org / compta2026', 'ok');
+    log('Bibliothécaire → bibliothecaire@ilch-demo.org / bib2026', 'ok');
+    log('— Communauté scolaire (connexion par identifiant, page /login) —', 'info');
     log('Professeur     → prof.marie / prof2026', 'ok');
     log('Élève          → eleve.jean / eleve2026', 'ok');
     log('Parent         → parent.marie / parent2026', 'ok');
-    log('Responsable    → resp.cycle1 / resp2026', 'ok');
-    log('Infirmière     → infirmiere / inf2026', 'ok');
-    log('Comptable      → comptable / compta2026', 'ok');
-    log('Bibliothécaire → bibliothecaire / bib2026', 'ok');
+    log('', 'info');
+    log('⚠️ Ces comptes utilisent des adresses e-mail factices (@ilch-demo.org) qui ne reçoivent pas de vrais e-mails. Remplacez-les par de vraies adresses avant un usage réel.', 'err');
 
     document.getElementById('success-banner').style.display = 'block';
     btn.textContent = '✅ Terminé !';

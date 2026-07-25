@@ -170,7 +170,9 @@
     .thread-messages{flex:1;padding:14px 16px;overflow-y:auto;display:flex;flex-direction:column;gap:10px;background:var(--cream)}
     .msg-bubble{max-width:72%;padding:9px 13px;font-size:12px;line-height:1.55}
     .msg-bubble.received{background:var(--white);border:0.5px solid var(--border);color:var(--text);align-self:flex-start}
-    .msg-bubble.sent{background:var(--navy);color:rgba(255,255,255,0.9);align-self:flex-end}
+    .msg-bubble.sent{background:var(--navy);color:rgba(255,255,255,0.9);align-self:flex-end;padding-right:32px}
+    .msg-delete-btn{position:absolute;top:6px;right:6px;background:none;border:none;color:rgba(255,255,255,0.5);cursor:pointer;padding:2px;font-size:12px;transition:color 0.15s}
+    .msg-delete-btn:hover{color:#fff}
     .msg-time{font-size:10px;margin-top:4px;opacity:0.45}
     .thread-input{padding:10px 14px;border-top:0.5px solid var(--border);display:flex;gap:8px;align-items:center;background:var(--white)}
     .thread-input input{flex:1;border:1px solid var(--border);padding:9px 12px;font-size:13px;outline:none;background:var(--cream);font-family:'Inter',sans-serif;transition:border-color 0.15s}
@@ -399,41 +401,18 @@
       <div class="msg-layout">
         <div class="msg-contacts">
           <div class="msg-contact-header">Professeurs</div>
-          <div class="contact-item active" onclick="switchContact('Prof. René Joseph','Français','RJ',this)">
-            <div class="contact-avatar">RJ</div>
-            <div style="min-width:0"><div class="contact-name">Prof. René Joseph</div><div class="contact-preview">N'oubliez pas le devoir…</div></div>
-            <div class="unread-dot"></div>
-          </div>
-          <div class="contact-item" onclick="switchContact('Prof. Marie Céleste','Mathématiques','MC',this)">
-            <div class="contact-avatar" style="background:#1A3D6B">MC</div>
-            <div style="min-width:0"><div class="contact-name">Prof. Marie Céleste</div><div class="contact-preview">Très bon travail !</div></div>
-            <div class="unread-dot"></div>
-          </div>
-          <div class="contact-item" onclick="switchContact('Prof. Claire Blanc','Sciences','CB',this)">
-            <div class="contact-avatar" style="background:#0F3460">CB</div>
-            <div style="min-width:0"><div class="contact-name">Prof. Claire Blanc</div><div class="contact-preview">Dernier message</div></div>
-          </div>
-          <div class="contact-item" onclick="switchContact('Prof. Jean Luc','Histoire','JL',this)">
-            <div class="contact-avatar" style="background:#16213E">JL</div>
-            <div style="min-width:0"><div class="contact-name">Prof. Jean Luc</div><div class="contact-preview">Bonne lecture !</div></div>
-          </div>
-          <div class="contact-item" onclick="switchContact('Prof. Sandra Moreau','Anglais','SM',this)">
-            <div class="contact-avatar" style="background:#0D3B2E">SM</div>
-            <div style="min-width:0"><div class="contact-name">Prof. Sandra Moreau</div><div class="contact-preview">Bien joué</div></div>
-          </div>
+          <div id="msg-contacts-liste"><div style="padding:1rem;font-size:12px;color:var(--gray)">Chargement des professeurs...</div></div>
         </div>
         <div class="msg-thread">
           <div class="thread-header">
-            <div class="thread-avatar" id="thread-avatar">RJ</div>
-            <div><strong id="thread-name">Prof. René Joseph</strong><br><span id="thread-sub">Français</span></div>
+            <div class="thread-avatar" id="thread-avatar">—</div>
+            <div><strong id="thread-name">Choisissez un professeur</strong><br><span id="thread-sub"></span></div>
           </div>
           <div class="thread-messages" id="thread-msgs">
-            <div class="msg-bubble received">Bonjour Jean, n'oubliez pas de remettre votre devoir de rédaction demain matin.<div class="msg-time">Hier, 15h30</div></div>
-            <div class="msg-bubble sent">Bonjour professeur, bien reçu. J'ai presque terminé.<div class="msg-time">Hier, 16h00</div></div>
-            <div class="msg-bubble received">Parfait. Si vous avez des questions, écrivez-moi ici.<div class="msg-time">Hier, 16h05</div></div>
+            <div style="padding:2rem;text-align:center;font-size:12px;color:var(--gray)">Sélectionnez un professeur à gauche pour voir la conversation.</div>
           </div>
           <div class="thread-input">
-            <input type="text" id="msg-input" placeholder="Écrire un message au professeur...">
+            <input type="text" id="msg-input" placeholder="Écrire un message au professeur..." disabled>
             <button class="send-btn" onclick="sendMsg()" aria-label="Envoyer"><i class="ti ti-send" aria-hidden="true"></i></button>
           </div>
         </div>
@@ -523,32 +502,6 @@
     document.querySelectorAll('.video-card').forEach(function(c){
       c.style.display=(!subj||c.dataset.subject===subj)?'block':'none';
     });
-  }
-
-  function switchContact(name,sub,initials,el){
-    document.querySelectorAll('.contact-item').forEach(function(i){i.classList.remove('active')});
-    el.classList.add('active');
-    var dot=el.querySelector('.unread-dot');
-    if(dot)dot.remove();
-    document.getElementById('thread-name').textContent=name;
-    document.getElementById('thread-sub').textContent=sub;
-    document.getElementById('thread-avatar').textContent=initials;
-    var msgs=document.getElementById('thread-msgs');
-    msgs.innerHTML='<div class="msg-bubble received">Bonjour Jean, avez-vous des questions ?<div class="msg-time">Aujourd\'hui</div></div>';
-  }
-
-  function sendMsg(){
-    var inp=document.getElementById('msg-input');
-    var txt=inp.value.trim();
-    if(!txt)return;
-    var msgs=document.getElementById('thread-msgs');
-    var b=document.createElement('div');
-    b.className='msg-bubble sent';
-    b.innerHTML=txt+'<div class="msg-time">À l\'instant</div>';
-    msgs.appendChild(b);
-    msgs.scrollTop=msgs.scrollHeight;
-    inp.value='';
-    showToast('Message envoyé');
   }
 
   function showToast(msg){
@@ -669,7 +622,7 @@ import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/fireba
 import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
 import {
   getFirestore, collection, doc,
-  getDocs, onSnapshot, query, where, updateDoc, addDoc, limit
+  getDocs, onSnapshot, query, where, updateDoc, addDoc, deleteDoc, limit
 } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
 const firebaseConfig = {
@@ -695,6 +648,136 @@ onAuthStateChanged(auth, function(fbUser) {
 });
 
 const user = JSON.parse(sessionStorage.getItem('ilch_user') || '{}');
+
+// ── MESSAGERIE RÉELLE — professeurs de la classe de l'élève ──
+var contactActifId = null;
+var desabonnerThreadEleve = null;
+
+window.envoyerMessageEleveFirebase = async function(destinataireId, contenu) {
+  try {
+    await addDoc(collection(db, 'messages'), {
+      expediteurId: user.id || 'demo',
+      expediteurNom: (user.prenom || 'Élève') + ' ' + (user.nom || ''),
+      expediteurRole: 'eleve',
+      destinataireId: destinataireId,
+      contenu: contenu,
+      lu: false,
+      date: new Date().toISOString()
+    });
+  } catch (e) { console.error(e); }
+};
+
+async function chargerContactsMessagerieEleve() {
+  var conteneur = document.getElementById('msg-contacts-liste');
+  if (!conteneur) return;
+  if (!user || !user.classe) {
+    conteneur.innerHTML = '<div style="padding:1rem;font-size:12px;color:var(--gray)">Classe non disponible.</div>';
+    return;
+  }
+  try {
+    var snap = await getDocs(query(collection(db, 'professeurs'), where('classes', 'array-contains', user.classe)));
+    var profs = snap.docs.map(function(d) { return { id: d.id, ...d.data() }; });
+    if (!profs.length) {
+      conteneur.innerHTML = '<div style="padding:1rem;font-size:12px;color:var(--gray)">Aucun professeur trouvé pour votre classe.</div>';
+      return;
+    }
+    profs.sort(function(a, b) { return (a.nom || '').localeCompare(b.nom || ''); });
+    conteneur.innerHTML = profs.map(function(p) {
+      var initiales = ((p.prenom || ' ')[0] || '') + ((p.nom || ' ')[0] || '');
+      var matiere = (p.matieres || []).join(', ');
+      return '<div class="contact-item" onclick="ouvrirConversationEleve(\'' + p.id + '\',\'Prof. ' + (p.prenom + ' ' + p.nom).replace(/'/g, "\\'") + '\',\'' + matiere.replace(/'/g, "\\'") + '\',\'' + initiales.toUpperCase() + '\',this)">' +
+        '<div class="contact-avatar">' + initiales.toUpperCase() + '</div>' +
+        '<div style="min-width:0"><div class="contact-name">Prof. ' + p.prenom + ' ' + p.nom + '</div><div class="contact-preview">' + matiere + '</div></div>' +
+        '</div>';
+    }).join('');
+  } catch (e) {
+    console.error('Erreur chargement contacts messagerie élève:', e);
+    conteneur.innerHTML = '<div style="padding:1rem;font-size:12px;color:var(--red)">Erreur de chargement.</div>';
+  }
+}
+setTimeout(chargerContactsMessagerieEleve, 400);
+
+window.ouvrirConversationEleve = function(profId, nomComplet, matiere, initiales, el) {
+  document.querySelectorAll('#msg-contacts-liste .contact-item').forEach(function(i) { i.classList.remove('active'); });
+  if (el) el.classList.add('active');
+  contactActifId = profId;
+  document.getElementById('thread-name').textContent = nomComplet;
+  document.getElementById('thread-sub').textContent = matiere;
+  document.getElementById('thread-avatar').textContent = initiales;
+  document.getElementById('msg-input').disabled = false;
+
+  var msgsBox = document.getElementById('thread-msgs');
+  msgsBox.innerHTML = '<div style="padding:1rem;text-align:center;font-size:12px;color:var(--gray)">Chargement de la conversation...</div>';
+
+  if (typeof desabonnerThreadEleve === 'function') desabonnerThreadEleve();
+
+  var messagesEnvoyes = [], messagesRecus = [];
+  function fusionnerEtAfficherEleve() {
+    var tous = messagesEnvoyes.concat(messagesRecus);
+    tous.sort(function(a, b) { return new Date(a.date) - new Date(b.date); });
+    rendreThreadMessagesEleve(tous);
+  }
+  var stop1 = onSnapshot(
+    query(collection(db, 'messages'), where('expediteurId', '==', user.id), where('destinataireId', '==', profId)),
+    function(snap) { messagesEnvoyes = snap.docs.map(function(d) { return { id: d.id, ...d.data() }; }); fusionnerEtAfficherEleve(); },
+    function(err) { console.error('Erreur écoute messages envoyés:', err); }
+  );
+  var stop2 = onSnapshot(
+    query(collection(db, 'messages'), where('expediteurId', '==', profId), where('destinataireId', '==', user.id)),
+    function(snap) { messagesRecus = snap.docs.map(function(d) { return { id: d.id, ...d.data() }; }); fusionnerEtAfficherEleve(); },
+    function(err) { console.error('Erreur écoute messages reçus:', err); }
+  );
+  desabonnerThreadEleve = function() { stop1(); stop2(); };
+};
+
+function rendreThreadMessagesEleve(messages) {
+  var msgsBox = document.getElementById('thread-msgs');
+  if (!messages.length) {
+    msgsBox.innerHTML = '<div style="padding:2rem;text-align:center;font-size:12px;color:var(--gray)">Aucun message pour le moment. Écrivez le premier message ci-dessous.</div>';
+    return;
+  }
+  msgsBox.innerHTML = messages.map(function(m) {
+    var estMoi = m.expediteurId === user.id;
+    var heure = m.date ? new Date(m.date).toLocaleString('fr-FR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' }) : '';
+    var btnSupprimer = estMoi ? '<button class="msg-delete-btn" title="Supprimer ce message" onclick="supprimerMessageEleve(\'' + m.id + '\')"><i class="ti ti-trash" aria-hidden="true"></i></button>' : '';
+    return '<div class="msg-bubble ' + (estMoi ? 'sent' : 'received') + '" style="position:relative">' + (m.contenu || '').replace(/</g, '&lt;') +
+      '<div class="msg-time">' + heure + '</div>' + btnSupprimer + '</div>';
+  }).join('');
+  msgsBox.scrollTop = msgsBox.scrollHeight;
+}
+
+window.sendMsg = async function() {
+  var inp = document.getElementById('msg-input');
+  var txt = inp.value.trim();
+  if (!txt) return;
+  if (!contactActifId) { if (typeof showToast === 'function') showToast('Choisissez un professeur avant d\'envoyer un message'); return; }
+  inp.value = '';
+  try {
+    await envoyerMessageEleveFirebase(contactActifId, txt);
+  } catch (e) {
+    console.error('Erreur envoi message:', e);
+    if (typeof showToast === 'function') showToast("L'envoi du message a échoué. Vérifiez votre connexion.");
+  }
+};
+
+window.supprimerMessageEleve = async function(messageId) {
+  if (!confirm('Êtes-vous sûr de vouloir supprimer ce message ?')) return;
+  try {
+    // Sécurité : on ne supprime que si le message appartient bien à l'élève connecté
+    var snap = await getDocs(query(collection(db, 'messages'), where('__name__', '==', messageId)));
+    if (snap.empty) return;
+    var msgData = snap.docs[0].data();
+    if (msgData.expediteurId !== user.id) {
+      if (typeof showToast === 'function') showToast('Vous ne pouvez supprimer que vos propres messages.');
+      return;
+    }
+    await deleteDoc(doc(db, 'messages', messageId));
+    if (typeof showToast === 'function') showToast('Message supprimé ✓');
+  } catch (e) {
+    console.error('Erreur suppression message:', e);
+    if (typeof showToast === 'function') showToast('La suppression a échoué. Réessayez.');
+  }
+};
 
 // ── EMPLOI DU TEMPS (lecture seule, filtré sur la classe de l'élève) ──
 var JOURS_SEMAINE_ELEVE = ['Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi'];
