@@ -340,12 +340,12 @@
     <div class="sb-section">Vue d'ensemble</div>
     <div class="sb-item active" onclick="showPanel('dash',this)"><i class="ti ti-home" aria-hidden="true"></i>Tableau de bord</div>
     <div class="sb-section">Gestion de ma section</div>
-    <div class="sb-item" onclick="showPanel('eleves',this)"><i class="ti ti-users" aria-hidden="true"></i>Mes élèves</div>
-    <div class="sb-item" onclick="showPanel('profs',this)"><i class="ti ti-chalkboard" aria-hidden="true"></i>Mes professeurs</div>
-    <div class="sb-item" onclick="showPanel('affectations',this)"><i class="ti ti-arrows-shuffle" aria-hidden="true"></i>Affectations</div>
-    <div class="sb-item" onclick="showPanel('emploidutemps',this);chargerEmploiDuTempsJour()"><i class="ti ti-calendar-time" aria-hidden="true"></i>Emploi du temps</div>
+    <div class="sb-item" data-panel="eleves" onclick="showPanel('eleves',this)"><i class="ti ti-users" aria-hidden="true"></i>Mes élèves</div>
+    <div class="sb-item" data-panel="profs" onclick="showPanel('profs',this)"><i class="ti ti-chalkboard" aria-hidden="true"></i>Mes professeurs</div>
+    <div class="sb-item" data-panel="affectations" onclick="showPanel('affectations',this)"><i class="ti ti-arrows-shuffle" aria-hidden="true"></i>Affectations</div>
+    <div class="sb-item" data-panel="emploidutemps" onclick="showPanel('emploidutemps',this);chargerEmploiDuTempsJour()"><i class="ti ti-calendar-time" aria-hidden="true"></i>Emploi du temps</div>
     <div class="sb-section">Suivi</div>
-    <div class="sb-item" onclick="showPanel('notes',this)"><i class="ti ti-chart-bar" aria-hidden="true"></i>Notes d'évaluation</div>
+    <div class="sb-item" data-panel="notes" onclick="showPanel('notes',this)"><i class="ti ti-chart-bar" aria-hidden="true"></i>Notes d'évaluation</div>
     <div class="sb-item" onclick="showPanel('absences',this)"><i class="ti ti-calendar-x" aria-hidden="true"></i>Absences<span class="sb-count" id="abs-count">0</span></div>
     <div class="sb-item" onclick="showPanel('presence',this)"><i class="ti ti-clipboard-check" aria-hidden="true"></i>Prise de présence</div>
     <div class="sb-item" onclick="showPanel('effectif',this);afficherEffectif('jour')"><i class="ti ti-users-group" aria-hidden="true"></i>Effectif de section</div>
@@ -757,7 +757,7 @@ var DB={
 
 // ─── SECTIONS ──────────────────────────────────────────────
 var sections={
-  prescolaire:{name:'Préscolaire',classes:['Préscolaire'],initiales:'PS',label:'Maternelle'},
+  prescolaire:{name:'Préscolaire',classes:['Maternelle','Petite Section','Moyenne Section','Grande Section'],initiales:'PS',label:'Maternelle → Grande Section'},
   cycle1:{name:'Fondamental Cycle 1',classes:['1ère Fondamentale','2ème Fondamentale','3ème Fondamentale'],initiales:'C1',label:'1ère → 3ème année'},
   cycle2:{name:'Fondamental Cycle 2',classes:['4ème Fondamentale','5ème Fondamentale','6ème Fondamentale'],initiales:'C2',label:'4ème → 6ème année'},
   cycle3:{name:'Fondamental Cycle 3',classes:['7ème Fondamentale','8ème Fondamentale','9ème Fondamentale','Nouveau Secondaire'],initiales:'C3',label:'7ème → Nouveau Secondaire'},

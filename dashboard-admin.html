@@ -382,14 +382,14 @@
     <div class="sb-section">Vue d'ensemble</div>
     <div class="sb-item active" onclick="showPanel('dash',this)"><i class="ti ti-home" aria-hidden="true"></i>Tableau de bord</div>
     <div class="sb-section">Gestion des comptes</div>
-    <div class="sb-item" onclick="showPanel('eleves',this)"><i class="ti ti-users" aria-hidden="true"></i>Élèves</div>
-    <div class="sb-item" onclick="showPanel('profs',this)"><i class="ti ti-chalkboard" aria-hidden="true"></i>Professeurs</div>
-    <div class="sb-item" onclick="showPanel('parents',this)"><i class="ti ti-heart" aria-hidden="true"></i>Parents</div>
-    <div class="sb-item" onclick="showPanel('import',this)"><i class="ti ti-clipboard-copy" aria-hidden="true"></i>Importer depuis Excel</div>
-    <div class="sb-item" id="sb-item-personnel" onclick="showPanel('personnel',this)"><i class="ti ti-user-plus" aria-hidden="true"></i>Personnel &amp; Direction</div>
+    <div class="sb-item" data-panel="eleves" onclick="showPanel('eleves',this)"><i class="ti ti-users" aria-hidden="true"></i>Élèves</div>
+    <div class="sb-item" data-panel="profs" onclick="showPanel('profs',this)"><i class="ti ti-chalkboard" aria-hidden="true"></i>Professeurs</div>
+    <div class="sb-item" data-panel="parents" onclick="showPanel('parents',this)"><i class="ti ti-heart" aria-hidden="true"></i>Parents</div>
+    <div class="sb-item" data-panel="import" onclick="showPanel('import',this)"><i class="ti ti-clipboard-copy" aria-hidden="true"></i>Importer depuis Excel</div>
+    <div class="sb-item" id="sb-item-personnel" data-panel="personnel" onclick="showPanel('personnel',this)"><i class="ti ti-user-plus" aria-hidden="true"></i>Personnel &amp; Direction</div>
     <div class="sb-section">Structure scolaire</div>
-    <div class="sb-item" onclick="showPanel('classes',this)"><i class="ti ti-door" aria-hidden="true"></i>Classes</div>
-    <div class="sb-item" onclick="showPanel('matieres',this)"><i class="ti ti-book" aria-hidden="true"></i>Matières</div>
+    <div class="sb-item" data-panel="classes" onclick="showPanel('classes',this)"><i class="ti ti-door" aria-hidden="true"></i>Classes</div>
+    <div class="sb-item" data-panel="matieres" onclick="showPanel('matieres',this)"><i class="ti ti-book" aria-hidden="true"></i>Matières</div>
     <div class="sb-item" onclick="showPanel('emploidutemps',this);chargerEmploiDuTempsAdmin()"><i class="ti ti-calendar-time" aria-hidden="true"></i>Emploi du temps</div>
     <div class="sb-item" onclick="showPanel('effectif',this);remplirClassesEffectifAdmin(true);afficherEffectifGlobal('jour')"><i class="ti ti-users-group" aria-hidden="true"></i>Effectif global</div>
     <div class="sb-item" id="sb-item-journal" onclick="showPanel('journal',this)"><i class="ti ti-history" aria-hidden="true"></i>Journal d'activité</div>
@@ -438,11 +438,11 @@
       <div style="background:var(--white);border:0.5px solid var(--border);padding:1.5rem">
         <div style="font-size:14px;font-weight:600;color:var(--navy);margin-bottom:1rem">Démarrage rapide</div>
         <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px">
-          <button class="btn btn-primary" onclick="showPanel('classes',document.querySelector('.sb-item:nth-child(9)'))"><i class="ti ti-door" aria-hidden="true"></i>1. Créer les classes</button>
-          <button class="btn btn-primary" onclick="showPanel('matieres',document.querySelector('.sb-item:nth-child(10)'))"><i class="ti ti-book" aria-hidden="true"></i>2. Créer les matières</button>
-          <button class="btn btn-primary" onclick="showPanel('profs',document.querySelector('.sb-item:nth-child(7)'))"><i class="ti ti-chalkboard" aria-hidden="true"></i>3. Ajouter les professeurs</button>
-          <button class="btn btn-primary" onclick="showPanel('eleves',document.querySelector('.sb-item:nth-child(6)'))"><i class="ti ti-users" aria-hidden="true"></i>4. Inscrire les élèves</button>
-          <button class="btn btn-primary" onclick="showPanel('parents',document.querySelector('.sb-item:nth-child(8)'))"><i class="ti ti-heart" aria-hidden="true"></i>5. Ajouter les parents</button>
+          <button class="btn btn-primary" onclick="showPanel('classes',document.querySelector('.sb-item[data-panel=&quot;classes&quot;]'))"><i class="ti ti-door" aria-hidden="true"></i>1. Créer les classes</button>
+          <button class="btn btn-primary" onclick="showPanel('matieres',document.querySelector('.sb-item[data-panel=&quot;matieres&quot;]'))"><i class="ti ti-book" aria-hidden="true"></i>2. Créer les matières</button>
+          <button class="btn btn-primary" onclick="showPanel('profs',document.querySelector('.sb-item[data-panel=&quot;profs&quot;]'))"><i class="ti ti-chalkboard" aria-hidden="true"></i>3. Ajouter les professeurs</button>
+          <button class="btn btn-primary" onclick="showPanel('eleves',document.querySelector('.sb-item[data-panel=&quot;eleves&quot;]'))"><i class="ti ti-users" aria-hidden="true"></i>4. Inscrire les élèves</button>
+          <button class="btn btn-primary" onclick="showPanel('parents',document.querySelector('.sb-item[data-panel=&quot;parents&quot;]'))"><i class="ti ti-heart" aria-hidden="true"></i>5. Ajouter les parents</button>
           <button class="btn btn-gold" onclick="exportData()"><i class="ti ti-download" aria-hidden="true"></i>Exporter les données</button>
         </div>
       </div>
@@ -818,7 +818,10 @@ window.onload = function(){
   // Classes par défaut si vides
   if(!DB.get('classes').length){
     DB.set('classes',[
-      {id:'c1',nom:'Préscolaire',niveau:'Préscolaire'},
+      {id:'c1a',nom:'Maternelle',niveau:'Préscolaire'},
+      {id:'c1b',nom:'Petite Section',niveau:'Préscolaire'},
+      {id:'c1c',nom:'Moyenne Section',niveau:'Préscolaire'},
+      {id:'c1d',nom:'Grande Section',niveau:'Préscolaire'},
       {id:'c2',nom:'1ère Fondamentale',niveau:'Fondamental Cycle 1'},
       {id:'c3',nom:'2ème Fondamentale',niveau:'Fondamental Cycle 1'},
       {id:'c4',nom:'3ème Fondamentale',niveau:'Fondamental Cycle 1'},
@@ -882,7 +885,7 @@ function renderProfs(){
     var mats = ((p.matieres||[]).map(function(m){return '<span class="badge badge-prof">'+m+'</span>';}).join(' ')) || '—';
     var btnReset = p.email
       ? '<button class="btn btn-edit" onclick="reinitialiserMotDePasseProf(\''+p.email.replace(/'/g,"")+'\',\''+(p.prenom+' '+p.nom).replace(/'/g,"\\'")+'\')" title="Envoyer un lien de réinitialisation sécurisé par e-mail"><i class="ti ti-key" aria-hidden="true"></i></button>'
-      : '<button class="btn btn-edit" onclick="showToast(\'Ajoutez d\\'abord une adresse e-mail à ce professeur (bouton Modifier) pour activer la réinitialisation sécurisée\')" title="Aucun e-mail — modifiez le professeur pour en ajouter un" style="opacity:0.5"><i class="ti ti-key" aria-hidden="true"></i></button>';
+      : '<button class="btn btn-edit" onclick="showToast(\'Ajoutez une adresse e-mail à ce professeur (bouton Modifier) pour activer la réinitialisation sécurisée\')" title="Aucun e-mail — modifiez le professeur pour en ajouter un" style="opacity:0.5"><i class="ti ti-key" aria-hidden="true"></i></button>';
     return '<tr data-search="'+((p.prenom+' '+p.nom+' '+((p.matieres||[]).join(' '))).toLowerCase())+'">'+
       '<td><strong>'+p.prenom+' '+p.nom+'</strong></td>'+
       '<td>'+mats+'</td>'+
@@ -1028,7 +1031,8 @@ function nettoyerTexte(str) {
 
 function getAbrClasse(classe) {
   var abr = {
-    'Préscolaire':'PS','1ère Fondamentale':'1F','2ème Fondamentale':'2F',
+    'Maternelle':'MAT','Petite Section':'PS','Moyenne Section':'MS','Grande Section':'GS',
+    '1ère Fondamentale':'1F','2ème Fondamentale':'2F',
     '3ème Fondamentale':'3F','4ème Fondamentale':'4F','5ème Fondamentale':'5F',
     '6ème Fondamentale':'6F','7ème Fondamentale':'7F','8ème Fondamentale':'8F',
     '9ème Fondamentale':'9F','Nouveau Secondaire':'NS','Rhétorique':'RH',
@@ -1301,13 +1305,14 @@ function saveClasse(){
 }
 
 // Matière
-function saveMatiere(){
+async function saveMatiere(){
   var nom=document.getElementById('mat-nom').value.trim();
   var coef=Number(document.getElementById('mat-coef').value)||2;
   if(!nom){showToast('Veuillez saisir un nom de matière');return;}
-  saveMatiereFirebase(nom, coef);
+  var ok = await saveMatiereFirebase(nom, coef);
+  if (!ok) return;
   closeModal('modal-matiere');
-  showToast('Matière "'+nom+'" créée');
+  showToast('Matière "'+nom+'" créée avec succès.');
   document.getElementById('mat-nom').value='';
   document.getElementById('mat-coef').value='2';
 }
@@ -1596,7 +1601,10 @@ var NIVEAU_VERS_SECTION = {
   'Terminale': 'secondaire'
 };
 var CLASSES_SEED_DEFAUT = [
-  { nom: 'Préscolaire', niveau: 'Préscolaire' },
+  { nom: 'Maternelle', niveau: 'Préscolaire' },
+  { nom: 'Petite Section', niveau: 'Préscolaire' },
+  { nom: 'Moyenne Section', niveau: 'Préscolaire' },
+  { nom: 'Grande Section', niveau: 'Préscolaire' },
   { nom: '1ère Fondamentale', niveau: 'Fondamental Cycle 1 (1→3)' },
   { nom: '2ème Fondamentale', niveau: 'Fondamental Cycle 1 (1→3)' },
   { nom: '3ème Fondamentale', niveau: 'Fondamental Cycle 1 (1→3)' },
@@ -1640,12 +1648,22 @@ onSnapshot(collection(db, 'classes'), function(snap) {
 
 window.saveClasseFirebase = async function(nom, niveau) {
   try {
+    var existant = await getDocs(query(collection(db, 'classes'), where('nom', '==', nom)));
+    if (!existant.empty) {
+      if (typeof showToast === 'function') showToast('Cette classe existe déjà.');
+      return false;
+    }
     await addDoc(collection(db, 'classes'), {
       nom: nom, niveau: niveau, section: NIVEAU_VERS_SECTION[niveau] || '',
       dateCreation: new Date().toISOString()
     });
     enregistrerActivite('Classe créée', 'Classe "' + nom + '" (' + niveau + ')');
-  } catch (e) { console.error('Erreur création classe:', e); }
+    return true;
+  } catch (e) {
+    console.error('Erreur création classe:', e);
+    if (typeof showToast === 'function') showToast("L'enregistrement a échoué. Vérifiez votre connexion et réessayez.");
+    return false;
+  }
 };
 
 // ── MATIÈRES — source unique partagée pour toute la plateforme ──
@@ -1677,9 +1695,19 @@ onSnapshot(collection(db, 'matieres'), function(snap) {
 
 window.saveMatiereFirebase = async function(nom, coefficient) {
   try {
+    var existant = await getDocs(query(collection(db, 'matieres'), where('nom', '==', nom)));
+    if (!existant.empty) {
+      if (typeof showToast === 'function') showToast('Cette matière existe déjà.');
+      return false;
+    }
     await addDoc(collection(db, 'matieres'), { nom: nom, coefficient: coefficient, dateCreation: new Date().toISOString() });
     enregistrerActivite('Matière créée', nom + ' (coef. ' + coefficient + ')');
-  } catch (e) { console.error('Erreur création matière:', e); }
+    return true;
+  } catch (e) {
+    console.error('Erreur création matière:', e);
+    if (typeof showToast === 'function') showToast("L'enregistrement a échoué. Vérifiez votre connexion et réessayez.");
+    return false;
+  }
 };
 
 function remplirMatieresSelects() {
@@ -1702,14 +1730,15 @@ window.supprimerClasseFirebase = async function(id) {
 };
 
 var _origSaveClasse = window.saveClasse;
-window.saveClasse = function() {
+window.saveClasse = async function() {
   var nom = document.getElementById('cl-nom').value.trim();
   var niveau = document.getElementById('cl-niveau').value;
   if (!nom) { if (typeof showToast === 'function') showToast('Veuillez saisir un nom de classe'); return; }
-  saveClasseFirebase(nom, niveau);
+  var ok = await saveClasseFirebase(nom, niveau);
+  if (!ok) return;
   if (typeof closeModal === 'function') closeModal('modal-classe');
   document.getElementById('cl-nom').value = '';
-  if (typeof showToast === 'function') showToast('Classe "' + nom + '" créée');
+  if (typeof showToast === 'function') showToast('Classe "' + nom + '" créée avec succès.');
 };
 
 var _origDeleteItem = window.deleteItem;

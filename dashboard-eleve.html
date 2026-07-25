@@ -1053,7 +1053,8 @@ console.log('✓ Dashboard Élève connecté à Firebase');
 
 // ── JEUX ÉDUCATIFS (Préscolaire uniquement) ─────────────────
 (function initJeuxEducatifs() {
-  if (user && user.classe === 'Préscolaire') {
+  var CLASSES_PRESCOLAIRE = ['Maternelle', 'Petite Section', 'Moyenne Section', 'Grande Section'];
+  if (user && CLASSES_PRESCOLAIRE.indexOf(user.classe) !== -1) {
     var item = document.getElementById('sb-item-jeux');
     if (item) item.style.display = 'flex';
   }
