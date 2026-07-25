@@ -96,7 +96,19 @@
     @media(max-width:860px){
       .login-page{flex-direction:column}
       .login-visual{display:none}
-      .login-form-side{max-width:100%;min-width:0}
+      .login-form-side{max-width:100%;min-width:0;padding:1.5rem}
+    }
+    @media(max-width:480px){
+      .role-cards,.role-cards-2{grid-template-columns:repeat(2,1fr)!important;gap:8px!important}
+      .role-card{padding:0.75rem 0.5rem!important}
+      .role-icon{width:32px!important;height:32px!important;font-size:14px!important;margin-bottom:0.35rem!important}
+      .role-title{font-size:10px!important}
+      .role-desc{display:none!important}
+      .login-box{padding:1.25rem!important}
+      .portal-badge{width:38px!important;height:38px!important;font-size:14px!important}
+      .portal-name{font-size:16px!important}
+      .login-visual-quote{font-size:1.5rem!important}
+      .wrap{max-width:100%!important}
     }
   </style>
   <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>

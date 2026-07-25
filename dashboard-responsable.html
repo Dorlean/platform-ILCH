@@ -1531,6 +1531,9 @@ window.afficherEffectif = async function(mode) {
 
   var s = sections[currentSection];
   var classes = window.getClassesForSection ? window.getClassesForSection(currentSection) : s.classes;
+  var tbody = document.getElementById('eff-tbody');
+  var entries = [];
+  var erreurChargement = false;
 
   try {
     var today = new Date().toISOString().slice(0, 10);
@@ -1541,9 +1544,13 @@ window.afficherEffectif = async function(mode) {
       var moisPrefix = today.slice(0, 7);
       effSnap = await getDocs(query(collection(db, 'effectifManuel'), where('date', '>=', moisPrefix + '-01'), where('date', '<=', moisPrefix + '-31')));
     }
-    var entries = effSnap.docs.map(function(d) { return d.data(); }).filter(function(e) { return classes.indexOf(e.classe) !== -1; });
+    entries = effSnap.docs.map(function(d) { return d.data(); }).filter(function(e) { return classes.indexOf(e.classe) !== -1; });
+  } catch (e) {
+    console.error('Erreur chargement des saisies effectif:', e);
+    erreurChargement = true;
+  }
 
-    var tbody = document.getElementById('eff-tbody');
+  try {
     var totalFillesG = 0, totalGarconsG = 0, totalPresG = 0, totalAbsG = 0;
     var rows = classes.map(function(c) {
       var entreesClasse = entries.filter(function(e) { return e.classe === c; });
@@ -1570,7 +1577,8 @@ window.afficherEffectif = async function(mode) {
         '<td>' + actionCell + '</td></tr>';
     });
 
-    tbody.innerHTML = rows.join('') || '<tr><td colspan="9" style="text-align:center;color:var(--muted);padding:1.5rem">Aucune donnée saisie pour cette période.</td></tr>';
+    var noticeErreur = erreurChargement ? '<tr><td colspan="9" style="text-align:center;color:var(--red);padding:8px;font-size:11px">⚠ Les saisies n\'ont pas pu être chargées (connexion). Les classes ci-dessous affichent 0 par défaut.</td></tr>' : '';
+    tbody.innerHTML = noticeErreur + (rows.join('') || '<tr><td colspan="9" style="text-align:center;color:var(--muted);padding:1.5rem">Aucune donnée saisie pour cette période.</td></tr>');
     document.getElementById('eff-total-filles').textContent = totalFillesG;
     document.getElementById('eff-total-garcons').textContent = totalGarconsG;
     document.getElementById('eff-total-presents').textContent = totalPresG;

@@ -243,6 +243,9 @@
       .fw-slider{height:340px!important}
       .fw-card{height:220px!important}
       .fw-card-lg{height:280px!important}
+      .hero-stats{gap:1.5rem!important;flex-wrap:wrap!important}
+      .hero-actions{width:100%}
+      .hero-actions a,.hero-actions button{flex:1 1 auto;text-align:center}
     }
     @media(max-width:480px){
       .vie-img{height:220px!important}
@@ -251,6 +254,8 @@
       .fw-card{height:180px!important}
       .fw-card-lg{height:220px!important}
       .fw-arrow{width:34px!important;height:34px!important;font-size:15px!important}
+      .hero-stats{gap:1rem!important}
+      .hero-stats .stat-num{font-size:1.5rem!important}
     }
     .nav-hamburger{display:none;flex-direction:column;gap:5px;cursor:pointer;padding:8px;background:none;border:none;z-index:200}
     .nav-hamburger span{display:block;width:22px;height:2px;background:var(--white);border-radius:2px;transition:all 0.3s}

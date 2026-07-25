@@ -389,7 +389,7 @@
     <div class="sb-section">Structure scolaire</div>
     <div class="sb-item" onclick="showPanel('classes',this)"><i class="ti ti-door" aria-hidden="true"></i>Classes</div>
     <div class="sb-item" onclick="showPanel('matieres',this)"><i class="ti ti-book" aria-hidden="true"></i>Matières</div>
-    <div class="sb-item" onclick="showPanel('effectif',this);afficherEffectifGlobal('jour')"><i class="ti ti-users-group" aria-hidden="true"></i>Effectif global</div>
+    <div class="sb-item" onclick="showPanel('effectif',this);remplirClassesEffectifAdmin(true);afficherEffectifGlobal('jour')"><i class="ti ti-users-group" aria-hidden="true"></i>Effectif global</div>
     <div class="sb-item" id="sb-item-journal" onclick="showPanel('journal',this)"><i class="ti ti-history" aria-hidden="true"></i>Journal d'activité</div>
     <div class="sb-section">Sécurité</div>
     <div class="sb-item" id="sb-item-motsdepasse" onclick="showPanel('motsdepasse',this)"><i class="ti ti-key" aria-hidden="true"></i>Mots de passe</div>
@@ -1753,16 +1753,28 @@ window.saveProf = async function() {
 console.log('✓ Dashboard Admin connecté à Firebase en temps réel');
 
 // ── EFFECTIF GLOBAL (saisie manuelle, toutes classes) ───────
+function classesEffectifDisponibles() {
+  // Source normale : classes réelles synchronisées depuis Firestore
+  var classes = JSON.parse(localStorage.getItem('ilch_classes') || '[]').map(function(c) { return c.nom; }).filter(Boolean);
+  if (classes.length) return Array.from(new Set(classes)).sort();
+  // Filet de sécurité : si Firestore n'a pas encore répondu (ou aucune classe créée),
+  // on affiche quand même la liste standard des classes de l'établissement.
+  return CLASSES_SEED_DEFAUT.map(function(c) { return c.nom; });
+}
+
 function remplirClassesEffectifAdmin(force) {
   var sel = document.getElementById('me-classe-admin');
   var dateInp = document.getElementById('me-date-admin');
-  var classes = JSON.parse(localStorage.getItem('ilch_classes') || '[]');
+  var classes = classesEffectifDisponibles();
   if (sel && (force || !sel.innerHTML) && classes.length) {
-    sel.innerHTML = classes.map(function(c) { return '<option value="' + c.nom + '">' + c.nom + '</option>'; }).join('');
+    sel.innerHTML = classes.map(function(c) { return '<option value="' + c + '">' + c + '</option>'; }).join('');
   }
   if (dateInp && !dateInp.value) dateInp.value = new Date().toISOString().slice(0, 10);
 }
 setTimeout(remplirClassesEffectifAdmin, 300);
+// Filet de sécurité supplémentaire : si le premier essai est passé avant le chargement complet
+// de la page (images lentes, connexion lente en Haïti, etc.), on réessaie une seconde fois.
+setTimeout(function(){ remplirClassesEffectifAdmin(true); }, 2000);
 
 window.enregistrerEffectifManuelAdmin = async function() {
   var classe = document.getElementById('me-classe-admin').value;
@@ -1795,6 +1807,13 @@ window.afficherEffectifGlobal = async function(mode) {
   document.getElementById('eff-btn-jour').classList.toggle('btn-primary', mode === 'jour');
   document.getElementById('eff-btn-mois').classList.toggle('btn-primary', mode === 'mois');
 
+  var tbody = document.getElementById('eff-tbody');
+  // Toutes les classes de l'établissement doivent apparaître, même sans saisie et même en cas
+  // d'erreur réseau — on part toujours de la liste de classes (avec filet de sécurité).
+  var classesAffichees = classesEffectifDisponibles();
+  var entries = [];
+  var erreurChargement = false;
+
   try {
     var today = new Date().toISOString().slice(0, 10);
     var effSnap;
@@ -1804,13 +1823,17 @@ window.afficherEffectifGlobal = async function(mode) {
       var moisPrefix = today.slice(0, 7);
       effSnap = await getDocs(query(collection(db, 'effectifManuel'), where('date', '>=', moisPrefix + '-01'), where('date', '<=', moisPrefix + '-31')));
     }
-    var entries = effSnap.docs.map(function(d) { return d.data(); });
-    // Toutes les classes de l'établissement doivent apparaître, même sans saisie
-    var toutesLesClasses = JSON.parse(localStorage.getItem('ilch_classes') || '[]').map(function(c) { return c.nom; });
+    entries = effSnap.docs.map(function(d) { return d.data(); });
+    // Si des saisies existent pour des classes absentes de la liste (ex : classe renommée/supprimée depuis), on les ajoute aussi.
     var classesAvecDonnees = Array.from(new Set(entries.map(function(e) { return e.classe; })));
-    var classesAffichees = Array.from(new Set(toutesLesClasses.concat(classesAvecDonnees))).sort();
+    classesAffichees = Array.from(new Set(classesAffichees.concat(classesAvecDonnees))).sort();
+  } catch (e) {
+    console.error('Erreur chargement des saisies effectif:', e);
+    erreurChargement = true;
+    classesAffichees = classesAffichees.slice().sort();
+  }
 
-    var tbody = document.getElementById('eff-tbody');
+  try {
     var totalFillesG = 0, totalGarconsG = 0, totalPresG = 0, totalAbsG = 0;
     var rows = classesAffichees.map(function(c) {
       var entreesClasse = entries.filter(function(e) { return e.classe === c; });
@@ -1836,7 +1859,8 @@ window.afficherEffectifGlobal = async function(mode) {
         '<td>' + actionCell + '</td></tr>';
     });
 
-    tbody.innerHTML = rows.join('') || '<tr><td colspan="9" style="text-align:center;color:var(--muted);padding:1.5rem">Aucune classe enregistrée. Créez d\'abord des classes.</td></tr>';
+    var noticeErreur = erreurChargement ? '<tr><td colspan="9" style="text-align:center;color:var(--red);padding:8px;font-size:11px">⚠ Les saisies n\'ont pas pu être chargées (connexion). Les classes ci-dessous affichent 0 par défaut.</td></tr>' : '';
+    tbody.innerHTML = noticeErreur + (rows.join('') || '<tr><td colspan="9" style="text-align:center;color:var(--muted);padding:1.5rem">Aucune classe enregistrée. Créez d\'abord des classes.</td></tr>');
     document.getElementById('eff-total-filles').textContent = totalFillesG;
     document.getElementById('eff-total-garcons').textContent = totalGarconsG;
     document.getElementById('eff-total-presents').textContent = totalPresG;
